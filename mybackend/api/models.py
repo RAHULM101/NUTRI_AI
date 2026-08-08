@@ -136,3 +136,99 @@ class chat_logs(models.Model):
     def __str__(self):
         return f"Chat {self.session_id} - {self.user.username}"
 
+
+# ─────────────────────────────────────────────
+#  NUTRI STORE MODELS
+# ─────────────────────────────────────────────
+
+class StoreCategory(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    icon = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "Store Categories"
+        ordering = ['name']
+
+
+class Product(models.Model):
+    PARTNER_CHOICES = [
+        ('Blinkit', 'Blinkit'),
+        ('Zepto', 'Zepto'),
+        ('Swiggy Instamart', 'Swiggy Instamart'),
+        ('Zomato', 'Zomato'),
+        ('HealthKart', 'HealthKart'),
+    ]
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    category = models.ForeignKey(StoreCategory, on_delete=models.SET_NULL, null=True, related_name='products')
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    image_url = models.TextField()
+    partner_name = models.CharField(max_length=50, choices=PARTNER_CHOICES)
+    affiliate_link = models.TextField()
+    calories = models.IntegerField(null=True, blank=True)
+    protein = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    carbs = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    fat = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    serving_size = models.CharField(max_length=50, null=True, blank=True)
+    macro_tag = models.CharField(max_length=50, null=True, blank=True)
+    ingredients = models.TextField(null=True, blank=True)
+    delivery_eta = models.CharField(max_length=100, null=True, blank=True)
+    is_available = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} — {self.partner_name}"
+
+    class Meta:
+        ordering = ['-is_featured', 'name']
+
+
+class Cart(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='store_cart')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Cart of {self.user.username}"
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+
+    def subtotal(self):
+        return self.product.price * self.quantity
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name}"
+
+    class Meta:
+        unique_together = ('cart', 'product')
+
+
+class AffiliateOrder(models.Model):
+    STATUS_CHOICES = [
+        ('redirected', 'Redirected to Partner'),
+        ('completed', 'Completed'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='affiliate_orders')
+    products = models.JSONField()
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    partner_name = models.CharField(max_length=50)
+    redirect_url = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='redirected')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Order #{self.id} by {self.user.username} via {self.partner_name}"
+
+    class Meta:
+        ordering = ['-created_at']

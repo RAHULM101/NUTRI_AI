@@ -262,4 +262,93 @@ Open your browser and navigate to `http://localhost:5173` to explore **NutriAI**
 
 ---
 
+## 🚀 Step-by-Step GitHub Push Guide
+
+To share your project or link it to your hosting providers, push your codebase to GitHub by running these commands in your project root terminal:
+
+1. **Initialize Git Repository** (if not already done):
+   ```bash
+   git init
+   ```
+
+2. **Verify File Staging Exclusion:**
+   Ensure your `.gitignore` is in place. Since your `.gitignore` is already set up in the root, private environment variables (`.env`) and large folders (`node_modules/`, `.venv/`) will be safely ignored.
+
+3. **Stage All Files:**
+   ```bash
+   git add .
+   ```
+
+4. **Commit the Codebase:**
+   ```bash
+   git commit -m "Initial commit: Set up configuration templates & deployment compatibility settings"
+   ```
+
+5. **Create a GitHub Repository:**
+   - Go to [GitHub](https://github.com/new).
+   - Give your repository a name (e.g. `Nutri_AI_POC`).
+   - Leave it empty (do **NOT** check "Add a README", ".gitignore", or "license" boxes since the project already has them).
+
+6. **Link Remote and Push:**
+   - Copy the HTTPS or SSH git link of your repository from GitHub.
+   - Run the following commands (replace the URL with your repository URL):
+     ```bash
+     git remote add origin https://github.com/your-username/your-repo-name.git
+     git branch -M main
+     git push -u origin main
+     ```
+
+---
+
+## 🌐 Production Deployment Guide
+
+Follow this guide to deploy your backend to **Render** and your frontend to **Vercel**.
+
+### 1️⃣ Django Backend Deployment on [Render](https://render.com)
+
+Render hosts the Django backend service and handles PostgreSQL databases.
+
+#### Step A: Spin Up PostgreSQL Database
+1. Go to your Render Dashboard and click **New > PostgreSQL**.
+2. Name the database (e.g., `nutri-db-prod`), choose your region, and set the Instance Type to **Free**.
+3. Click **Create Database**.
+4. Once active, copy the **Internal Database URL** (if deploying backend on Render) or **External Database URL** (to connect from pgAdmin or other external tools). We will configure the backend to use this URL.
+
+#### Step B: Deploy the Django Web Service
+1. Click **New > Web Service** on Render and connect your GitHub repository.
+2. Configure the following service settings:
+   - **Name:** `nutri-backend` (or a name of your choice)
+   - **Environment:** `Python`
+   - **Build Command:** `pip install -r requirements.txt && python mybackend/manage.py collectstatic --noinput && python mybackend/manage.py migrate`
+   - **Start Command:** `gunicorn --chdir mybackend core.wsgi:application`
+3. Click **Advanced** and click **Add Environment Variable** to add the following:
+   - `DATABASE_URL`: *[Paste your Render PostgreSQL Database URL]*
+   - `SECRET_KEY`: *[Insert a unique random string for security]*
+   - `DEBUG`: `False`
+   - `GEMINI_API_KEY`: *[Your Gemini API Key]*
+   - `GOOGLE_CLIENT_ID`: *[Your Google Client ID]*
+   - `DJANGO_ALLOWED_HOSTS`: `localhost,127.0.0.1,your-backend-app.onrender.com`
+4. Click **Create Web Service**. Render will install requirements, run migrations, gather static assets via WhiteNoise, and serve the project.
+
+---
+
+### 2️⃣ React Frontend Deployment on [Vercel](https://vercel.com)
+
+Vercel hosts the static assets and handles React routes on page refreshes.
+
+#### Step A: Configure and Import the Project
+1. Log in to Vercel and click **Add New > Project**.
+2. Import your GitHub repository.
+3. In the project config window:
+   - **Framework Preset:** Auto-detected as `Vite`.
+   - **Root Directory:** Click "Edit" and set this to `myfrontend`.
+4. Open the **Environment Variables** section and add:
+   - `VITE_BACKEND_URL`: `https://your-backend-app.onrender.com`
+   - `VITE_API_BASE_URL`: `https://your-backend-app.onrender.com`
+   - `VITE_GOOGLE_CLIENT_ID`: *[Your Google OAuth Client ID]*
+5. Click **Deploy**. Vercel will build the frontend and serve it securely. (Note: The `myfrontend/vercel.json` rewrite rule is automatically loaded to prevent 404s on subpages like `/dashboard`).
+
+---
+
 *Developed by the NutriAI Team — March 2026.*
+

@@ -9,6 +9,7 @@ import Profile from "./components/Profile";
 import Dashboard from "./components/Dashboard";
 import MealLogs from "./components/MealLogs";
 import Nia from "./components/Nia";
+import NutriStore from "./components/store/NutriStore";
 import MainLayout from "./components/MainLayout";
 import SuccessScreen from "./components/SuccessScreen";
 import { useUser } from "./context/UserContext";
@@ -34,6 +35,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState("dashboard");
   const [showReport, setShowReport] = useState(false);
   const [niaMsgs, setNiaMsgs] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
 
 
   async function fetchAndHydrateProfile(token) {
@@ -244,10 +246,12 @@ export default function App() {
             onLogout={handleLogout}
             onUpgrade={() => setCurrentView('plans')}
             onOpenReport={() => setShowReport(true)}
+            cartCount={cartCount}
           >
             {currentView === 'dashboard' && <Dashboard dark={dark} onOpenReport={() => setShowReport(true)} profileComplete={getProfileCompletion(profileData) === 100} />}
             {currentView === 'meal-logs' && <MealLogs dark={dark} />}
             {currentView === 'nia' && <Nia dark={dark} profileData={profileData} niaMsgs={niaMsgs} setNiaMsgs={setNiaMsgs} />}
+            {currentView === 'store' && <NutriStore dark={dark} onCartChange={setCartCount} />}
             {(currentView === 'profile' || currentView === 'plans' || currentView === 'settings') && (
               <Profile
                 dark={dark}

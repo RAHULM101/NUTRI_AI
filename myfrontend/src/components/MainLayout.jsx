@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 
-export default function MainLayout({ children, dark, setDark, profileData, activeNav, onNavigate, onLogout, onUpgrade, onOpenReport }) {
+export default function MainLayout({ children, dark, setDark, profileData, activeNav, onNavigate, onLogout, onUpgrade, onOpenReport, cartCount = 0 }) {
   const { name = '', category = '', photo = null } = profileData || {};
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef(null);
@@ -24,6 +24,7 @@ export default function MainLayout({ children, dark, setDark, profileData, activ
         onLogout={onLogout}
         collapsed={collapsed}
         setCollapsed={setCollapsed}
+        cartCount={cartCount}
       />
       <main
         className="flex-1 flex flex-col overflow-hidden"

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 
 import os
+import dj_database_url
 from dotenv import load_dotenv
 
 
@@ -62,6 +63,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -70,11 +72,28 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# CORS_ALLOW_ALL_ORIGINS = True
+allowed_hosts_str = os.environ.get('DJANGO_ALLOWED_HOSTS')
+if allowed_hosts_str:
+    ALLOWED_HOSTS = allowed_hosts_str.split(',')
+else:
+    ALLOWED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        '10.43.17.147',
+    ]
+
+# Render automatically sets RENDER_EXTERNAL_HOSTNAME in its environment
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 CORS_ALLOW_ALL_ORIGINS = True
-# Allow your machine's IP so Android emulator can reach it
-# ALLOWED_HOSTS = ['10.83.193.38','10.135.4.38']
-allowed_hosts_str = os.environ.get('DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost')
-ALLOWED_HOSTS = allowed_hosts_str.split(',')
+
 
 ROOT_URLCONF = 'core.urls'
 
@@ -102,15 +121,21 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-
         'NAME': os.environ.get('DB_NAME'),    # The name of your existing postgres DB
         'USER': os.environ.get('DB_USER'),       # e.g., 'postgres'
         'PASSWORD': os.environ.get('DB_PASSWORD'),        # Your postgres password
         'HOST': os.environ.get('DB_HOST'),                # Or the remote IP (e.g., AWS RDS endpoint)
         'PORT': os.environ.get('DB_PORT'),                     # Default postgres port
-
     }
 }
+
+# If DATABASE_URL is set (like in Render environment), configure the database connection accordingly
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    DATABASES['default'] = dj_database_url.config(
+        default=DATABASE_URL,
+        conn_max_age=600
+    )
 
 AUTH_USER_MODEL = 'api.User'
 
@@ -150,6 +175,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Use WhiteNoise to serve compressed static files efficiently in production
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Frontend URL for email verification and password reset links
 FRONTEND_URL = 'http://localhost:3000' # Update this with your actual frontend URL or custom app scheme

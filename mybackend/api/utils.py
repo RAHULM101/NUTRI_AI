@@ -65,7 +65,7 @@ def analyze_meal_image_with_gemini(image_file):
         
         # 2. Use the new client.models.generate_content syntax
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.5-flash',
             contents=[prompt, img]
         )
         
@@ -122,7 +122,7 @@ def generate_nia_chat_response(user, user_message):
         # 4. Call the Gemini API
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.5-flash',
             contents=system_prompt
         )
         

@@ -58,4 +58,71 @@ class ChatLogSerializer(serializers.ModelSerializer):
         # You can specify exact fields, or use '__all__'
         fields = '__all__'
         read_only_fields = ['session_id', 'created_at', 'user','ai_response']
-        
+
+
+# ─────────────────────────────────────────────
+#  NUTRI STORE SERIALIZERS
+# ─────────────────────────────────────────────
+from .models import StoreCategory, Product, Cart, CartItem, AffiliateOrder
+
+
+class StoreCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StoreCategory
+        fields = ['id', 'name', 'slug', 'icon']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name', read_only=True)
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'name', 'description', 'category', 'category_name',
+            'price', 'image_url', 'partner_name', 'affiliate_link',
+            'calories', 'protein', 'carbs', 'fat', 'serving_size',
+            'macro_tag', 'ingredients', 'delivery_eta',
+            'is_available', 'is_featured', 'created_at',
+        ]
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(), source='product', write_only=True
+    )
+    subtotal = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CartItem
+        fields = ['id', 'product', 'product_id', 'quantity', 'subtotal']
+
+    def get_subtotal(self, obj):
+        return float(obj.product.price) * obj.quantity
+
+
+class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True, read_only=True)
+    total = serializers.SerializerMethodField()
+    item_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cart
+        fields = ['id', 'items', 'total', 'item_count', 'created_at', 'updated_at']
+
+    def get_total(self, obj):
+        return sum(float(item.product.price) * item.quantity for item in obj.items.all())
+
+    def get_item_count(self, obj):
+        return sum(item.quantity for item in obj.items.all())
+
+
+class AffiliateOrderSerializer(serializers.ModelSerializer):
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+
+    class Meta:
+        model = AffiliateOrder
+        fields = [
+            'id', 'products', 'total_price', 'partner_name',
+            'redirect_url', 'status', 'status_display', 'created_at',
+        ]
