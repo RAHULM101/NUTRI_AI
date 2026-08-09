@@ -27,28 +27,32 @@ export default function ProductCard({ product, dark = true, onAddToCart, onQuick
   const qvBtnBdr   = dark ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
   const qvBtnCol   = dark ? 'rgba(255,255,255,0.6)'  : '#64748B';
 
-  // Pick a best-match image from Unsplash based on product name/category
+  // Pick the local high-fidelity image based on product name/category
   const imageUrl = (() => {
+    // If it's already a correct local path, use it
+    if (product.image_url && product.image_url.startsWith('/products/')) {
+      return product.image_url;
+    }
+    
+    // Prioritize name-matching to map both old and new product names to local files
     const name = (product.name || '').toLowerCase();
-    const cat  = (product.category_name || '').toLowerCase();
-    if (product.image_url && !product.image_url.includes('placeholder')) return product.image_url;
-    if (name.includes('peanut butter'))  return 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80';
-    if (name.includes('whey') || name.includes('protein powder')) return 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=400&q=80';
-    if (name.includes('oat'))            return 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=400&q=80';
-    if (name.includes('green juice') || name.includes('juice')) return 'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=400&q=80';
-    if (name.includes('almond'))         return 'https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80';
-    if (name.includes('banana'))         return 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?w=400&q=80';
-    if (name.includes('chicken') || name.includes('egg')) return 'https://images.unsplash.com/photo-1518492104633-130d0cc84637?w=400&q=80';
-    if (name.includes('salad') || name.includes('meal')) return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80';
-    if (name.includes('protein bar') || name.includes('bar')) return 'https://images.unsplash.com/photo-1622484212850-eb596d769edc?w=400&q=80';
-    if (name.includes('vitamin') || name.includes('supplement') || name.includes('capsule')) return 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&q=80';
-    if (name.includes('coffee'))         return 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80';
-    if (name.includes('milk') || name.includes('dairy')) return 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&q=80';
-    if (cat.includes('beverage'))        return 'https://images.unsplash.com/photo-1610970881699-44a5587cabec?w=400&q=80';
-    if (cat.includes('supplement'))      return 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&q=80';
-    if (cat.includes('snack'))           return 'https://images.unsplash.com/photo-1622484212850-eb596d769edc?w=400&q=80';
-    if (cat.includes('organic') || cat.includes('meal')) return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80';
-    return 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80';
+    
+    if (name.includes('peanut butter')) return '/products/alpino_peanut_butter.jpg';
+    if (name.includes('creatine')) return '/products/mb_creatine.jpg';
+    if (name.includes('whey') && name.includes('muscleblaze')) return '/products/mb_whey.jpg';
+    if (name.includes('whey') && name.includes('gold standard')) return '/products/on_whey.jpg';
+    if (name.includes('oats') || name.includes('oat')) return '/products/true_elements_oats.jpg';
+    if (name.includes('yogurt')) return '/products/epigamia_yogurt.jpg';
+    if (name.includes('makhana')) return '/products/farmley_makhana.jpg';
+    if (name.includes('granola')) return '/products/true_elements_granola.jpg';
+    if (name.includes('tea')) return '/products/tetley_green_tea.jpg';
+    if (name.includes('bar') || name.includes('yoga bar') || name.includes('yogabar')) return '/products/yogabar_protein_bar.jpg';
+    
+    // Fallback if not matching our 10 products
+    if (product.image_url && !product.image_url.includes('placeholder') && !product.image_url.includes('grofers')) {
+      return product.image_url;
+    }
+    return '/products/on_whey.jpg';
   })();
 
   async function handleAdd(e) {

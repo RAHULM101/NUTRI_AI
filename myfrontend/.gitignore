@@ -60,9 +60,9 @@ dist-ssr
 !index.html
 
 # Images (optional - careful if used in project)
-*.jpeg
-*.jpg
-*.png
+# *.jpeg
+# *.jpg
+# *.png
 
 # Notes / misc
 *.txt

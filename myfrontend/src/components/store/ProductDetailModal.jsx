@@ -40,6 +40,33 @@ export default function ProductDetailModal({ product, dark = true, onClose, onAd
   const closeBdr = dark ? 'rgba(255,255,255,0.1)'     : '#E2E8F0';
   const closeCol = dark ? 'rgba(255,255,255,0.6)'     : '#64748B';
 
+  const imageUrl = (() => {
+    // If it's already a correct local path, use it
+    if (product.image_url && product.image_url.startsWith('/products/')) {
+      return product.image_url;
+    }
+    
+    // Prioritize name-matching to map both old and new product names to local files
+    const name = (product.name || '').toLowerCase();
+    
+    if (name.includes('peanut butter')) return '/products/alpino_peanut_butter.jpg';
+    if (name.includes('creatine')) return '/products/mb_creatine.jpg';
+    if (name.includes('whey') && name.includes('muscleblaze')) return '/products/mb_whey.jpg';
+    if (name.includes('whey') && name.includes('gold standard')) return '/products/on_whey.jpg';
+    if (name.includes('oats') || name.includes('oat')) return '/products/true_elements_oats.jpg';
+    if (name.includes('yogurt')) return '/products/epigamia_yogurt.jpg';
+    if (name.includes('makhana')) return '/products/farmley_makhana.jpg';
+    if (name.includes('granola')) return '/products/true_elements_granola.jpg';
+    if (name.includes('tea')) return '/products/tetley_green_tea.jpg';
+    if (name.includes('bar') || name.includes('yoga bar') || name.includes('yogabar')) return '/products/yogabar_protein_bar.jpg';
+    
+    // Fallback if not matching our 10 products
+    if (product.image_url && !product.image_url.includes('placeholder') && !product.image_url.includes('grofers')) {
+      return product.image_url;
+    }
+    return '/products/on_whey.jpg';
+  })();
+
   useEffect(() => {
     const handleKey = e => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleKey);
@@ -57,7 +84,7 @@ export default function ProductDetailModal({ product, dark = true, onClose, onAd
       >
         {/* LEFT — Image */}
         <div style={{ width: 280, flexShrink: 0, background: imgBg, position: 'relative', overflow: 'hidden' }}>
-          <img src={product.image_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img src={imageUrl} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '20px 16px 14px', background: 'linear-gradient(to top, rgba(0,0,0,0.85), transparent)' }}>
             <span className={ps.cls} style={{ padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 700, border: '1px solid' }}>
               {ps.emoji} {product.partner_name}

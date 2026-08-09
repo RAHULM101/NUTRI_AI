@@ -102,8 +102,7 @@ export default function App() {
           localStorage.setItem("nutriai_onboarded", "true");
         } else {
           setOnboardingDone(false);
-          // Only show onboarding if they have a profile but haven't onboarded
-          // Assuming we don't auto-open it on refresh unless they try to log in
+          setOnboarding(true);
         }
       }
     }

@@ -20,14 +20,19 @@ try:
     import subprocess
     import sys
     from django.conf import settings
-    from api.models import StoreCategory
+    from api.models import StoreCategory, Product
     
     print("Running automatic startup database migrations...")
     call_command('migrate', interactive=False)
     print("Startup migrations completed successfully!")
     
-    if not StoreCategory.objects.exists():
-        print("Store categories empty. Running database seeder...")
+    # Check if we have old generic home links or external Grofers CDN links that need updating
+    old_links = ['https://blinkit.com', 'https://www.zeptonow.com', 'https://www.swiggy.com/instamart', 'https://www.healthkart.com', 'https://www.zomato.com']
+    has_old_links = Product.objects.filter(affiliate_link__in=old_links).exists()
+    has_legacy_images = Product.objects.filter(image_url__icontains='grofers').exists()
+    
+    if not StoreCategory.objects.exists() or has_old_links or has_legacy_images:
+        print("Database requires seeding/updating. Running database seeder...")
         seed_script = os.path.join(settings.BASE_DIR, 'seed_store.py')
         if os.path.exists(seed_script):
             print(f"Executing: {sys.executable} {seed_script}")
