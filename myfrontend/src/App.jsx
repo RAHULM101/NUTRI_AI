@@ -40,7 +40,7 @@ export default function App() {
 
   async function fetchAndHydrateProfile(token) {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/profile/`, {
+      const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/profile/`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const dbData = response.data.data;

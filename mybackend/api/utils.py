@@ -1,11 +1,21 @@
 import os
 import json
 from google import genai
+from google.genai import types
+from pydantic import BaseModel, Field
 from django.conf import settings
 from PIL import Image
 import traceback
 from .models import UserProfile, daily_tracking
 from django.utils import timezone
+
+class MealAnalysis(BaseModel):
+    detected_items: str = Field(description="A string summarizing what the food is.")
+    calories: int = Field(description="Estimated total calories.")
+    protein_gm: float = Field(description="Estimated protein in grams.")
+    carbs_gm: float = Field(description="Estimated carbohydrates in grams.")
+    fat_gm: float = Field(description="Estimated fat in grams.")
+    ai_insights: str = Field(description="A short sentence with a nutritional observation.")
 
 def calculate_junk_score(calories, protein, carbs, fat, detected_items):
     """
@@ -53,24 +63,20 @@ def analyze_meal_image_with_gemini(image_file):
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
         
         prompt = """
-        Analyze this food image. Provide the output strictly in valid JSON format with no markdown formatting.
-        The JSON should have the following keys:
-        - "detected_items": A string summarizing what the food is.
-        - "calories": An integer representing estimated total calories.
-        - "protein_gm": A float representing estimated protein in grams.
-        - "carbs_gm": A float representing estimated carbohydrates in grams.
-        - "fat_gm": A float representing estimated fat in grams.
-        - "ai_insights": A short sentence with a nutritional observation.
+        Analyze this food image.
         """
         
-        # 2. Use the new client.models.generate_content syntax
+        # 2. Use the new client.models.generate_content syntax with Pydantic response schema
         response = client.models.generate_content(
             model='gemini-3.5-flash',
-            contents=[prompt, img]
+            contents=[prompt, img],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                response_schema=MealAnalysis
+            )
         )
         
-        result_text = response.text.replace("```json", "").replace("```", "").strip()
-        data = json.loads(result_text)
+        data = json.loads(response.text)
         
         data['junk_score'] = calculate_junk_score(
             calories=data.get('calories', 0),

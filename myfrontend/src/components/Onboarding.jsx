@@ -222,7 +222,7 @@ const Onboarding = ({ onComplete, onBack, dark = false, initialData = null, back
       const monthInt = formData.dobMonth ? monthNames.indexOf(formData.dobMonth) + 1 : null;
 
 
-      const response = await axios.patch(`${import.meta.env.VITE_API_BASE_URL}/api/onboarding/${userId}/`, {
+      const response = await axios.patch(`${baseURL}/api/onboarding/${userId}/`, {
         first_name: formData.firstName,
         last_name: formData.lastName,
         day_of_birth: parseInt(formData.dobDay) || null,
@@ -253,7 +253,7 @@ const Onboarding = ({ onComplete, onBack, dark = false, initialData = null, back
         main_carbs_source: formData.mainCarbs,
         bmi: parseFloat(formData.bmi) || null,
         daily_calorie_target: parseInt(formData.calorieTarget) || null,
-        is_Onboarded: true
+        is_onboarded: true
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });

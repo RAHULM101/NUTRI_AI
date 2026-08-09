@@ -8,7 +8,7 @@ import ProductDetailModal from './ProductDetailModal';
 import CartDrawer from './CartDrawer';
 import OrderHistory from './OrderHistory';
 
-const API = import.meta.env.VITE_API_BASE_URL;
+const API = import.meta.env.VITE_BACKEND_URL;
 
 function getAuthHeader() {
   const token = localStorage.getItem('access_token')?.replace(/['"]+/g, '');
