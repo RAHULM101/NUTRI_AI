@@ -75,7 +75,7 @@ const CustomTooltip = ({ active, payload, label,  }) => {
     const isScore = data.name === 'score';
     let dotColor = COLORS.teal; 
     if (isScore) {
-      dotColor = data.value >= 7 ? COLORS.coral : data.value >= 4 ? COLORS.amber : COLORS.mint;
+      dotColor = data.value >= 70 ? COLORS.coral : data.value >= 40 ? COLORS.amber : COLORS.mint;
     } else if (data.dataKey === 'val' && data.payload.val > 1920) {
       dotColor = COLORS.coral;
     }
@@ -87,7 +87,7 @@ const CustomTooltip = ({ active, payload, label,  }) => {
         <div className="flex items-center gap-2">
           <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: dotColor }}></div>
           <span className="text-[#0F172A] dark:text-white font-extrabold text-[16px] tracking-tight">
-            {isScore ? `${data.value} / 10` : `${data.value} kcal`}
+            {isScore ? `${data.value} / 100` : `${data.value} kcal`}
           </span>
         </div>
       </div>
@@ -199,6 +199,7 @@ const AnalyticsDashboard = ({ dark, onOpenReport, profileComplete }) => {
           daily_fat: res.data.today.fat || 0,
           junk_score: res.data.today.junk_score || 0,
           junk_count: res.data.today.junk_count || 0,
+          current_water: res.data.today.water || 0,
         }));
       }
     })
@@ -236,8 +237,16 @@ const AnalyticsDashboard = ({ dark, onOpenReport, profileComplete }) => {
     predictionMessage = "You're on a steady muscle-gain path. Maintain your current caloric surplus to reach your goal consistently.";
   }
 
-  const displayCal = Math.round(data.calTrend.reduce((a, b) => a + b.val, 0) / data.calTrend.length);
-  const avgJunk = (data.junkScore.reduce((a, b) => a + b.score, 0) / data.junkScore.length).toFixed(1);
+  // Calculate averages based only on the days that actually have logged calories
+  const activeDays = data.calTrend.filter(item => item.val > 0).length;
+
+  const displayCal = activeDays > 0
+    ? Math.round(data.calTrend.reduce((a, b) => a + b.val, 0) / activeDays)
+    : 0;
+
+  const avgJunk = activeDays > 0
+    ? (data.junkScore.reduce((a, b) => a + b.score, 0) / activeDays).toFixed(1)
+    : "0.0";
 
   // Live today stats from meal logs
   const todayCal = dailyLogs?.daily_calories_consumed || 0;

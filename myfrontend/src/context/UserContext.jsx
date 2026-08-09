@@ -84,10 +84,21 @@ export function UserProvider({ children }) {
   };
 
   const updateWaterIntake = (amount) => {
-    setDailyLogs(prev => ({
-      ...prev,
-      current_water: Math.min(parseFloat((prev.current_water + amount).toFixed(2)), userMetrics.water_goal)
-    }));
+    const rawToken = localStorage.getItem('access_token');
+    const token = rawToken ? rawToken.replace(/['\"]+/g, '') : null;
+    
+    setDailyLogs(prev => {
+      const newWater = Math.min(parseFloat((prev.current_water + amount).toFixed(2)), userMetrics.water_goal);
+      if (token) {
+        axios.post(`${BASE_URL}/api/dashboard/water/`, { water: newWater }, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).catch(err => console.warn("Failed to sync water intake with backend:", err.message));
+      }
+      return {
+        ...prev,
+        current_water: newWater
+      };
+    });
   };
 
   const addMealLog = (meal) => {

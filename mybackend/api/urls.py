@@ -1,5 +1,9 @@
 from django.urls import path
-from .views import RegisterView, LoginView, ProfileView, OnboardingView, AnalyzeMealImageView, MealLogListCreateView, DashboardSummaryView, NiaChatView
+from .views import (
+    RegisterView, LoginView, ProfileView, OnboardingView,
+    AnalyzeMealImageView, MealLogListCreateView, DashboardSummaryView,
+    NiaChatView, UpdateWaterIntakeView
+)
 from .views import GoogleLoginView
 from .store_views import (
     ProductListView, ProductDetailView,
@@ -17,6 +21,7 @@ urlpatterns = [
     path('meal-logs/analyze/', AnalyzeMealImageView.as_view(), name='analyze_meal_image'),
     path('meal-logs/', MealLogListCreateView.as_view(), name='meal_logs_list_create'),
     path('dashboard/', DashboardSummaryView.as_view(), name='dashboard_summary'),
+    path('dashboard/water/', UpdateWaterIntakeView.as_view(), name='update_water_intake'),
     path('nia/chat/', NiaChatView.as_view(), name='nia_chat'),
 
     # ── Nutri Store ──

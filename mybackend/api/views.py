@@ -326,6 +326,13 @@ class DashboardSummaryView(APIView):
         today_junk_avg = 0
         if today_junk_count > 0:
             today_junk_avg = round(today_junk_sum / today_junk_count, 1)
+            
+        today_water = 0.0
+        from .models import daily_tracking
+        tracking_today = daily_tracking.objects.filter(user=user, created_at__date=today).first()
+        if tracking_today and tracking_today.water_intake_liters is not None:
+            today_water = float(tracking_today.water_intake_liters)
+
         from .utils import calculate_user_streak
         return Response({
             'cal_trend': cal_trend,
@@ -337,9 +344,37 @@ class DashboardSummaryView(APIView):
                 'carbs': round(today_carbs, 1),
                 'fat': round(today_fat, 1),
                 'junk_score': today_junk_avg,
-                'junk_count': today_junk_count
+                'junk_count': today_junk_count,
+                'water': today_water
             }
         })
+
+
+class UpdateWaterIntakeView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        from django.utils import timezone
+        from .models import daily_tracking
+        
+        water_amount = request.data.get('water')
+        if water_amount is None:
+            return Response({"error": "water amount required"}, status=400)
+            
+        today = timezone.now().date()
+        tracking, created = daily_tracking.objects.get_or_create(
+            user=request.user,
+            created_at__date=today,
+            defaults={'behaviour_summary': 'Active', 'water_intake_liters': 0.0}
+        )
+        
+        tracking.water_intake_liters = float(water_amount)
+        tracking.save()
+        
+        return Response({
+            "message": "Water intake updated",
+            "water": float(tracking.water_intake_liters)
+        }, status=200)
 
 
 class NiaChatView(APIView):
