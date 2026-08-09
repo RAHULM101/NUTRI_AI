@@ -57,9 +57,8 @@ class RegisterView(APIView):
                 }, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            import traceback
             return Response({
-                "error": [f"{str(e)}\n{traceback.format_exc()[:300]}"]
+                "error": ["An unexpected server error occurred during registration. Please try again later."]
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
