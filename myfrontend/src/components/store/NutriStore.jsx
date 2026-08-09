@@ -20,21 +20,7 @@ const TABS = [
   { id: 'orders',   label: 'Order History', icon: ClipboardList },
 ];
 
-export default function NutriStore({ onCartChange }) {
-  // ── Theme ────────────────────────────────────────────────────────────────
-  const [dark, setDark] = useState(() => {
-    const stored = localStorage.getItem('nutri_store_theme');
-    return stored ? stored === 'dark' : true;
-  });
-
-  function toggleTheme() {
-    setDark(prev => {
-      const next = !prev;
-      localStorage.setItem('nutri_store_theme', next ? 'dark' : 'light');
-      return next;
-    });
-  }
-
+export default function NutriStore({ dark, onCartChange }) {
   // ── Colour tokens (derived from dark flag) ───────────────────────────────
   const T = {
     pageBg:       dark ? '#0F172A'                       : '#F8FAFC',
@@ -240,32 +226,6 @@ export default function NutriStore({ onCartChange }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Theme toggle */}
-          <button
-            id="store-theme-toggle"
-            onClick={toggleTheme}
-            title={dark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            style={{
-              width: 38, height: 38, borderRadius: 10,
-              border: `1px solid ${T.toggleBdr}`,
-              background: T.toggleBg,
-              color: T.toggleCol,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 200ms',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = dark ? 'rgba(255,255,255,0.12)' : '#CBD5E1';
-              e.currentTarget.style.color = dark ? '#F1F5F9' : '#1E293B';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = T.toggleBg;
-              e.currentTarget.style.color = T.toggleCol;
-            }}
-          >
-            {dark ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
-
           {/* Cart button */}
           <button
             id="store-cart-btn"
