@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ShoppingCart, Eye, Flame, Dumbbell, Wheat, Droplets } from 'lucide-react';
+import { ShoppingCart, Eye } from 'lucide-react';
 
 const PARTNER_STYLE = {
   'Blinkit':          { cls: 'partner-blinkit',   emoji: '🟢' },
@@ -8,18 +8,6 @@ const PARTNER_STYLE = {
   'Zomato':           { cls: 'partner-zomato',     emoji: '🔴' },
   'HealthKart':       { cls: 'partner-healthkart', emoji: '🩵' },
 };
-
-// Macro badge shown on the card body
-function MacroBadge({ icon: Icon, value, color, label }) {
-  if (!value && value !== 0) return null;
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '5px 8px', borderRadius: 8, background: `${color}18`, border: `1px solid ${color}33`, minWidth: 46, flex: 1 }}>
-      <Icon size={11} style={{ color, marginBottom: 2 }} />
-      <span style={{ fontSize: 11, fontWeight: 800, color, lineHeight: 1 }}>{value}</span>
-      <span style={{ fontSize: 9, color, opacity: 0.7, marginTop: 1, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{label}</span>
-    </div>
-  );
-}
 
 export default function ProductCard({ product, dark = true, onAddToCart, onQuickView }) {
   const [imgLoaded, setImgLoaded] = useState(false);
@@ -69,8 +57,6 @@ export default function ProductCard({ product, dark = true, onAddToCart, onQuick
     await onAddToCart(product.id);
     setTimeout(() => setAdding(false), 600);
   }
-
-  const showMacros = product.calories != null || product.protein != null || product.carbs != null || product.fat != null;
 
   return (
     <div
@@ -140,16 +126,6 @@ export default function ProductCard({ product, dark = true, onAddToCart, onQuick
           <p style={{ fontSize: 11, color: subCol }}>
             ⚡ {product.delivery_eta} via {product.partner_name}
           </p>
-        )}
-
-        {/* Macro nutrition row */}
-        {showMacros && (
-          <div style={{ display: 'flex', gap: 4, marginTop: 2 }}>
-            <MacroBadge icon={Flame}    value={product.calories != null ? `${product.calories}` : null} color="#F59E0B" label="kcal" />
-            <MacroBadge icon={Dumbbell} value={product.protein  != null ? `${product.protein}g`  : null} color="#14B8A6" label="pro"  />
-            <MacroBadge icon={Wheat}    value={product.carbs    != null ? `${product.carbs}g`    : null} color="#F97316" label="carb" />
-            <MacroBadge icon={Droplets} value={product.fat      != null ? `${product.fat}g`      : null} color="#818CF8" label="fat"  />
-          </div>
         )}
 
         {/* Price + Actions */}
