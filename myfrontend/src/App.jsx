@@ -52,6 +52,7 @@ export default function App() {
       const mappedData = {
         firstName: dbData.first_name || '',
         lastName: dbData.last_name || '',
+        name: `${dbData.first_name || ''} ${dbData.last_name || ''}`.trim(),
         dobDay: dbData.day_of_birth ? String(dbData.day_of_birth).padStart(2, '0') : '',
         dobMonth: monthName,
         dobYear: dbData.year_of_birth ? String(dbData.year_of_birth) : '',

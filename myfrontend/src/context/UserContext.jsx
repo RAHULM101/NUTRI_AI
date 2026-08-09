@@ -55,8 +55,14 @@ export function UserProvider({ children }) {
       // Reset today's water to 0 on fresh load (water isn't persisted in backend yet)
       setDailyLogs(prev => ({ ...prev, current_water: 0 }));
 
-      // Also store raw profile in userData for Profile page use
-      setUserData(prev => ({ ...prev, ...profile }));
+      // Also store raw profile in userData with mapped helper fields
+      const formattedName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+      setUserData(prev => ({
+        ...prev,
+        ...profile,
+        name: formattedName || prev?.name,
+        mainGoal: profile.primary_goal || prev?.mainGoal
+      }));
 
       console.log('✅ Profile loaded from backend:', profile);
       return profile;

@@ -3,7 +3,10 @@ import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 
 export default function MainLayout({ children, dark, setDark, profileData, activeNav, onNavigate, onLogout, onUpgrade, onOpenReport, cartCount = 0 }) {
-  const { name = '', category = '', photo = null } = profileData || {};
+  const { category = '', photo = null } = profileData || {};
+  const firstName = profileData?.firstName || '';
+  const lastName = profileData?.lastName || '';
+  const name = profileData?.name || `${firstName} ${lastName}`.trim() || '';
   const [collapsed, setCollapsed] = useState(false);
   const scrollRef = useRef(null);
 
