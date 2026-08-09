@@ -103,9 +103,12 @@ class ProfileView(APIView):
     def get(self, request):
         profile = getattr(request.user, 'profile', None)
         serializer = OnboardingSerializer(profile)
+        data = serializer.data
+        from .utils import calculate_user_streak
+        data['streak'] = calculate_user_streak(request.user)
         return Response({
             "message": "user profile",
-            "data": serializer.data
+            "data": data
         }, status = status.HTTP_200_OK)
         
         
@@ -323,10 +326,11 @@ class DashboardSummaryView(APIView):
         today_junk_avg = 0
         if today_junk_count > 0:
             today_junk_avg = round(today_junk_sum / today_junk_count, 1)
-            
+        from .utils import calculate_user_streak
         return Response({
             'cal_trend': cal_trend,
             'junk_trend': junk_trend,
+            'streak': calculate_user_streak(user),
             'today': {
                 'calories': today_calories,
                 'protein': round(today_protein, 1),

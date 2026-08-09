@@ -38,6 +38,7 @@ const COLORS = {
 const DASHBOARD_DATA = {
   headerLabel: "Last 7 Days",
   streakSub: "7-day consistency strong",
+  streak: 0,
   calGoal: 1920,
   calTrend: [ 
     { name: 'Mon', val: 1800 }, { name: 'Tue', val: 1750 }, { name: 'Wed', val: 1900 }, 
@@ -142,6 +143,7 @@ const AnalyticsDashboard = ({ dark, onOpenReport, profileComplete }) => {
         ...prev,
         calTrend: res.data.cal_trend && res.data.cal_trend.length ? res.data.cal_trend : prev.calTrend,
         junkScore: res.data.junk_trend && res.data.junk_trend.length ? res.data.junk_trend : prev.junkScore,
+        streak: res.data.streak ?? 0,
       }));
 
       // Hydrate today's tracking data from real backend database
@@ -325,7 +327,7 @@ const AnalyticsDashboard = ({ dark, onOpenReport, profileComplete }) => {
             <div className="w-20 h-20 rounded-[24px] bg-[#FFF5F5] dark:bg-red-900/20 border border-[#FED7D7] dark:border-red-900/50 flex items-center justify-center mb-6 shadow-sm">
               <Flame size={40} color={COLORS.coral} className="drop-shadow-sm" strokeWidth={2.5} />
             </div>
-            <div className="text-[72px] font-extrabold text-[#0F172A] dark:text-white leading-none tracking-[-0.04em] mb-2">18</div>
+            <div className="text-[72px] font-extrabold text-[#0F172A] dark:text-white leading-none tracking-[-0.04em] mb-2">{data.streak ?? 0}</div>
             <div className="text-[18px] font-bold text-[#0F172A] dark:text-slate-300 uppercase tracking-[0.1em] mb-3">Day Streak</div>
             <div className="text-[15px] font-semibold text-[#475569] dark:text-slate-400 bg-white dark:bg-slate-800 px-4 py-1.5 rounded-full border border-[#E2E8F0] dark:border-slate-700 shadow-sm">{data.streakSub}</div>
           </div>

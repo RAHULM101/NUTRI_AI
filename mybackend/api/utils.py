@@ -139,3 +139,33 @@ def generate_nia_chat_response(user, user_message):
         print("--- NIA CHAT ERROR ---")
         print(error_trace)
         return "I'm having a little trouble connecting to my brain right now. Please try again later!"
+
+def calculate_user_streak(user):
+    from datetime import timedelta
+    from .models import meal_logs
+    
+    # Get all distinct dates on which the user has logged meals, sorted in descending order
+    logs = meal_logs.objects.filter(user=user).order_by('-meal_timedate')
+    logged_dates = sorted(list(set(log.meal_timedate.date() for log in logs)), reverse=True)
+    
+    if not logged_dates:
+        return 0
+        
+    today = timezone.now().date()
+    yesterday = today - timedelta(days=1)
+    
+    # The user must have logged a meal either today or yesterday to maintain/have a streak
+    if logged_dates[0] not in (today, yesterday):
+        return 0
+        
+    streak = 1
+    current_date = logged_dates[0]
+    
+    for next_date in logged_dates[1:]:
+        if current_date - next_date == timedelta(days=1):
+            streak += 1
+            current_date = next_date
+        elif current_date - next_date > timedelta(days=1):
+            break
+            
+    return streak

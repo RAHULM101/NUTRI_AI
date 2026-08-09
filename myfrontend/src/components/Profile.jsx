@@ -216,7 +216,7 @@ export default function Profile({ dark, profileData, onboardingDone, onCompleteP
                   {mainGoal || "Setup Goal"}
                 </span>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold border ${dark ? 'bg-[#F59E0B]/10 text-[#FBBF24] border-[#F59E0B]/20' : 'bg-amber-50 text-amber-700 border-amber-100'}`}>
-                  🔥 18 Day Streak
+                  🔥 {profileData?.streak ?? 0} Day Streak
                 </span>
 
               </div>
