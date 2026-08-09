@@ -113,6 +113,49 @@ const renderCustomDot = (props) => {
   return null;
 };
 
+const generateGoalPredictionData = (currentWeight, targetWeight, goalType) => {
+  const cw = parseFloat(currentWeight) || 75;
+  const tw = parseFloat(targetWeight) || cw;
+  
+  let direction = 'maintain';
+  if (cw > tw) direction = 'loss';
+  if (cw < tw) direction = 'gain';
+  
+  const dailyDiff = direction === 'loss' ? -0.2 : direction === 'gain' ? 0.15 : 0;
+  
+  const gp = [];
+  for (let i = 1; i <= 6; i++) {
+    const diff = (7 - i) * dailyDiff;
+    gp.push({
+      name: `Day ${i}`,
+      actual: parseFloat((cw - diff).toFixed(1))
+    });
+  }
+  
+  gp.push({
+    name: 'Day 7',
+    actual: cw,
+    predicted: cw
+  });
+  
+  gp.push({
+    name: '+7d',
+    predicted: parseFloat((cw + dailyDiff * 7).toFixed(1))
+  });
+  
+  gp.push({
+    name: '+14d',
+    predicted: parseFloat((cw + dailyDiff * 14).toFixed(1))
+  });
+  
+  gp.push({
+    name: 'Goal',
+    predicted: tw
+  });
+  
+  return gp;
+};
+
 const AnalyticsDashboard = ({ dark, onOpenReport, profileComplete }) => {
   const [reportState, setReportState] = useState('idle');
 
@@ -169,7 +212,29 @@ const AnalyticsDashboard = ({ dark, onOpenReport, profileComplete }) => {
   const addWater = updateWaterIntake;
 
   const calGoal = userMetrics?.daily_calorie_goal || 1920;
-  const data = { ...dashboardData, calGoal };
+  const currentWeight = userMetrics?.current_weight || 75;
+  const targetWeight = userMetrics?.target_weight || 70;
+  const goalType = userMetrics?.goal_type || 'loss';
+
+  const goalPrediction = generateGoalPredictionData(currentWeight, targetWeight, goalType);
+  const data = { ...dashboardData, calGoal, goalPrediction };
+
+  let direction = 'maintain';
+  if (currentWeight > targetWeight) direction = 'loss';
+  if (currentWeight < targetWeight) direction = 'gain';
+  
+  let timeEstimate = "Goal Reached!";
+  let predictionMessage = "You have successfully reached your target weight. Keep up the great work maintaining it!";
+  
+  if (direction === 'loss') {
+    const weeks = Math.max(1, Math.round((currentWeight - targetWeight) / 0.5));
+    timeEstimate = `${weeks - 1 > 0 ? `${weeks - 1}–` : ''}${weeks + 1} weeks`;
+    predictionMessage = "You're on a steady fat-loss path. Maintain your current intake to reach your goal consistently.";
+  } else if (direction === 'gain') {
+    const weeks = Math.max(1, Math.round((targetWeight - currentWeight) / 0.35));
+    timeEstimate = `${weeks - 1 > 0 ? `${weeks - 1}–` : ''}${weeks + 1} weeks`;
+    predictionMessage = "You're on a steady muscle-gain path. Maintain your current caloric surplus to reach your goal consistently.";
+  }
 
   const displayCal = Math.round(data.calTrend.reduce((a, b) => a + b.val, 0) / data.calTrend.length);
   const avgJunk = (data.junkScore.reduce((a, b) => a + b.score, 0) / data.junkScore.length).toFixed(1);
@@ -362,11 +427,11 @@ const AnalyticsDashboard = ({ dark, onOpenReport, profileComplete }) => {
             </div>
             <div className="flex items-start justify-between mt-auto pt-5 border-t border-[#E2E8F0] dark:border-slate-800">
               <div className="flex flex-col gap-1.5">
-                <div className="text-[20px] font-semibold text-[#0F172A] dark:text-white tracking-tight">Estimated: 4–6 weeks</div>
+                <div className="text-[20px] font-semibold text-[#0F172A] dark:text-white tracking-tight">Estimated: {timeEstimate}</div>
                 <div className="text-[13px] font-medium text-[#64748B] dark:text-slate-500">Based on your last 7 days trend</div>
               </div>
               <div className="max-w-[220px] text-[13px] text-[#475569] dark:text-slate-400 leading-relaxed">
-                You're on a steady fat-loss path. Maintain your current intake to reach your goal consistently.
+                {predictionMessage}
               </div>
             </div>
           </div>
