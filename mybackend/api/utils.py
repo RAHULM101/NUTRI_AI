@@ -54,6 +54,40 @@ def calculate_junk_score(calories, protein, carbs, fat, detected_items):
     # Ensure score stays between 0 and 100
     return max(0, min(100, int(score)))
 
+# Helper to handle Gemini API model fallbacks in case of quota limit exhaustion
+def call_gemini_with_fallback(client, contents, response_schema=None):
+    models_to_try = [
+        'gemini-3.5-flash',       # Primary model (as defined in app settings)
+        'gemini-3.6-flash',       # Fallback 1
+        'gemini-3.5-flash-lite',  # Fallback 2
+        'gemini-flash-latest',    # Fallback 3
+    ]
+    
+    last_exception = None
+    for model_name in models_to_try:
+        try:
+            config = None
+            if response_schema:
+                config = types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=response_schema
+                )
+            
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents,
+                config=config
+            )
+            return response
+        except Exception as e:
+            print(f"--- FALLBACK WARNING: Model '{model_name}' failed: {e}. Trying next model... ---")
+            last_exception = e
+            continue
+            
+    if last_exception:
+        raise last_exception
+    raise Exception("No active models available for content generation.")
+
 # Make sure you set GEMINI_API_KEY in your settings or .env file
 def analyze_meal_image_with_gemini(image_file):
     try:
@@ -66,14 +100,11 @@ def analyze_meal_image_with_gemini(image_file):
         Analyze this food image.
         """
         
-        # 2. Use the new client.models.generate_content syntax with Pydantic response schema
-        response = client.models.generate_content(
-            model='gemini-3.5-flash',
+        # 2. Use our fallback utility to call the Gemini API
+        response = call_gemini_with_fallback(
+            client=client,
             contents=[prompt, img],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=MealAnalysis
-            )
+            response_schema=MealAnalysis
         )
         
         data = json.loads(response.text)
@@ -125,10 +156,10 @@ def generate_nia_chat_response(user, user_message):
         Answer this user message: "{user_message}"
         """
 
-        # 4. Call the Gemini API
+        # 4. Call the Gemini API using fallback helper
         client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model='gemini-3.5-flash',
+        response = call_gemini_with_fallback(
+            client=client,
             contents=system_prompt
         )
         

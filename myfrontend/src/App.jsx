@@ -127,9 +127,14 @@ export default function App() {
     // Always fetch profile from backend
     const token = localStorage.getItem("access_token")?.replace(/['"]+/g, '');
     if (token) {
-      await fetchAndHydrateProfile(token);
+      // Execute the two profile hydration endpoints concurrently to optimize speed
+      await Promise.all([
+        fetchAndHydrateProfile(token),
+        loadUserProfile()
+      ]);
+    } else {
+      loadUserProfile();
     }
-    loadUserProfile();
     
     // If from LOGIN, always go to dashboard
     if (type === "login") {
@@ -143,7 +148,7 @@ export default function App() {
       setOnboardingDone(false);
       setOnboarding(true);
     }
-  }, 2200);
+  }, 450);
 }
 
 
