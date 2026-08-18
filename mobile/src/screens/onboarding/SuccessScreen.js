@@ -61,7 +61,7 @@ export default function SuccessScreen({ navigation }) {
             { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
           ]}
         >
-          <Text style={styles.title}>You're all set! 🎉</Text>
+          <Text style={styles.title}>You're all set</Text>
           <Text style={styles.subtitle}>
             Your personalized NutriAI profile has been created. Let's start your health journey!
           </Text>

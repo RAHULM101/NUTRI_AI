@@ -120,6 +120,10 @@ export default function ProfileScreen({ navigation }) {
     navigation.navigate('Onboarding', { initialData: userData, isEditMode: true });
   };
 
+  const initials = name && name !== 'Member'
+    ? name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
+    : '';
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
@@ -131,8 +135,12 @@ export default function ProfileScreen({ navigation }) {
             {photo ? (
               <Image source={{ uri: photo }} style={styles.avatar} />
             ) : (
-              <View style={styles.avatarPlaceholder}>
-                <User size={36} color={COLORS.primary} />
+              <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: colors.border }]}>
+                {initials ? (
+                  <Text style={[styles.avatarInitials, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>{initials}</Text>
+                ) : (
+                  <User size={34} color={isDark ? '#94A3B8' : '#64748B'} />
+                )}
               </View>
             )}
           </View>
@@ -294,11 +302,14 @@ const styles = StyleSheet.create({
     width: 86,
     height: 86,
     borderRadius: 43,
-    backgroundColor: 'rgba(16,185,129,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(16,185,129,0.3)',
+    borderWidth: 1.5,
+  },
+  avatarInitials: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
   },
   name: { fontSize: 24, fontWeight: '900', letterSpacing: -0.5, marginBottom: 2 },
   goalLabel: { fontSize: FONT_SIZES.sm, marginBottom: SPACING.sm },

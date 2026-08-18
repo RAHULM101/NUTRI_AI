@@ -529,15 +529,15 @@ export default function OnboardingScreen({ navigation, route }) {
                 {photoUri ? (
                   <Image source={{ uri: photoUri }} style={styles.photoImg} />
                 ) : (
-                  <View style={[styles.photoPlaceholder, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                    <User size={36} color={colors.textMuted} />
+                  <View style={[styles.photoPlaceholder, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: colors.border }]}>
+                    <User size={36} color={isDark ? '#94A3B8' : '#64748B'} />
                   </View>
                 )}
                 <View style={styles.photoEditBadge}>
                   <Camera size={14} color="#fff" />
                 </View>
               </Pressable>
-              <Text style={[styles.photoHint, { color: colors.textMuted }]}>Tap to add profile photo</Text>
+              <Text style={[styles.photoHint, { color: colors.textMuted }]}>Add profile photo</Text>
             </View>
 
             <FieldInput label="First Name *" value={formData.firstName} onChangeText={(v) => set('firstName', v)} placeholder="e.g. Rahul" colors={colors} />
@@ -949,7 +949,7 @@ export default function OnboardingScreen({ navigation, route }) {
               {step < TOTAL_STEPS ? (
                 <Button title="Continue →" onPress={handleNext} size="lg" />
               ) : (
-                <Button title="Complete & Launch 🚀" onPress={handleFinish} loading={loading} disabled={loading} size="lg" />
+                <Button title="Complete & Launch" onPress={handleFinish} loading={loading} disabled={loading} size="lg" />
               )}
             </View>
           </View>
