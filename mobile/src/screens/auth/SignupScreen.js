@@ -89,12 +89,12 @@ export default function SignupScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // ── Google PKCE Auth Request (Authorization Code Flow) ──────────
+  // ── Google OAuth Request (Web Client ID Flow) ──────────
   const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: GOOGLE_ANDROID_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
-    iosClientId: GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID,
+    clientId: GOOGLE_WEB_CLIENT_ID,
     webClientId: GOOGLE_WEB_CLIENT_ID,
-    scopes: ['email', 'profile', 'openid'],
+    scopes: ['openid', 'profile', 'email'],
+    responseType: 'id_token token',
   });
 
   // Animations

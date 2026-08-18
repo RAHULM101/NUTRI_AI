@@ -120,9 +120,12 @@ export default function ProfileScreen({ navigation }) {
     navigation.navigate('Onboarding', { initialData: userData, isEditMode: true });
   };
 
+  const [photoError, setPhotoError] = useState(false);
+  const hasValidPhoto = Boolean(photo && typeof photo === 'string' && photo.trim().length > 5 && !photo.includes('null'));
+
   const initials = name && name !== 'Member'
-    ? name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase()
-    : '';
+    ? name.split(' ').map(n => n[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+    : 'N';
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
@@ -132,14 +135,14 @@ export default function ProfileScreen({ navigation }) {
         {/* Avatar + name card */}
         <View style={[styles.avatarCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
           <View style={styles.avatarWrap}>
-            {photo ? (
-              <Image source={{ uri: photo }} style={styles.avatar} />
+            {hasValidPhoto && !photoError ? (
+              <Image source={{ uri: photo }} onError={() => setPhotoError(true)} style={styles.avatar} />
             ) : (
-              <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: colors.border }]}>
+              <View style={[styles.avatarPlaceholder, { backgroundColor: isDark ? 'rgba(16,185,129,0.16)' : '#E6F4EA', borderColor: COLORS.primary }]}>
                 {initials ? (
-                  <Text style={[styles.avatarInitials, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>{initials}</Text>
+                  <Text style={[styles.avatarInitials, { color: COLORS.primary }]}>{initials}</Text>
                 ) : (
-                  <User size={34} color={isDark ? '#94A3B8' : '#64748B'} />
+                  <User size={36} color={COLORS.primary} />
                 )}
               </View>
             )}
