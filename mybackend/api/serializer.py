@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import UserProfile,meal_logs, chat_logs
+from django.db import models
+from django.db.models import Q
+from .models import UserProfile, meal_logs, chat_logs
 
 User = get_user_model()
 
