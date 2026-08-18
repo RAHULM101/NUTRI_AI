@@ -58,11 +58,11 @@ def calculate_junk_score(calories, protein, carbs, fat, detected_items):
 def call_gemini_with_fallback(client, contents, response_schema=None):
     models_to_try = [
         'gemini-3.6-flash',             # Active latest flagship flash model
+        'gemini-2.5-flash',             # High availability stable fallback
         'gemini-3.5-flash',             # Fast fallback
         'gemini-flash-latest',          # Always active latest alias
-        'gemini-3-flash-preview',       # Preview fallback
-        'gemini-3.1-flash-lite-preview',# Lightweight fallback
         'gemini-2.5-flash-lite',        # Budget fallback
+        'gemini-3-flash-preview',       # Preview fallback
     ]
     
     last_exception = None
