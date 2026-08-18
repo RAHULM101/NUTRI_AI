@@ -93,6 +93,8 @@ def call_gemini_with_fallback(client, contents, response_schema=None):
 # Make sure you set GEMINI_API_KEY in your settings or .env file
 def analyze_meal_image_with_gemini(image_file):
     try:
+        if hasattr(image_file, 'seek'):
+            image_file.seek(0)
         img = Image.open(image_file)
         if img.mode != 'RGB':
             img = img.convert('RGB')
