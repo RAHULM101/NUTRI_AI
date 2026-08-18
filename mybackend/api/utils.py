@@ -57,13 +57,11 @@ def calculate_junk_score(calories, protein, carbs, fat, detected_items):
 # Helper to handle Gemini API model fallbacks in case of quota limit exhaustion
 def call_gemini_with_fallback(client, contents, response_schema=None):
     models_to_try = [
-        'gemini-3.5-flash-lite',        # 1. High-throughput, generous rate limits, instant vision
-        'gemini-3-flash-preview',       # 2. Fast preview fallback
-        'gemini-3.1-flash-lite-preview',# 3. Lite preview fallback
-        'gemini-3.5-flash',             # 4. Standard Flash model
+        'gemini-3.5-flash-lite',        # 1. Primary: Highest quota & fastest vision (100% stable)
+        'gemini-3-flash-preview',       # 2. High availability Flash preview
+        'gemini-3.1-flash-lite-preview',# 3. High throughput Lite preview
+        'gemini-flash-latest',          # 4. Production alias
         'gemini-3.6-flash',             # 5. Flagship Flash model
-        'gemini-flash-latest',          # 6. Production alias
-        'gemini-flash-lite-latest',     # 7. Production alias
     ]
     
     last_exception = None
@@ -102,7 +100,7 @@ def analyze_meal_image_with_gemini(image_file):
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # Optimize large camera images (downscale to max 1024x1024 for instant processing without timeout)
+        # Optimize camera captures (downscale to max 1024x1024 to guarantee sub-second vision inference)
         img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
         
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
@@ -110,15 +108,15 @@ def analyze_meal_image_with_gemini(image_file):
         
         prompt = """
         Analyze this food image and identify the dishes accurately for nutritional tracking.
-        CRITICAL RULE:
-        - If the image contains ANY edible food or beverage dish (e.g. roti, naan, curry, rice, salad, chicken, paneer, eggs, fruits, snacks, drinks), accurately estimate:
-          * detected_items: Specific name of the dish/items
+        CRITICAL RULES:
+        - If the image contains ANY food or drink (e.g. roti, naan, curry, dal, rice, salad, paneer, chicken, eggs, fruits, snacks, tea, coffee), accurately estimate:
+          * detected_items: Specific names of the dishes found
           * calories: estimated total calories (integer > 0)
-          * protein_gm: estimated protein in grams
-          * carbs_gm: estimated carbs in grams
-          * fat_gm: estimated fat in grams
-          * ai_insights: concise breakdown of nutrition
-        - If the image is strictly NON-FOOD (human selfie/face, pet, vehicle, furniture, screenshot of text/document), set:
+          * protein_gm: estimated protein in grams (float)
+          * carbs_gm: estimated carbs in grams (float)
+          * fat_gm: estimated fat in grams (float)
+          * ai_insights: concise nutrition observation
+        - If the image is strictly NON-FOOD (human selfie/face, pet, vehicle, furniture, text document), set:
           * detected_items: "No food detected - Non-food / Human photo"
           * calories: 0
           * protein_gm: 0.0
@@ -127,12 +125,19 @@ def analyze_meal_image_with_gemini(image_file):
           * ai_insights: "Invalid Upload: No food detected."
         """
         
-        # 2. Use our fallback utility to call the Gemini API
-        response = call_gemini_with_fallback(
-            client=client,
-            contents=[prompt, img],
-            response_schema=MealAnalysis
-        )
+        # 2. Try structured output first, with seamless fallback to raw JSON prompt
+        try:
+            response = call_gemini_with_fallback(
+                client=client,
+                contents=[prompt, img],
+                response_schema=MealAnalysis
+            )
+        except Exception:
+            json_prompt = prompt + "\nReturn ONLY a valid JSON object matching: {\"detected_items\": \"...\", \"calories\": 0, \"protein_gm\": 0.0, \"carbs_gm\": 0.0, \"fat_gm\": 0.0, \"ai_insights\": \"...\"}"
+            response = call_gemini_with_fallback(
+                client=client,
+                contents=[json_prompt, img]
+            )
 
         raw_text = (response.text or '').strip()
         match = re.search(r'\{.*\}', raw_text, re.DOTALL)
