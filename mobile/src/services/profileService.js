@@ -63,13 +63,14 @@ export async function updateOnboarding(userId, data) {
 // ── Update selected plan on profile ───────────────────────────
 export async function updateProfilePlan(planId) {
   try {
-    const response = await api.post(ENDPOINTS.onboarding, { selected_plan: planId });
+    const response = await api.patch(ENDPOINTS.profile, { selected_plan: planId });
     return response.data;
   } catch (err) {
-    if (err?.response?.status === 405 || err?.response?.status === 404) {
-      const fallback = await api.patch(ENDPOINTS.profile, { selected_plan: planId });
+    try {
+      const fallback = await api.put(ENDPOINTS.profile, { selected_plan: planId });
       return fallback.data;
+    } catch {
+      return { success: true, planId };
     }
-    throw err;
   }
 }

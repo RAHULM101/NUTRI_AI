@@ -495,12 +495,11 @@ function ChatBubble({ message, isUser }) {
     detectedDays = 5;
   }
 
-  const isMealPlan = !isUser && (
+  const isMealPlan = !isUser && message.id !== 'init_0' && (
     message.hasMealPlan === true ||
-    lowerText.includes('meal plan') ||
-    lowerText.includes('diet plan') ||
-    lowerText.includes('diet chart') ||
-    (lowerText.includes('day 1') && lowerText.includes('breakfast'))
+    (lowerText.includes('day 1') && (lowerText.includes('breakfast') || lowerText.includes('lunch') || lowerText.includes('dinner'))) ||
+    (lowerText.includes('meal plan') && (lowerText.includes('breakfast') || lowerText.includes('day 1') || lowerText.includes('lunch'))) ||
+    (lowerText.includes('diet chart') && (lowerText.includes('breakfast') || lowerText.includes('day 1') || lowerText.includes('lunch')))
   );
 
   const handleCopyText = () => {
