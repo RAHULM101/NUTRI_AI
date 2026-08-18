@@ -541,11 +541,6 @@ export default function ChatBubble({ message, isUser }) {
 
         <FormattedText content={rawText} isUser={isUser} textColor={isUser ? '#ffffff' : colors.text} />
 
-        {/* Structured Multi-Day 4-Meal Table ONLY when meal plan is explicitly generated */}
-        {isMealPlan ? (
-          <MealPlanTable isDark={isDark} colors={colors} />
-        ) : null}
-
         {/* Healthify / Fittr Inspired Response Utility Action Bar */}
         {!isUser && (
           <View style={[styles.utilityBar, { borderColor: colors.border }]}>
