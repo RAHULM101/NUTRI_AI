@@ -22,11 +22,14 @@ const HIGHLIGHTS = [
 ];
 
 export default function SuccessScreen({ navigation }) {
+  const { loadUserProfile } = useAuth();
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
+    // Pre-fetch profile in background
+    loadUserProfile().catch(() => {});
     Animated.sequence([
       Animated.spring(scaleAnim, { toValue: 1, tension: 50, friction: 7, useNativeDriver: true }),
       Animated.parallel([
@@ -35,6 +38,11 @@ export default function SuccessScreen({ navigation }) {
       ]),
     ]).start();
   }, []);
+
+  const handleGoDashboard = async () => {
+    await loadUserProfile().catch(() => {});
+    navigation.replace('Main');
+  };
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -72,7 +80,7 @@ export default function SuccessScreen({ navigation }) {
 
           <Button
             title="Go to Dashboard"
-            onPress={() => navigation.replace('Main')}
+            onPress={handleGoDashboard}
             size="lg"
             style={styles.btn}
           />

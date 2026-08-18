@@ -52,7 +52,7 @@ function StatCard({ icon: Icon, label, value, color, bg, labelColor }) {
 }
 
 export default function DashboardScreen({ navigation }) {
-  const { userData, userMetrics, dailyLogs, setDailyLogs, updateWaterIntake } = useAuth();
+  const { userData, userMetrics, dailyLogs, setDailyLogs, updateWaterIntake, loadUserProfile } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
 
   const [dashData, setDashData] = useState(null);
@@ -134,8 +134,9 @@ export default function DashboardScreen({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
+      loadUserProfile().catch(() => {});
       loadDashboard();
-    }, [loadDashboard])
+    }, [loadUserProfile, loadDashboard])
   );
 
   const onRefresh = async () => {

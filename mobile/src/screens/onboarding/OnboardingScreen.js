@@ -198,9 +198,10 @@ const inputStyles = StyleSheet.create({
 });
 
 export default function OnboardingScreen({ navigation, route }) {
-  const { completeOnboarding } = useAuth();
+  const { userData, completeOnboarding, loadUserProfile, signIn } = useAuth();
   const { isDark, colors } = useTheme();
-  const initialData = route?.params?.initialData || null;
+  const initialData = route?.params?.initialData || userData || null;
+  const fromProfile = route?.params?.isEditMode || route?.params?.fromProfile || false;
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState(() => buildForm(initialData));
@@ -211,6 +212,35 @@ export default function OnboardingScreen({ navigation, route }) {
   // Step transition animation
   const stepSlide = useRef(new Animated.Value(0)).current;
 
+  // Pre-fill formData if userData arrives or changes
+  useEffect(() => {
+    if (userData) {
+      setFormData((prev) => ({
+        ...buildForm(userData),
+        ...prev,
+        firstName: prev.firstName || userData.firstName || '',
+        lastName: prev.lastName || userData.lastName || '',
+        gender: prev.gender || userData.gender || '',
+        phone: prev.phone || userData.phone || '',
+        dobDay: prev.dobDay || userData.dobDay || '',
+        dobMonth: prev.dobMonth || userData.dobMonth || '',
+        dobYear: prev.dobYear || userData.dobYear || '',
+        height: prev.height || userData.height || '',
+        weight: prev.weight || userData.weight || '',
+        targetWeight: prev.targetWeight || userData.targetWeight || '',
+        waterGoal: prev.waterGoal || userData.waterGoal || '3',
+        mainGoal: prev.mainGoal || userData.mainGoal || '',
+        activityLevel: prev.activityLevel || userData.activityLevel || '',
+        dietaryPreference: prev.dietaryPreference || userData.dietaryPreference || '',
+        allergies: (prev.allergies && prev.allergies.length > 0) ? prev.allergies : (userData.allergies || []),
+        healthIssues: (prev.healthIssues && prev.healthIssues.length > 0) ? prev.healthIssues : (userData.healthIssues || []),
+      }));
+      if (!photoUri && userData.photo) {
+        setPhotoUri(userData.photo);
+      }
+    }
+  }, [userData]);
+
   const set = (name, value) => setFormData((prev) => ({ ...prev, [name]: value }));
 
   const toggleChip = (category, value) => {
@@ -218,7 +248,6 @@ export default function OnboardingScreen({ navigation, route }) {
       setFormData((prev) => {
         const currentList = prev[category] || [];
         const isNoneActive = currentList.includes('None');
-        // Toggle None on or off completely
         return { ...prev, [category]: isNoneActive ? [] : ['None'] };
       });
       return;
@@ -262,7 +291,7 @@ export default function OnboardingScreen({ navigation, route }) {
     if (formData.mainGoal === 'Fat Loss') cal -= 500;
     if (formData.mainGoal === 'Muscle Gain') cal += 300;
     if (formData.mainGoal === 'Weight Gain') cal += 500;
-    return { bmi, cal };
+    return { bmi, cal: Math.max(cal, 1200) };
   }, [formData.weight, formData.height, formData.dobYear, formData.gender, formData.activityLevel, formData.mainGoal]);
 
   const handleNext = () => {
@@ -289,11 +318,15 @@ export default function OnboardingScreen({ navigation, route }) {
       setStep((s) => s - 1);
       animateStep();
     } else {
-      try {
-        await logoutUser();
-        await signIn(false);
-      } catch (e) {
-        if (navigation.canGoBack()) navigation.goBack();
+      if (fromProfile || navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        try {
+          await logoutUser();
+          await signIn(false);
+        } catch (e) {
+          if (navigation.canGoBack()) navigation.goBack();
+        }
       }
     }
   };
@@ -315,7 +348,8 @@ export default function OnboardingScreen({ navigation, route }) {
     }
   };
 
-  const handleFinish = async () => {
+  // ── Universal Quick Save Handler for ANY Step ─────────────────
+  const handleQuickSave = async () => {
     setErrorMsg('');
     setLoading(true);
     try {
@@ -329,10 +363,10 @@ export default function OnboardingScreen({ navigation, route }) {
       const monthInt = formData.dobMonth ? monthNames.indexOf(formData.dobMonth) + 1 : null;
 
       const results = calculateResults();
-      const finalBmi = results?.bmi || parseFloat(formData.bmi) || null;
-      const finalCal = results?.cal || parseInt(formData.calorieTarget) || null;
+      const finalBmi = results?.bmi || parseFloat(formData.bmi) || 22.5;
+      const finalCal = results?.cal || parseInt(formData.calorieTarget) || 1920;
 
-      await api.patch(ENDPOINTS.onboardingDetail(userId), {
+      const patchPayload = {
         first_name: formData.firstName,
         last_name: formData.lastName,
         day_of_birth: parseInt(formData.dobDay) || null,
@@ -352,8 +386,8 @@ export default function OnboardingScreen({ navigation, route }) {
         dietary_preference: formData.dietaryPreference,
         preferred_cooking_oil: formData.cookingOil,
         regional_culture: formData.regionalCulture,
-        allergies: formData.allergies.join(', '),
-        health_issues: formData.healthIssues.join(', '),
+        allergies: Array.isArray(formData.allergies) ? formData.allergies.join(', ') : '',
+        health_issues: Array.isArray(formData.healthIssues) ? formData.healthIssues.join(', ') : '',
         liked_foods: formData.likedFoods,
         disliked_foods: formData.dislikedFoods,
         meal_intake_per_day: parseInt(formData.mealsPerDay) || 3,
@@ -365,7 +399,14 @@ export default function OnboardingScreen({ navigation, route }) {
         daily_calorie_target: finalCal,
         is_onboarded: true,
         selected_plan: formData.selectedPlan || 'Pro',
-      });
+      };
+
+      // 1. Direct profile patch
+      await api.patch(ENDPOINTS.profile, patchPayload).catch(() => {});
+      // 2. Onboarding fallback
+      if (userId) {
+        await api.patch(ENDPOINTS.onboardingDetail(userId), patchPayload).catch(() => {});
+      }
 
       const completeData = {
         ...formData,
@@ -374,9 +415,95 @@ export default function OnboardingScreen({ navigation, route }) {
         bmi: finalBmi,
         calorieTarget: finalCal,
         name: `${formData.firstName} ${formData.lastName}`.trim(),
+        is_onboarded: true,
       };
 
       await completeOnboarding(completeData);
+      await loadUserProfile().catch(() => {});
+
+      Alert.alert('Saved! 🎯', 'Your profile details and calorie targets have been saved successfully.');
+      if (fromProfile || navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        navigation.replace('Main');
+      }
+    } catch (err) {
+      console.error('Save error:', err?.response?.data || err.message);
+      setErrorMsg('Could not save changes. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFinish = async () => {
+    setErrorMsg('');
+    setLoading(true);
+    try {
+      const token = await getStoredToken();
+      if (!token) throw new Error('No auth token');
+
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.user_id || payload.id || payload.sub;
+
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const monthInt = formData.dobMonth ? monthNames.indexOf(formData.dobMonth) + 1 : null;
+
+      const results = calculateResults();
+      const finalBmi = results?.bmi || parseFloat(formData.bmi) || 22.5;
+      const finalCal = results?.cal || parseInt(formData.calorieTarget) || 1920;
+
+      const finalPayload = {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        day_of_birth: parseInt(formData.dobDay) || null,
+        month_of_birth: monthInt,
+        year_of_birth: parseInt(formData.dobYear) || null,
+        phone_number: formData.phone,
+        profile_photo_url: photoUri,
+        gender: formData.gender,
+        height_cm: parseFloat(formData.height) || null,
+        current_weight_kg: parseFloat(formData.weight) || null,
+        targeted_weight_kg: parseFloat(formData.targetWeight) || null,
+        water_intake_litres: parseFloat(formData.waterGoal) || 3.0,
+        primary_goal: formData.mainGoal,
+        activity_level: formData.activityLevel,
+        occupation: formData.occupation,
+        sleep_schedule: formData.sleepSchedule,
+        dietary_preference: formData.dietaryPreference,
+        preferred_cooking_oil: formData.cookingOil,
+        regional_culture: formData.regionalCulture,
+        allergies: Array.isArray(formData.allergies) ? formData.allergies.join(', ') : '',
+        health_issues: Array.isArray(formData.healthIssues) ? formData.healthIssues.join(', ') : '',
+        liked_foods: formData.likedFoods,
+        disliked_foods: formData.dislikedFoods,
+        meal_intake_per_day: parseInt(formData.mealsPerDay) || 3,
+        available_cooking_time: formData.cookingTime,
+        grocery_budget: formData.groceryBudget,
+        preferred_meal_location: formData.mealLocation,
+        main_carbs_source: formData.mainCarbs,
+        bmi: finalBmi,
+        daily_calorie_target: finalCal,
+        is_onboarded: true,
+        selected_plan: formData.selectedPlan || 'Pro',
+      };
+
+      await api.patch(ENDPOINTS.profile, finalPayload).catch(() => {});
+      if (userId) {
+        await api.patch(ENDPOINTS.onboardingDetail(userId), finalPayload).catch(() => {});
+      }
+
+      const completeData = {
+        ...formData,
+        selectedPlan: formData.selectedPlan || 'Pro',
+        photo: photoUri,
+        bmi: finalBmi,
+        calorieTarget: finalCal,
+        name: `${formData.firstName} ${formData.lastName}`.trim(),
+        is_onboarded: true,
+      };
+
+      await completeOnboarding(completeData);
+      await loadUserProfile().catch(() => {});
       navigation.replace('Success');
     } catch (err) {
       console.error('Onboarding error:', err?.response?.data || err.message);
@@ -782,7 +909,12 @@ export default function OnboardingScreen({ navigation, route }) {
             <Text style={[styles.stepCount, { color: colors.textMuted }]}>{step}/{TOTAL_STEPS}</Text>
           </View>
 
-          {/* Top-Right Skip Button */}
+          {/* Quick Save Button on Every Step */}
+          <Pressable onPress={handleQuickSave} style={styles.quickSaveBtn}>
+            <Text style={styles.quickSaveText}>Save</Text>
+          </Pressable>
+
+          {/* Skip Button */}
           {step < TOTAL_STEPS && (
             <Pressable onPress={handleSkipStep} style={styles.skipBtn}>
               <Text style={styles.skipText}>Skip</Text>
@@ -803,13 +935,24 @@ export default function OnboardingScreen({ navigation, route }) {
           </ScrollView>
         </TouchableWithoutFeedback>
 
-        {/* Footer */}
+        {/* Footer with Save & Exit + Continue */}
         <View style={[styles.footer, { borderColor: colors.border, backgroundColor: colors.bgCard }]}>
-          {step < TOTAL_STEPS ? (
-            <Button title="Continue →" onPress={handleNext} size="lg" />
-          ) : (
-            <Button title="Complete Setup & Launch 🚀" onPress={handleFinish} loading={loading} disabled={loading} size="lg" />
-          )}
+          <View style={styles.footerRow}>
+            <Pressable
+              onPress={handleQuickSave}
+              style={[styles.footerSaveBtn, { borderColor: colors.border, backgroundColor: colors.bg }]}
+            >
+              <Text style={[styles.footerSaveText, { color: colors.textSecondary }]}>Save & Exit</Text>
+            </Pressable>
+
+            <View style={{ flex: 1.4 }}>
+              {step < TOTAL_STEPS ? (
+                <Button title="Continue →" onPress={handleNext} size="lg" />
+              ) : (
+                <Button title="Complete & Launch 🚀" onPress={handleFinish} loading={loading} disabled={loading} size="lg" />
+              )}
+            </View>
+          </View>
         </View>
       </KeyboardAvoidingView>
 
@@ -841,8 +984,15 @@ const styles = StyleSheet.create({
   progressFill: { height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full },
   stepCount: { fontSize: FONT_SIZES.xs, fontWeight: '700', minWidth: 32 },
 
-  skipBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, backgroundColor: 'rgba(16,185,129,0.1)' },
+  skipBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.full, backgroundColor: 'rgba(16,185,129,0.1)', marginLeft: 6 },
   skipText: { fontSize: FONT_SIZES.xs, fontWeight: '800', color: COLORS.primary },
+
+  quickSaveBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, backgroundColor: COLORS.primary, marginLeft: 8 },
+  quickSaveText: { fontSize: FONT_SIZES.xs, fontWeight: '800', color: '#ffffff' },
+
+  footerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  footerSaveBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: RADIUS.xl, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  footerSaveText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
 
   scroll: { padding: SPACING.xl, paddingBottom: 140 },
   stepTitle: { fontSize: 26, fontWeight: '900', marginBottom: 6, letterSpacing: -0.5 },
