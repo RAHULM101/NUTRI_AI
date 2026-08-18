@@ -101,13 +101,36 @@ export default function DashboardScreen({ navigation }) {
       setDashError(false);
       const data = await getDashboardData();
       setDashData(data);
+      if (data?.today) {
+        setDailyLogs((prev) => ({
+          ...prev,
+          current_water: data.today.water !== undefined ? data.today.water : prev.current_water,
+          daily_calories_consumed: data.today.calories !== undefined ? data.today.calories : prev.daily_calories_consumed,
+          daily_protein: data.today.protein !== undefined ? data.today.protein : prev.daily_protein,
+          daily_carbs: data.today.carbs !== undefined ? data.today.carbs : prev.daily_carbs,
+          daily_fat: data.today.fat !== undefined ? data.today.fat : prev.daily_fat,
+          junk_score: data.today.junk_score !== undefined ? data.today.junk_score : prev.junk_score,
+        }));
+      }
     } catch (e) {
       console.warn('Dashboard load failed:', e?.message);
       setDashError(true);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [setDailyLogs]);
+
+  const handleUpdateWater = async (amount) => {
+    const next = Math.max(0, parseFloat((currentWater + amount).toFixed(2)));
+    setDashData((prev) => ({
+      ...prev,
+      today: {
+        ...(prev?.today || {}),
+        water: next,
+      },
+    }));
+    await updateWaterIntake(amount);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -291,7 +314,7 @@ export default function DashboardScreen({ navigation }) {
             <WaterTracker
               current={currentWater}
               goal={waterGoal}
-              onAdd={updateWaterIntake}
+              onAdd={handleUpdateWater}
             />
           </View>
 
