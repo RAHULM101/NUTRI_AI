@@ -4,14 +4,19 @@
 export function calculateDailyCalorieTarget(userData, userMetrics) {
   // If explicitly set and valid, use user's custom target
   const explicit = userData?.calorieTarget || userMetrics?.daily_calorie_goal;
-  if (explicit && Number(explicit) >= 800 && Number(explicit) !== 1920) {
+  if (explicit && Number(explicit) >= 500 && Number(explicit) !== 1920) {
     return Number(explicit);
   }
 
-  // Extract biometric factors
-  const weight = parseFloat(userData?.weight || userMetrics?.current_weight) || 68; // kg
-  const height = parseFloat(userData?.height) || 172; // cm
-  const age = parseInt(userData?.age) || 24;
+  // Extract biometric factors (if not filled, return 0)
+  const weight = parseFloat(userData?.weight || userMetrics?.current_weight);
+  const height = parseFloat(userData?.height);
+  const age = parseInt(userData?.age);
+
+  if (!weight || !height || !age) {
+    return 0;
+  }
+
   const isMale = (userData?.gender || 'male').toLowerCase() === 'male';
 
   // Mifflin-St Jeor Equation:

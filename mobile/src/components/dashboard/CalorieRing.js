@@ -63,7 +63,7 @@ export default function CalorieRing({ current = 0, goal = 2000, size = 180 }) {
         <Text style={[styles.calLabel, { color: colors.textMuted }]}>kcal</Text>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <Text style={[styles.remaining, { color: colors.textSecondary }]}>
-          {overGoal ? `+${Math.round(current - goal)}` : Math.round(remaining)} remaining
+          {goal <= 0 ? '0 remaining' : overGoal ? `+${Math.round(current - goal)}` : `${Math.round(remaining)} remaining`}
         </Text>
       </View>
     </View>

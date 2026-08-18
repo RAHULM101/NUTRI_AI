@@ -14,7 +14,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Flame, TrendingDown, TrendingUp, Zap, Trophy, ChevronRight, Sun, Moon, BarChart2, Sparkles, WifiOff } from 'lucide-react-native';
+import { Flame, TrendingDown, TrendingUp, Zap, Trophy, ChevronRight, Sun, Moon, BarChart2, Sparkles, WifiOff, Utensils } from 'lucide-react-native';
 import CalorieRing from '../../components/dashboard/CalorieRing';
 import MacroBar from '../../components/dashboard/MacroBar';
 import WaterTracker from '../../components/dashboard/WaterTracker';
@@ -284,9 +284,9 @@ export default function DashboardScreen({ navigation }) {
           {/* Quick stats (Standardized Junk Score color logic) */}
           <View style={styles.statsRow}>
             <StatCard
-              icon={Zap}
-              label="Calories"
-              value={`${Math.round(currentCal)}`}
+              icon={Utensils}
+              label="Meals Logged"
+              value={`${dashData?.today?.meals_count !== undefined ? dashData.today.meals_count : (currentCal > 0 ? 1 : 0)}`}
               color={COLORS.teal}
               bg={isDark ? '#0f172a' : '#EFF9F8'}
               labelColor={colors.textMuted}

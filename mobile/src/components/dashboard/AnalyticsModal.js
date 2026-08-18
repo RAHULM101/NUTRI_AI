@@ -26,9 +26,9 @@ export default function AnalyticsModal({ visible, onClose, dashData, userData, u
 
   if (!visible) return null;
 
-  const calGoal = userMetrics?.daily_calorie_goal || 1920;
-  const currentWeight = parseFloat(userMetrics?.current_weight || userData?.weight || 75);
-  const targetWeight = parseFloat(userMetrics?.target_weight || userData?.targetWeight || 70);
+  const calGoal = parseFloat(userData?.calorieTarget || userMetrics?.daily_calorie_goal) || 0;
+  const currentWeight = parseFloat(userMetrics?.current_weight || userData?.weight || 70);
+  const targetWeight = parseFloat(userMetrics?.target_weight || userData?.targetWeight || 65);
 
   const calTrend = dashData?.cal_trend || [
     { name: 'Mon', val: 1800 },
@@ -66,7 +66,7 @@ export default function AnalyticsModal({ visible, onClose, dashData, userData, u
   const barChartHeight = 160;
   const barCount = calTrend.length;
   const barWidth = 24;
-  const maxVal = Math.max(...calTrend.map((d) => d.val), calGoal, 2500);
+  const maxVal = Math.max(...calTrend.map((d) => d.val), calGoal || 2000, 2400);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -80,7 +80,7 @@ export default function AnalyticsModal({ visible, onClose, dashData, userData, u
               </View>
               <View>
                 <Text style={[styles.title, { color: colors.text }]}>Analytics & Trends 📊</Text>
-                <Text style={[styles.subtitle, { color: colors.textMuted }]}>Weekly clinical & dietary breakdown</Text>
+                <Text style={[styles.subtitle, { color: colors.textMuted }]}>Weekly dietary & metabolic progress</Text>
               </View>
             </View>
             <Pressable style={styles.closeBtn} onPress={onClose} hitSlop={8}>
@@ -120,7 +120,9 @@ export default function AnalyticsModal({ visible, onClose, dashData, userData, u
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.chartTitle, { color: colors.text }]}>Daily Calorie Intake</Text>
-                  <Text style={[styles.chartSub, { color: colors.textMuted }]}>Target: {calGoal} kcal / day</Text>
+                  <Text style={[styles.chartSub, { color: colors.textMuted }]}>
+                    {calGoal > 0 ? `Target: ${calGoal} kcal / day` : 'Set daily target in Profile'}
+                  </Text>
                 </View>
               </View>
 
@@ -137,7 +139,7 @@ export default function AnalyticsModal({ visible, onClose, dashData, userData, u
                 </Defs>
 
                 {/* Calorie Goal Reference Line */}
-                {(() => {
+                {calGoal > 0 && (() => {
                   const goalY = barChartHeight - 25 - ((calGoal / maxVal) * (barChartHeight - 45));
                   return (
                     <>
