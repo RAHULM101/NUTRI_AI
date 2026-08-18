@@ -543,18 +543,22 @@ export default function MealLogsScreen() {
 
           {/* Inputs Section */}
           <View style={styles.formSection}>
-            {/* 3. Type / Search Food Name */}
-            <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Dish / Food Description</Text>
-            <TextInput
-              style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: isDark ? '#0f172a' : '#F8FAFC' }]}
-              value={foodName}
-              onChangeText={setFoodName}
-              placeholder="e.g. 2 Rotis with Dal & Paneer"
-              placeholderTextColor={colors.textMuted}
-            />
+            {/* 3. Type / Search Food Name (Only show when not analyzed yet) */}
+            {!hasAnalysisResult && (
+              <>
+                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>Dish / Food Description</Text>
+                <TextInput
+                  style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: isDark ? '#0f172a' : '#F8FAFC' }]}
+                  value={foodName}
+                  onChangeText={setFoodName}
+                  placeholder="e.g. 2 Rotis with Dal & Paneer"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </>
+            )}
 
             {/* 4. Meal Location Dropdown */}
-            <Text style={[styles.formLabel, { color: colors.textSecondary, marginTop: 12 }]}>Meal Location</Text>
+            <Text style={[styles.formLabel, { color: colors.textSecondary, marginTop: !hasAnalysisResult ? 12 : 0 }]}>Meal Location</Text>
             <Pressable
               style={[styles.dropdownBtn, { backgroundColor: isDark ? '#0f172a' : '#F8FAFC', borderColor: colors.border }]}
               onPress={() => setShowLocationModal(true)}
@@ -583,35 +587,44 @@ export default function MealLogsScreen() {
               <ChevronDown size={16} color={colors.textMuted} />
             </Pressable>
 
-            {/* 6. Analyze Button */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.analyzeBtn,
-                pressed && { opacity: 0.88, transform: [{ scale: 0.98 }] },
-                analyzing && { opacity: 0.7 },
-              ]}
-              onPress={handleAnalyzeWithNia}
-              disabled={analyzing}
-            >
-              {analyzing ? (
-                <View style={styles.analyzeInner}>
-                  <ActivityIndicator size="small" color="#ffffff" />
-                  <Text style={styles.analyzeBtnText}>Analyzing with Nia AI...</Text>
-                </View>
-              ) : (
-                <View style={styles.analyzeInner}>
-                  <Sparkles size={16} color="#ffffff" />
-                  <Text style={styles.analyzeBtnText}>Analyze with Nia AI ✨</Text>
-                </View>
-              )}
-            </Pressable>
+            {/* 6. Analyze Button (Only show if not analyzed yet) */}
+            {!hasAnalysisResult && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.analyzeBtn,
+                  pressed && { opacity: 0.88, transform: [{ scale: 0.98 }] },
+                  analyzing && { opacity: 0.7 },
+                ]}
+                onPress={handleAnalyzeWithNia}
+                disabled={analyzing}
+              >
+                {analyzing ? (
+                  <View style={styles.analyzeInner}>
+                    <ActivityIndicator size="small" color="#ffffff" />
+                    <Text style={styles.analyzeBtnText}>Analyzing with Nia AI...</Text>
+                  </View>
+                ) : (
+                  <View style={styles.analyzeInner}>
+                    <Sparkles size={16} color="#ffffff" />
+                    <Text style={styles.analyzeBtnText}>Analyze with Nia AI ✨</Text>
+                  </View>
+                )}
+              </Pressable>
+            )}
 
-            {/* Inline AI Analysis Results */}
+            {/* Inline AI Analysis Results with Bold Food Name Header */}
             {hasAnalysisResult && (
               <View style={[styles.resultsCard, { backgroundColor: isDark ? '#0f172a' : '#F8FAFC', borderColor: colors.border }]}>
                 <View style={styles.resultsHeader}>
-                  <CheckCircle2 size={16} color={COLORS.primary} />
-                  <Text style={[styles.resultsTitle, { color: colors.text }]}>Nutritional Breakdown</Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <CheckCircle2 size={16} color={COLORS.primary} />
+                      <Text style={[styles.resultsTitle, { color: colors.text }]}>Nutritional Breakdown</Text>
+                    </View>
+                    <Text style={[styles.scannedFoodTitle, { color: colors.text }]}>
+                      {foodName || 'Scanned Meal'}
+                    </Text>
+                  </View>
                 </View>
 
                 <View style={styles.macroInputsGrid}>
@@ -875,8 +888,9 @@ const styles = StyleSheet.create({
   analyzeBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '800' },
 
   resultsCard: { borderRadius: RADIUS.xl, padding: SPACING.md, borderWidth: 1, marginTop: SPACING.md },
-  resultsHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 },
-  resultsTitle: { fontSize: 14, fontWeight: '800' },
+  resultsHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
+  resultsTitle: { fontSize: 13, fontWeight: '700' },
+  scannedFoodTitle: { fontSize: 16, fontWeight: '900', marginTop: 2, letterSpacing: -0.2 },
   macroInputsGrid: { flexDirection: 'row', gap: 6, marginBottom: 10 },
   macroInputWrap: { flex: 1 },
   macroInputLabel: { fontSize: 10, fontWeight: '700', color: '#64748B', marginBottom: 3 },
