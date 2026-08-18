@@ -36,9 +36,9 @@ const MEAL_TYPES = ['Breakfast', 'Lunch', 'Snack', 'Dinner', 'Pre-workout', 'Pos
 const MEAL_LOCATIONS = ['Home', 'Office / School', 'Restaurant', 'Cafe / Street Food', 'Delivery / Takeout', 'Mess / Hostel'];
 
 const PLAN_SCAN_LIMITS = {
-  Free: 3,
-  Pro: 10,
-  Premium: 20,
+  Free: 25,
+  Pro: 50,
+  Premium: 200,
 };
 
 function calculateJunkScore(calories, protein, carbs, fat, foodName) {
