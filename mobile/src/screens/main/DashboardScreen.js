@@ -26,6 +26,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getDashboardData } from '../../services/mealService';
+import { useFocusEffect } from '@react-navigation/native';
 import { getProfileCompletion } from '../../utils/profileCompletion';
 import { calculateDailyCalorieTarget, calculateMacros } from '../../utils/calorieCalculator';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
@@ -83,12 +84,14 @@ export default function DashboardScreen({ navigation }) {
   const firstName = userData?.firstName || userData?.name?.split(' ')[0] || 'there';
   const calGoal = calculateDailyCalorieTarget(userData, userMetrics);
   const waterGoal = parseFloat(userData?.waterGoal || userMetrics?.water_goal) || 3.0;
-  const currentCal = dailyLogs?.daily_calories_consumed || 0;
-  const currentWater = dailyLogs?.current_water || 0;
-  const protein = dailyLogs?.daily_protein || 0;
-  const carbs = dailyLogs?.daily_carbs || 0;
-  const fat = dailyLogs?.daily_fat || 0;
-  const junkScore = dailyLogs?.junk_score || 0;
+  
+  // Directly sync with backend daily aggregates on reload & keep reactive with local state
+  const currentCal = dashData?.today?.calories !== undefined ? dashData.today.calories : (dailyLogs?.daily_calories_consumed || 0);
+  const currentWater = dashData?.today?.water !== undefined ? dashData.today.water : (dailyLogs?.current_water || 0);
+  const protein = dashData?.today?.protein !== undefined ? dashData.today.protein : (dailyLogs?.daily_protein || 0);
+  const carbs = dashData?.today?.carbs !== undefined ? dashData.today.carbs : (dailyLogs?.daily_carbs || 0);
+  const fat = dashData?.today?.fat !== undefined ? dashData.today.fat : (dailyLogs?.daily_fat || 0);
+  const junkScore = dashData?.today?.junk_score !== undefined ? dashData.today.junk_score : (dailyLogs?.junk_score || 0);
   const profilePct = getProfileCompletion(userData);
 
   const { proteinGoal, carbsGoal, fatGoal } = calculateMacros(calGoal);
@@ -106,9 +109,11 @@ export default function DashboardScreen({ navigation }) {
     }
   }, []);
 
-  useEffect(() => {
-    loadDashboard();
-  }, [loadDashboard]);
+  useFocusEffect(
+    useCallback(() => {
+      loadDashboard();
+    }, [loadDashboard])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
