@@ -10,9 +10,7 @@
     "updates": {
       "url": "https://u.expo.dev/1e1ecf9c-858c-4692-b4f7-8fcfaddca5cd"
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "splash": {
       "image": "./assets/icon.png",
       "resizeMode": "contain",
@@ -52,7 +50,8 @@
           "photosPermission": "NutriAI needs photo access to analyze your meals with AI.",
           "cameraPermission": "NutriAI uses your camera to analyze meals."
         }
-      ]
+      ],
+      "expo-updates"
     ],
     "extra": {
       "eas": {
