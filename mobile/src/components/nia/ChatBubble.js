@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Clipboard, Share } from 'react-native';
-import { Sparkles, User, Utensils, Flame, Download, Copy, Plus, Check, Share2, ShieldCheck, Zap } from 'lucide-react-native';
+import { Sparkles, User, Utensils, Flame, Download, Copy, Plus, Check, Share2, ShieldCheck, Zap, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../context/ThemeContext';
@@ -222,7 +222,26 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
       {/* ── Top Bar (matches web DayPlanTable) ── */}
       <View style={[tableStyles.topBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', borderBottomColor: colors.border }]}>
         <View style={tableStyles.topBarLeft}>
+          <Pressable
+            style={[tableStyles.navChevron, activeDayIdx === 0 && { opacity: 0.3 }]}
+            onPress={() => setActiveDayIdx((p) => Math.max(0, p - 1))}
+            disabled={activeDayIdx === 0}
+            hitSlop={8}
+          >
+            <ChevronLeft size={16} color={colors.text} />
+          </Pressable>
+
           <Text style={[tableStyles.dayLabel, { color: colors.text }]}>{currentDayData.day}</Text>
+          
+          <Pressable
+            style={[tableStyles.navChevron, activeDayIdx === weeklyPlan.length - 1 && { opacity: 0.3 }]}
+            onPress={() => setActiveDayIdx((p) => Math.min(weeklyPlan.length - 1, p + 1))}
+            disabled={activeDayIdx === weeklyPlan.length - 1}
+            hitSlop={8}
+          >
+            <ChevronRight size={16} color={colors.text} />
+          </Pressable>
+
           <Text style={tableStyles.flameEmoji}>🔥</Text>
           <View style={[tableStyles.vDivider, { backgroundColor: colors.border }]} />
           <Text style={tableStyles.calValue}>{currentDayData.totals.cal}</Text>
@@ -256,7 +275,15 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
       </View>
 
       {/* ── 7-Day Switcher Tabs ── */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={tableStyles.dayTabScroll} contentContainerStyle={{ paddingHorizontal: 6, gap: 6 }}>
+      <ScrollView
+        horizontal
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={16}
+        showsHorizontalScrollIndicator={false}
+        style={tableStyles.dayTabScroll}
+        contentContainerStyle={{ paddingHorizontal: 6, gap: 6 }}
+      >
         {weeklyPlan.map((d, idx) => (
           <Pressable
             key={d.day}
@@ -275,7 +302,14 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
       </ScrollView>
 
       {/* ── Meals Table (matches web DayPlanTable) ── */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={true} contentContainerStyle={tableStyles.tableScroll}>
+      <ScrollView
+        horizontal
+        nestedScrollEnabled={true}
+        keyboardShouldPersistTaps="handled"
+        scrollEventThrottle={16}
+        showsHorizontalScrollIndicator={true}
+        contentContainerStyle={tableStyles.tableScroll}
+      >
         <View>
           {/* Table Header */}
           <View style={[tableStyles.row, tableStyles.headerRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9' }]}>
@@ -350,7 +384,13 @@ const tableStyles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  dayLabel: { fontSize: 14, fontWeight: '900' },
+  navChevron: {
+    padding: 2,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayLabel: { fontSize: 13, fontWeight: '900' },
   flameEmoji: { fontSize: 13 },
   vDivider: { width: 1, height: 14, marginHorizontal: 2 },
   calValue: { fontSize: 14, fontWeight: '900', color: '#14B8A6' },
@@ -580,9 +620,7 @@ function ChatBubble({ message, isUser }) {
         </View>
       )}
 
-      <Pressable
-        onLongPress={handleCopyText}
-        delayLongPress={250}
+      <View
         style={[
           styles.bubble,
           isUser
@@ -662,7 +700,7 @@ function ChatBubble({ message, isUser }) {
             </Text>
           ) : null}
         </View>
-      </Pressable>
+      </View>
 
       {isUser && (
         <View style={styles.userAvatar}>
