@@ -125,8 +125,9 @@ export default function LoginScreen({ navigation }) {
   // ── Handle the OAuth response from Google ───────────────────────
   useEffect(() => {
     if (response?.type === 'success') {
-      const { authentication } = response;
-      handleGoogleToken(authentication?.accessToken);
+      const { authentication, params } = response;
+      const token = authentication?.accessToken || authentication?.idToken || params?.access_token || params?.id_token;
+      handleGoogleToken(token);
     } else if (response?.type === 'error') {
       setErrorMsg('Google sign-in failed. Please try again.');
       setGoogleLoading(false);

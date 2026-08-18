@@ -283,17 +283,31 @@ class GoogleLoginView(APIView):
             return Response({"message": "No token provided"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
+            idinfo = None
+            # 1. First try as OAuth2 Access Token via Google UserInfo API
             google_response = standard_requests.get(
                 "https://www.googleapis.com/oauth2/v3/userinfo",
-                headers={"Authorization": f"Bearer {token}"}
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10
             )
 
-            if google_response.status_code != 200:
-                return Response({"message": "Invalid Google token"}, status=status.HTTP_401_UNAUTHORIZED)
+            if google_response.status_code == 200:
+                idinfo = google_response.json()
+            else:
+                # 2. Fallback: try as OpenID ID Token via Google TokenInfo API
+                tokeninfo_resp = standard_requests.get(
+                    f"https://oauth2.googleapis.com/tokeninfo?id_token={token}",
+                    timeout=10
+                )
+                if tokeninfo_resp.status_code == 200:
+                    idinfo = tokeninfo_resp.json()
+                else:
+                    return Response({"message": "Invalid Google token"}, status=status.HTTP_401_UNAUTHORIZED)
 
-            idinfo = google_response.json()
+            email = idinfo.get('email')
+            if not email:
+                return Response({"message": "Could not retrieve email from Google account"}, status=status.HTTP_400_BAD_REQUEST)
 
-            email = idinfo['email']
             first_name = idinfo.get('given_name', '')
             last_name = idinfo.get('family_name', '')
 
@@ -326,8 +340,9 @@ class GoogleLoginView(APIView):
                 }
             }, status=status.HTTP_200_OK)
 
-        except ValueError:
-            return Response({"message": "Invalid Google token"}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            print("--- GOOGLE LOGIN ERROR ---", e)
+            return Response({"message": "Google authentication failed. Please try again."}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class DashboardSummaryView(APIView):
