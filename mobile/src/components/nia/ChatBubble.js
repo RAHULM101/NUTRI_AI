@@ -639,13 +639,22 @@ function ChatBubble({ message, isUser }) {
           </View>
         )}
 
-        <FormattedText content={rawText} isUser={isUser} textColor={isUser ? '#ffffff' : colors.text} />
-
-        {/* Dynamic Interactive Meal Plan Table (1-day, 2-day, 7-day etc.) with PDF Download */}
-        {isMealPlan && (
-          <View style={{ marginTop: 12 }}>
-            <MealPlanTable numDays={detectedDays} isDark={isDark} colors={colors} />
+        {isMealPlan ? (
+          <View>
+            <FormattedText
+              content={
+                rawText.split(/\n(?=\||\*\*Day|Day \d|Breakfast)/)[0].trim() ||
+                "Here is your personalized nutrition & meal schedule:"
+              }
+              isUser={isUser}
+              textColor={colors.text}
+            />
+            <View style={{ marginTop: 8 }}>
+              <MealPlanTable numDays={detectedDays} isDark={isDark} colors={colors} />
+            </View>
           </View>
+        ) : (
+          <FormattedText content={rawText} isUser={isUser} textColor={isUser ? '#ffffff' : colors.text} />
         )}
 
         {/* Healthify / Fittr Inspired Response Utility Action Bar for AI */}
@@ -662,13 +671,6 @@ function ChatBubble({ message, isUser }) {
               <Share2 size={13} color={colors.textMuted} />
               <Text style={[styles.utilityBtnText, { color: colors.textMuted }]}>Share</Text>
             </Pressable>
-
-            {isMealPlan && (
-              <Pressable style={styles.utilityBtn} onPress={handleDownloadMealPlanPdf}>
-                <Download size={13} color="#14B8A6" />
-                <Text style={[styles.utilityBtnText, { color: '#14B8A6', fontWeight: '800' }]}>PDF</Text>
-              </Pressable>
-            )}
           </View>
         )}
 
