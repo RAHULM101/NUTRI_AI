@@ -591,12 +591,6 @@ export default function NiaScreen() {
               returnKeyType="send"
               onSubmitEditing={() => sendMessage()}
             />
-              placeholderTextColor={colors.textMuted}
-              multiline
-              maxLength={500}
-              returnKeyType="send"
-              onSubmitEditing={() => sendMessage()}
-            />
 
             <Pressable
               style={[
