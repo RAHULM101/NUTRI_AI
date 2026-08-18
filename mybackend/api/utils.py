@@ -204,9 +204,11 @@ def generate_nia_chat_response(user, user_message):
         Activity Today: {tracking_context}
         ---
         CRITICAL INSTRUCTIONS:
-        - If the user asks for a meal plan of a specific duration (e.g. 1-day, 2-day, 3-day, or 7-day), create a plan for EXACTLY the number of days requested by the user. Do not generate 7 days if they asked for 2 days.
-        - Structure the meal plan cleanly by Day and Meals (Breakfast, Lunch, Snack, Dinner) with estimated Calories and Protein.
-        - Use clean, beautiful markdown formatting with bold titles and clear bullet points.
+        - If the user asks for ANY meal plan, diet chart, or food suggestion (e.g. 1-day, 2-day, 3-day, 7-day, pre-match, budget diet):
+          * Create the plan for EXACTLY the number of days requested by the user.
+          * Present each day's meals in a structured format / table with: Meal (Breakfast, Lunch, Evening Snack, Dinner), Food Dish & Portions, Calories (kcal), and Protein (g).
+          * Include estimated daily total calories and protein.
+        - Use clean, beautiful formatting with bold headers and clear bullet points or markdown tables.
         
         Answer this user message: "{user_message}"
         """

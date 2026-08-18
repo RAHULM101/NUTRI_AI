@@ -431,7 +431,7 @@ export default function NiaScreen() {
               <Text style={styles.onlinePulseText}>Active Coach</Text>
             </View>
           </View>
-          <Text style={styles.niaTitle}>Multi-language AI Nutrition Assistant</Text>
+          <Text style={styles.niaTitle}>Personalized Nutrition & Diet Coach</Text>
         </View>
 
         {/* Action Header Group */}
@@ -511,13 +511,17 @@ export default function NiaScreen() {
         <FlatList
           ref={listRef}
           data={messages}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id || item.timestamp || Math.random())}
           renderItem={({ item }) => (
             <ChatBubble
               message={item}
               isUser={item.type === 'user'}
             />
           )}
+          initialNumToRender={10}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           style={styles.messageList}
           contentContainerStyle={styles.messageContent}
           showsVerticalScrollIndicator={false}
@@ -580,7 +584,13 @@ export default function NiaScreen() {
               style={[styles.input, { color: colors.text }]}
               value={input}
               onChangeText={setInput}
-              placeholder={attachedFile ? 'Add a question about this attachment...' : 'Ask Nia in English, বাংলা, or हिंदी...'}
+              placeholder={attachedFile ? 'Add a question about this attachment...' : 'Ask Nia anything...'}
+              placeholderTextColor={colors.textMuted}
+              multiline
+              maxLength={500}
+              returnKeyType="send"
+              onSubmitEditing={() => sendMessage()}
+            />
               placeholderTextColor={colors.textMuted}
               multiline
               maxLength={500}
