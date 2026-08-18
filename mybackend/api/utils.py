@@ -57,13 +57,13 @@ def calculate_junk_score(calories, protein, carbs, fat, detected_items):
 # Helper to handle Gemini API model fallbacks in case of quota limit exhaustion
 def call_gemini_with_fallback(client, contents, response_schema=None):
     models_to_try = [
-        'gemini-flash-latest',          # 1. Official latest production stable model
-        'gemini-flash-lite-latest',     # 2. Official latest lightweight stable model
-        'gemini-3.5-flash-lite',        # 3. High-throughput stable model
-        'gemini-3.5-flash',             # 4. Standard stable Flash model
+        'gemini-3.5-flash-lite',        # 1. High-throughput, generous rate limits, instant vision
+        'gemini-3-flash-preview',       # 2. Fast preview fallback
+        'gemini-3.1-flash-lite-preview',# 3. Lite preview fallback
+        'gemini-3.5-flash',             # 4. Standard Flash model
         'gemini-3.6-flash',             # 5. Flagship Flash model
-        'gemini-3-flash-preview',       # 6. Fast preview fallback
-        'gemini-3.1-flash-lite-preview',# 7. Lite preview fallback
+        'gemini-flash-latest',          # 6. Production alias
+        'gemini-flash-lite-latest',     # 7. Production alias
     ]
     
     last_exception = None
@@ -95,25 +95,36 @@ def call_gemini_with_fallback(client, contents, response_schema=None):
 # Make sure you set GEMINI_API_KEY in your settings or .env file
 def analyze_meal_image_with_gemini(image_file):
     try:
+        import re
         if hasattr(image_file, 'seek'):
             image_file.seek(0)
         img = Image.open(image_file)
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
+        # Optimize large camera images (downscale to max 1024x1024 for instant processing without timeout)
+        img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+        
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
         client = genai.Client(api_key=api_key)
         
         prompt = """
-        Analyze this image for food and nutritional tracking.
-        CRITICAL RULE: Check if the image contains real consumable food or drink.
-        If the image is NOT food (e.g., it is a human selfie/photo, animal, vehicle, room, document, or non-edible object):
-        - Set detected_items to: "No food detected - Non-food / Human photo"
-        - Set calories to: 0
-        - Set protein_gm to: 0.0
-        - Set carbs_gm to: 0.0
-        - Set fat_gm to: 0.0
-        - Set ai_insights to: "Invalid Upload: This image does not contain food (human/object detected). Please upload a clear photo of your meal."
+        Analyze this food image and identify the dishes accurately for nutritional tracking.
+        CRITICAL RULE:
+        - If the image contains ANY edible food or beverage dish (e.g. roti, naan, curry, rice, salad, chicken, paneer, eggs, fruits, snacks, drinks), accurately estimate:
+          * detected_items: Specific name of the dish/items
+          * calories: estimated total calories (integer > 0)
+          * protein_gm: estimated protein in grams
+          * carbs_gm: estimated carbs in grams
+          * fat_gm: estimated fat in grams
+          * ai_insights: concise breakdown of nutrition
+        - If the image is strictly NON-FOOD (human selfie/face, pet, vehicle, furniture, screenshot of text/document), set:
+          * detected_items: "No food detected - Non-food / Human photo"
+          * calories: 0
+          * protein_gm: 0.0
+          * carbs_gm: 0.0
+          * fat_gm: 0.0
+          * ai_insights: "Invalid Upload: No food detected."
         """
         
         # 2. Use our fallback utility to call the Gemini API
@@ -124,15 +135,17 @@ def analyze_meal_image_with_gemini(image_file):
         )
 
         raw_text = (response.text or '').strip()
-        if raw_text.startswith("```json"):
-            raw_text = raw_text[7:]
-        if raw_text.startswith("```"):
-            raw_text = raw_text[3:]
-        if raw_text.endswith("```"):
-            raw_text = raw_text[:-3]
-        raw_text = raw_text.strip()
-
-        data = json.loads(raw_text)
+        match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+        if match:
+            data = json.loads(match.group(0))
+        else:
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.startswith("```"):
+                raw_text = raw_text[3:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+            data = json.loads(raw_text.strip())
         
         data['junk_score'] = calculate_junk_score(
             calories=data.get('calories', 0),
