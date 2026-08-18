@@ -56,12 +56,15 @@ def calculate_junk_score(calories, protein, carbs, fat, detected_items):
 
 # Helper to handle Gemini API model fallbacks in case of quota limit exhaustion
 def call_gemini_with_fallback(client, contents, response_schema=None):
+    import time
     models_to_try = [
         'gemini-3.5-flash-lite',        # 1. Primary: Highest quota & fastest vision (100% stable)
         'gemini-3-flash-preview',       # 2. High availability Flash preview
         'gemini-3.1-flash-lite-preview',# 3. High throughput Lite preview
         'gemini-flash-latest',          # 4. Production alias
         'gemini-3.6-flash',             # 5. Flagship Flash model
+        'gemini-3.5-flash',             # 6. Standard Flash model
+        'gemini-pro-latest',            # 7. Pro model fallback
     ]
     
     last_exception = None
@@ -82,8 +85,12 @@ def call_gemini_with_fallback(client, contents, response_schema=None):
             if response and response.text:
                 return response
         except Exception as e:
-            print(f"--- FALLBACK WARNING: Model '{model_name}' failed: {e}. Trying next model... ---")
+            err_str = str(e)
+            print(f"--- FALLBACK WARNING: Model '{model_name}' failed: {err_str[:120]}. Trying next model... ---")
             last_exception = e
+            # If rate limit (429) was hit, wait briefly for project bucket to drain
+            if '429' in err_str or 'RESOURCE_EXHAUSTED' in err_str:
+                time.sleep(0.6)
             continue
             
     if last_exception:

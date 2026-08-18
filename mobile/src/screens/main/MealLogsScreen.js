@@ -36,9 +36,9 @@ const MEAL_TYPES = ['Breakfast', 'Lunch', 'Snack', 'Dinner', 'Pre-workout', 'Pos
 const MEAL_LOCATIONS = ['Home', 'Office / School', 'Restaurant', 'Cafe / Street Food', 'Delivery / Takeout', 'Mess / Hostel'];
 
 const PLAN_SCAN_LIMITS = {
-  Free: 25,
-  Pro: 50,
-  Premium: 200,
+  Free: 3,
+  Pro: 10,
+  Premium: 20,
 };
 
 function calculateJunkScore(calories, protein, carbs, fat, foodName) {
@@ -255,8 +255,8 @@ export default function MealLogsScreen() {
     }
 
     const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true })
-      : await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsEditing: true });
+      ? await ImagePicker.launchCameraAsync({ quality: 0.5, allowsEditing: true, maxWidth: 1024, maxHeight: 1024 })
+      : await ImagePicker.launchImageLibraryAsync({ quality: 0.5, allowsEditing: true, maxWidth: 1024, maxHeight: 1024 });
 
     if (result.canceled || !result.assets[0]?.uri) return;
 
