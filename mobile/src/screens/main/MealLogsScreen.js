@@ -143,7 +143,7 @@ const cardStyles = StyleSheet.create({
 });
 
 export default function MealLogsScreen() {
-  const { userData, addMealLog } = useAuth();
+  const { userData, addMealLog, removeMealLog } = useAuth();
   const { isDark, colors } = useTheme();
 
   const [logs, setLogs] = useState([]);
@@ -436,6 +436,7 @@ export default function MealLogsScreen() {
             } catch (e) {
               console.warn('Delete meal API failed:', e?.message);
             }
+            removeMealLog(item);
             setLogs((prev) => prev.filter((m) => (m.meal_id || m.id) !== mealId && m !== item));
           },
         },

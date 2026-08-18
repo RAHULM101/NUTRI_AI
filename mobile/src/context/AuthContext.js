@@ -120,6 +120,30 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  // ── Remove logged meal from today's totals ─────────────────────
+  const removeMealLog = useCallback((meal) => {
+    setDailyLogs((prev) => {
+      const newCount = Math.max(prev.junk_count - 1, 0);
+      const newCal = Math.max(prev.daily_calories_consumed - (meal.calories || 0), 0);
+      const newP = Math.max(prev.daily_protein - (parseFloat(meal.protein_gm || meal.protein) || 0), 0);
+      const newC = Math.max(prev.daily_carbs - (parseFloat(meal.carbs_gm || meal.carbs) || 0), 0);
+      const newF = Math.max(prev.daily_fat - (parseFloat(meal.fat_gm || meal.fat) || 0), 0);
+      const newJunk = newCount > 0
+        ? parseFloat(Math.max((prev.junk_score * prev.junk_count - (meal.junk_score || meal.junkScore || 0)) / newCount, 0).toFixed(1))
+        : 0;
+
+      return {
+        ...prev,
+        daily_calories_consumed: newCal,
+        daily_protein: newP,
+        daily_carbs: newC,
+        daily_fat: newF,
+        junk_score: newJunk,
+        junk_count: newCount,
+      };
+    });
+  }, []);
+
   // ── Set auth state after login ────────────────────────────────
   const signIn = useCallback(async (onboarded = false) => {
     setIsAuthenticated(true);
@@ -198,6 +222,7 @@ export function AuthProvider({ children }) {
         setDailyLogs,
         updateWaterIntake,
         addMealLog,
+        removeMealLog,
       }}
     >
       {children}

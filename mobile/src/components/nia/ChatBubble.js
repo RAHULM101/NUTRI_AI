@@ -520,7 +520,9 @@ export default function ChatBubble({ message, isUser }) {
         </View>
       )}
 
-      <View
+      <Pressable
+        onLongPress={handleCopyText}
+        delayLongPress={250}
         style={[
           styles.bubble,
           isUser
@@ -541,7 +543,7 @@ export default function ChatBubble({ message, isUser }) {
 
         <FormattedText content={rawText} isUser={isUser} textColor={isUser ? '#ffffff' : colors.text} />
 
-        {/* Healthify / Fittr Inspired Response Utility Action Bar */}
+        {/* Healthify / Fittr Inspired Response Utility Action Bar for AI */}
         {!isUser && (
           <View style={[styles.utilityBar, { borderColor: colors.border }]}>
             <Pressable style={styles.utilityBtn} onPress={handleCopyText}>
@@ -558,12 +560,35 @@ export default function ChatBubble({ message, isUser }) {
           </View>
         )}
 
-        {message.timestamp ? (
-          <Text style={[styles.timestamp, isUser ? styles.timestampUser : { color: colors.textMuted }]}>
-            {message.timestamp}
-          </Text>
-        ) : null}
-      </View>
+        {/* Bubble Footer with Timestamp & User 1-Tap Copy */}
+        <View style={styles.footerRow}>
+          {isUser ? (
+            <Pressable
+              style={styles.userCopyBtn}
+              onPress={handleCopyText}
+              hitSlop={8}
+            >
+              {copied ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                  <Check size={10} color="rgba(255,255,255,0.95)" />
+                  <Text style={styles.userCopyText}>Copied</Text>
+                </View>
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                  <Copy size={10} color="rgba(255,255,255,0.7)" />
+                  <Text style={styles.userCopyText}>Copy</Text>
+                </View>
+              )}
+            </Pressable>
+          ) : <View />}
+
+          {message.timestamp ? (
+            <Text style={[styles.timestamp, isUser ? styles.timestampUser : { color: colors.textMuted }]}>
+              {message.timestamp}
+            </Text>
+          ) : null}
+        </View>
+      </Pressable>
 
       {isUser && (
         <View style={styles.userAvatar}>
@@ -665,9 +690,28 @@ const styles = StyleSheet.create({
   utilityBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   utilityBtnText: { fontSize: 11, fontWeight: '700' },
 
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
+  },
+  userCopyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: RADIUS.full,
+  },
+  userCopyText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+
   timestamp: {
     fontSize: 10,
-    marginTop: 6,
     alignSelf: 'flex-end',
   },
   timestampUser: { color: 'rgba(255,255,255,0.75)' },
