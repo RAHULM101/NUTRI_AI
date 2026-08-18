@@ -57,11 +57,12 @@ def calculate_junk_score(calories, protein, carbs, fat, detected_items):
 # Helper to handle Gemini API model fallbacks in case of quota limit exhaustion
 def call_gemini_with_fallback(client, contents, response_schema=None):
     models_to_try = [
-        'gemini-2.5-flash',             # 1. Ultra-stable production model with full multimodal & text support
-        'gemini-2.5-flash-lite',        # 2. Lightweight high-throughput free model
-        'gemini-flash-latest',          # 3. Always active latest production alias
-        'gemini-3.6-flash',             # 4. Preview flagship
-        'gemini-1.5-flash',             # 5. Longstanding stable fallback
+        'gemini-3.6-flash',             # 1. Flagship Flash (multimodal + fast)
+        'gemini-3.5-flash',             # 2. Stable high-throughput Flash
+        'gemini-3.5-flash-lite',        # 3. High rate-limit Flash Lite
+        'gemini-3-flash-preview',       # 4. Preview Flash
+        'gemini-3.1-flash-lite-preview',# 5. Fast Lite Preview
+        'gemini-3.7-flash',             # 6. Advanced Flash fallback
     ]
     
     last_exception = None

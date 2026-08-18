@@ -283,18 +283,11 @@ export default function MealLogsScreen() {
           const isNonFood = itemStr.includes('no food') || itemStr.includes('human') || itemStr.includes('non-food') || (analysis?.calories === 0 && analysis?.protein_gm === 0);
 
           if (isNonFood) {
-            Alert.alert('Non-Food Photo Detected ⚠️', 'Please upload a clear photo of your meal.');
-            setFoodName('Non-Food Photo Detected');
-            setCalories('0');
-            setProtein('0');
-            setCarbs('0');
-            setFat('0');
-            setJunkScore(null);
-            setAiInsights('Please upload a clear photo of a food dish.');
-            setHasAnalysisResult(true);
+            Alert.alert('No Food Detected ⚠️', 'This image does not contain recognizable food. Please upload a clear photo of your meal.');
+            setHasAnalysisResult(false);
             return;
-          } else if (analysis && !analysis.error) {
-            setFoodName(analysis.detected_items || analysis.food_name || foodName || 'Scanned Meal');
+          } else if (analysis && !analysis.error && (analysis.calories > 0 || analysis.protein_gm > 0 || analysis.carbs_gm > 0)) {
+            setFoodName(analysis.detected_items || analysis.food_name || foodName || 'Scanned Dish');
             setCalories(String(analysis.calories || ''));
             setProtein(String(analysis.protein_gm || analysis.protein || ''));
             setCarbs(String(analysis.carbs_gm || analysis.carbs || ''));
@@ -304,22 +297,19 @@ export default function MealLogsScreen() {
             setHasAnalysisResult(true);
             incrementScanCount();
             return;
-          }
-        } catch (imgErr) {
-          console.warn('Image analysis API failed, attempting AI chat fallback:', imgErr.message);
-          // If image endpoint failed (e.g. 500), try text analysis if foodName is available
-          if (foodName.trim()) {
-            const res = await api.post(ENDPOINTS.niaChat, {
-              message: `Analyze this meal: "${foodName.trim()}". Return estimated calories, protein (g), carbs (g), fat (g).`,
-              profile: userData,
-            });
-            const reply = res.data?.ai_response || res.data?.response || res.data?.message || '';
-            setAiInsights(reply || 'Nutrition calculated from food description.');
-            setHasAnalysisResult(true);
-            incrementScanCount();
+          } else {
+            Alert.alert('Scan Unsuccessful ℹ️', 'Could not detect food in this photo. Please try again with a clear photo of your dish.');
+            setHasAnalysisResult(false);
             return;
           }
-          throw imgErr;
+        } catch (imgErr) {
+          console.warn('Image analysis failed:', imgErr.message);
+          Alert.alert(
+            'Scan Failed ℹ️',
+            'Could not analyze food image. Please make sure your photo clearly shows a food dish and try again.'
+          );
+          setHasAnalysisResult(false);
+          return;
         }
       } else {
         // Text analysis via Nia chat endpoint
@@ -329,15 +319,15 @@ export default function MealLogsScreen() {
         });
         const reply = res.data?.ai_response || res.data?.response || res.data?.message || '';
         setAiInsights(reply || 'Meal logged successfully.');
+        setHasAnalysisResult(true);
         incrementScanCount();
       }
-      setHasAnalysisResult(true);
     } catch (e) {
       Alert.alert(
-        'AI Scanner Notice ℹ️',
-        'AI image scanner is currently busy or re-calibrating. You can enter or adjust the nutrition values below to save your meal!'
+        'Scan Notice ℹ️',
+        'Could not complete nutritional analysis. Please check your network and try again.'
       );
-      setHasAnalysisResult(true);
+      setHasAnalysisResult(false);
     } finally {
       setAnalyzing(false);
     }
