@@ -2,7 +2,10 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q
-from .models import UserProfile, meal_logs, chat_logs
+from .models import (
+    UserProfile, meal_logs, chat_logs,
+    StoreCategory, Product, Cart, CartItem, AffiliateOrder
+)
 
 User = get_user_model()
 
@@ -81,8 +84,6 @@ class ChatLogSerializer(serializers.ModelSerializer):
 # ─────────────────────────────────────────────
 #  NUTRI STORE SERIALIZERS
 # ─────────────────────────────────────────────
-from .models import StoreCategory, Product, Cart, CartItem, AffiliateOrder
-
 
 class StoreCategorySerializer(serializers.ModelSerializer):
     class Meta:
