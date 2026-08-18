@@ -1,0 +1,1 @@
+{'detected_items': 'No food detected.', 'calories': 0, 'protein_gm': 0.0, 'carbs_gm': 0.0, 'fat_gm': 0.0, 'ai_insights': 'No food items were visible in the provided image for analysis.', 'junk_score': 0}

@@ -1,0 +1,26 @@
+﻿
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django database & media
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Environment Variables & Sensitive Files
+.env
+.env.local
+*.env
+*.pem
+*.key
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# OS files
+.DS_Store

@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "NutriAI",
+    "slug": "nutriai-mobile",
+    "scheme": "nutriai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10b981"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nutriai.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "NutriAI uses your camera to analyze your meals with AI.",
+        "NSPhotoLibraryUsageDescription": "NutriAI needs photo library access to upload meal photos for AI analysis."
+      }
+    },
+    "android": {
+      "package": "com.nutriai.mobile",
+      "usesCleartextTraffic": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#10b981",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "NutriAI needs photo access to analyze your meals with AI.",
+          "cameraPermission": "NutriAI uses your camera to analyze meals."
+        }
+      ]
+    ]
+  }
+}
