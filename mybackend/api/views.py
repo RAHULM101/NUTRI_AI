@@ -271,9 +271,9 @@ class MealLogDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 
 
-# Replace this with your actual Google Client ID
+# Read Google Client ID dynamically from environment
 import os
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "418733621307-ajvgk9mk30meca1cs7k83tcl63mse6b5.apps.googleusercontent.com")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
 class GoogleLoginView(APIView):
     permission_classes = [permissions.AllowAny]
     def post(self, request):

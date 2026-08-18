@@ -36,10 +36,9 @@ WebBrowser.maybeCompleteAuthSession();
 
 // ── Google OAuth Client IDs ─────────────────────────────────────────────────
 // Replace these with YOUR actual Client IDs from Google Cloud Console:
-//   https://console.cloud.google.com/apis/credentials
-const GOOGLE_WEB_CLIENT_ID = '418733621307-ajvgk9mk30meca1cs7k83tcl63mse6b5.apps.googleusercontent.com';
-const GOOGLE_ANDROID_CLIENT_ID = '418733621307-nnds9kibi1v797glsq0m5m9vbbc2lufv.apps.googleusercontent.com';
-const GOOGLE_IOS_CLIENT_ID = '418733621307-eahhl0rod0qla9mm0serau0c2v4v6cjp.apps.googleusercontent.com';
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 
 // ── Email validation regex ────────────────────────────────────
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
