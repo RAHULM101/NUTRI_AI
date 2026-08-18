@@ -26,7 +26,8 @@
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.READ_MEDIA_IMAGES"
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#10b981",
@@ -46,6 +47,11 @@
           "cameraPermission": "NutriAI uses your camera to analyze meals."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1e1ecf9c-858c-4692-b4f7-8fcfaddca5cd"
+      }
+    }
   }
 }
