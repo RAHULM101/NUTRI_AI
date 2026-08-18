@@ -111,39 +111,51 @@ class LoginView(APIView):
 class ProfileView(APIView):
     permission_classes = [permissions.IsAuthenticated]
     def get(self, request):
-        profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        serializer = OnboardingSerializer(profile)
-        data = serializer.data
-        from .utils import calculate_user_streak
-        data['streak'] = calculate_user_streak(request.user)
-        return Response({
-            "message": "user profile",
-            "data": data
-        }, status = status.HTTP_200_OK)
+        try:
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            serializer = OnboardingSerializer(profile)
+            data = serializer.data
+            try:
+                from .utils import calculate_user_streak
+                data['streak'] = calculate_user_streak(request.user)
+            except Exception:
+                data['streak'] = 0
+            return Response({
+                "message": "user profile",
+                "data": data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def patch(self, request):
-        profile, _ = UserProfile.objects.get_or_create(user=request.user)
-        plan_name = request.data.get('selected_plan') or request.data.get('selectedPlan') or request.data.get('plan')
-        if plan_name:
-            from .models import Subscription
-            sub, _ = Subscription.objects.get_or_create(
-                user=request.user,
-                defaults={'plan_type': plan_name, 'status': 'active'}
-            )
-            sub.plan_type = plan_name
-            sub.status = 'active'
-            sub.save()
-            profile.active_subscription = sub
-            profile.save()
+        try:
+            profile, _ = UserProfile.objects.get_or_create(user=request.user)
+            plan_name = request.data.get('selected_plan') or request.data.get('selectedPlan') or request.data.get('plan')
+            if plan_name:
+                from .models import Subscription
+                sub, _ = Subscription.objects.get_or_create(
+                    user=request.user,
+                    defaults={'plan_type': plan_name, 'status': 'active'}
+                )
+                sub.plan_type = plan_name
+                sub.status = 'active'
+                sub.save()
+                profile.active_subscription = sub
+                profile.save()
 
-        serializer = OnboardingSerializer(profile, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            data = serializer.data
-            from .utils import calculate_user_streak
-            data['streak'] = calculate_user_streak(request.user)
-            return Response({"message": "Profile updated", "data": data}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            serializer = OnboardingSerializer(profile, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                data = serializer.data
+                try:
+                    from .utils import calculate_user_streak
+                    data['streak'] = calculate_user_streak(request.user)
+                except Exception:
+                    data['streak'] = 0
+                return Response({"message": "Profile updated", "data": data}, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
 class OnboardingView(viewsets.ModelViewSet):
