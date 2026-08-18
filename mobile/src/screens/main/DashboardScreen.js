@@ -52,7 +52,7 @@ function StatCard({ icon: Icon, label, value, color, bg, labelColor }) {
 }
 
 export default function DashboardScreen({ navigation }) {
-  const { userData, userMetrics, dailyLogs, updateWaterIntake } = useAuth();
+  const { userData, userMetrics, dailyLogs, setDailyLogs, updateWaterIntake } = useAuth();
   const { isDark, toggleTheme, colors } = useTheme();
 
   const [dashData, setDashData] = useState(null);
