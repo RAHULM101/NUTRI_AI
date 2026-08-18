@@ -63,11 +63,26 @@ class MealLogSerializer(serializers.ModelSerializer):
     """
     Serializer for saving and listing the actual meal logs in the database.
     """
+    detected_items = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    ai_insights = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    meal_photo_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    protein_gm = serializers.DecimalField(max_digits=7, decimal_places=2, required=False, allow_null=True)
+    carbs_gm = serializers.DecimalField(max_digits=7, decimal_places=2, required=False, allow_null=True)
+    fat_gm = serializers.DecimalField(max_digits=7, decimal_places=2, required=False, allow_null=True)
+
     class Meta:
         model = meal_logs
-        # You can specify exact fields, or use '__all__'
         fields = '__all__'
         read_only_fields = ['meal_id', 'created_at', 'tracking_id', 'user']
+
+    def validate_detected_items(self, value):
+        return value[:500] if value else value
+
+    def validate_ai_insights(self, value):
+        return value[:1000] if value else value
+
+    def validate_meal_photo_url(self, value):
+        return value[:1000] if value else value
 
 
 class ChatLogSerializer(serializers.ModelSerializer):

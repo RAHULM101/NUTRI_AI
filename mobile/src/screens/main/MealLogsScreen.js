@@ -389,16 +389,16 @@ export default function MealLogsScreen() {
       : calculateJunkScore(calVal, protVal, carbVal, fatVal, foodName.trim());
 
     const payload = {
-      meal_type: mealType,
-      meal_location: mealLocation,
-      detected_items: foodName.trim(),
-      calories: calVal,
-      protein_gm: protVal,
-      carbs_gm: carbVal,
-      fat_gm: fatVal,
+      meal_type: mealType || 'Meal',
+      meal_location: mealLocation || 'Home',
+      detected_items: foodName.trim() || 'Logged Meal',
+      calories: Math.round(calVal),
+      protein_gm: parseFloat(protVal.toFixed(2)),
+      carbs_gm: parseFloat(carbVal.toFixed(2)),
+      fat_gm: parseFloat(fatVal.toFixed(2)),
       junk_score: finalJunk,
       ai_insights: aiInsights || 'Nutrient logged successfully.',
-      meal_photo_url: scannedPhotoUri || null,
+      meal_photo_url: scannedPhotoUri && (scannedPhotoUri.startsWith('http://') || scannedPhotoUri.startsWith('https://')) ? scannedPhotoUri : null,
     };
 
     try {
