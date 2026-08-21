@@ -65,6 +65,12 @@ const LOCAL_PRODUCT_IMAGES = {
 };
 
 export function getProductImageSource(item) {
+  // 1. If product has a direct high-res web image URL, prioritize it
+  if (item?.image_link && typeof item.image_link === 'string' && (item.image_link.startsWith('http://') || item.image_link.startsWith('https://'))) {
+    return { uri: item.image_link };
+  }
+
+  // 2. Otherwise map to local high-res asset fallback
   const name = (item?.name || '').toLowerCase();
   if (name.includes('peanut butter') || name.includes('alpino') || name.includes('pintola')) return LOCAL_PRODUCT_IMAGES.alpino_pb;
   if (name.includes('creatine')) return LOCAL_PRODUCT_IMAGES.mb_creatine;
@@ -94,7 +100,7 @@ const EXACT_WEB_PRODUCTS = [
     is_featured: true,
     macro_tag: 'Whole Grain • High Fiber',
     description:
-      'True Elements Wholegrain Rolled Oats made from rolled oats and suitable for everyday breakfast.',
+      'True Elements Wholegrain Rolled Oats made from 100% natural wholegrain rolled oats. Rich in dietary fiber and essential minerals.',
     nutrition: {
       calories: '363 kcal',
       protein: '13.1g',
@@ -102,9 +108,9 @@ const EXACT_WEB_PRODUCTS = [
       fat: '7.8g'
     },
     affiliate_link:
-      'https://blinkit.com/prn/true-elements-wholegrain-rolled-oats/prid/473034?utm_source=chatgpt.com',
+      'https://blinkit.com/prn/true-elements-wholegrain-rolled-oats/prid/473034',
     image_link:
-      'https://true-elements.com/products/rolled-oats-1kg?utm_source=chatgpt.com',
+      'https://m.media-amazon.com/images/I/71N1t2s49TL._SL1500_.jpg',
     verified: true
   },
   {
@@ -122,7 +128,7 @@ const EXACT_WEB_PRODUCTS = [
     description: 'Clinically tested 25g protein per serving and fortified with DigeZyme enzyme complex for 50% higher protein absorption.',
     nutrition: { calories: '113 kcal', protein: '25g', carbs: '2.5g', fat: '1g' },
     affiliate_link: 'https://www.healthkart.com',
-    image_link: 'https://www.healthkart.com',
+    image_link: 'https://m.media-amazon.com/images/I/71y+m6gJ+fL._SL1500_.jpg',
     verified: true
   },
   {
@@ -139,7 +145,7 @@ const EXACT_WEB_PRODUCTS = [
     is_featured: true,
     macro_tag: 'Greek Yogurt • High Protein',
     description:
-      'Epigamia Natural Greek Yogurt, 400g cup.',
+      'Epigamia Natural Greek Yogurt, 400g cup. Strained authentic Greek yogurt packed with gut-healthy probiotics and natural protein.',
     nutrition: {
       calories: '65 kcal',
       protein: '7g',
@@ -147,9 +153,9 @@ const EXACT_WEB_PRODUCTS = [
       fat: '2g'
     },
     affiliate_link:
-      'https://www.bigbasket.com/pd/40103424/epigamia-greek-yogurt-natural-low-fat-400-g-cup/?utm_source=chatgpt.com',
+      'https://www.bigbasket.com/pd/40103424/epigamia-greek-yogurt-natural-low-fat-400-g-cup/',
     image_link:
-      'https://www.bigbasket.com/pd/40103424/epigamia-greek-yogurt-natural-low-fat-400-g-cup/?utm_source=chatgpt.com',
+      'https://m.media-amazon.com/images/I/61kYQJv7rOL._SL1200_.jpg',
     verified: true
   },
   {
