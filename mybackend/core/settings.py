@@ -30,12 +30,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'), override=True)
 # SECURITY WARNING: keep the secret key used in production secret!
 
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-production-env-file-only')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # Gemini API Key configuration
@@ -56,6 +51,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'api',
     'corsheaders',
 ]
@@ -89,8 +85,16 @@ if RENDER_EXTERNAL_HOSTNAME:
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
-CORS_ALLOW_ALL_ORIGINS = True
+
+custom_frontend = os.environ.get('FRONTEND_URL')
+if custom_frontend and custom_frontend not in CORS_ALLOWED_ORIGINS:
+    CORS_ALLOWED_ORIGINS.append(custom_frontend)
+
+# In production (DEBUG=False), strictly enforce CORS whitelist; in dev (DEBUG=True), allow flexible dev connections
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 
 ROOT_URLCONF = 'core.urls'
@@ -207,13 +211,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',
     ),
 }
-# 3. (Optional) Customize JWT settings
+# 3. Customize JWT settings
 from datetime import timedelta
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=7),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
+    'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 

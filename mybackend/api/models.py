@@ -19,7 +19,7 @@ class User(AbstractUser):
     
     # Timestamps
     created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.username
@@ -114,7 +114,7 @@ class meal_logs(models.Model):
     junk_score = models.IntegerField(null=True, blank=True)
     ai_insights = models.TextField(null=True, blank=True)
     meal_photo_url = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
 
 class chat_logs(models.Model):

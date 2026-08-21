@@ -87,38 +87,38 @@ const getBmiCategory = (bmi) => {
 };
 
 const buildForm = (d) => ({
-  firstName: d?.firstName || '',
-  lastName: d?.lastName || '',
-  dobDay: d?.dobDay || '',
-  dobMonth: d?.dobMonth || '',
-  dobYear: d?.dobYear || '',
+  firstName: d?.firstName || d?.first_name || '',
+  lastName: d?.lastName || d?.last_name || '',
+  dobDay: d?.dobDay ? String(d.dobDay) : (d?.day_of_birth !== null && d?.day_of_birth !== undefined ? String(d.day_of_birth) : ''),
+  dobMonth: d?.dobMonth ? String(d.dobMonth) : (d?.month_of_birth !== null && d?.month_of_birth !== undefined ? String(d.month_of_birth) : ''),
+  dobYear: d?.dobYear ? String(d.dobYear) : (d?.year_of_birth !== null && d?.year_of_birth !== undefined ? String(d.year_of_birth) : ''),
   gender: d?.gender || '',
-  phone: d?.phone || '',
-  height: d?.height || '',
-  weight: d?.weight || '',
-  targetWeight: d?.targetWeight || '',
-  waterGoal: d?.waterGoal ? String(d.waterGoal) : '3',
-  mainGoal: d?.mainGoal || '',
-  activityLevel: d?.activityLevel || '',
+  phone: d?.phone || d?.phone_number || '',
+  height: d?.height ? String(d.height) : (d?.height_cm ? String(d.height_cm) : ''),
+  weight: d?.weight ? String(d.weight) : (d?.current_weight_kg ? String(d.current_weight_kg) : ''),
+  targetWeight: d?.targetWeight ? String(d.targetWeight) : (d?.targeted_weight_kg ? String(d.targeted_weight_kg) : ''),
+  waterGoal: d?.waterGoal ? String(d.waterGoal) : (d?.water_intake_litres ? String(d.water_intake_litres) : '3'),
+  mainGoal: d?.mainGoal || d?.primary_goal || '',
+  activityLevel: d?.activityLevel || d?.activity_level || '',
   occupation: d?.occupation || '',
-  sleepSchedule: d?.sleepSchedule || '',
-  dietaryPreference: d?.dietaryPreference || '',
-  cookingOil: d?.cookingOil || '',
-  regionalCulture: d?.regionalCulture || '',
-  allergies: Array.isArray(d?.allergies) ? d.allergies : [],
-  healthIssues: Array.isArray(d?.healthIssues) ? d.healthIssues : [],
-  likedFoods: d?.likedFoods || '',
-  dislikedFoods: d?.dislikedFoods || '',
+  sleepSchedule: d?.sleepSchedule || d?.sleep_schedule || '',
+  dietaryPreference: d?.dietaryPreference || d?.dietary_preference || '',
+  cookingOil: d?.cookingOil || d?.preferred_cooking_oil || '',
+  regionalCulture: d?.regionalCulture || d?.regional_culture || '',
+  allergies: Array.isArray(d?.allergies) ? d.allergies : (typeof d?.allergies === 'string' && d.allergies ? d.allergies.split(',').map((s) => s.trim()).filter(Boolean) : []),
+  healthIssues: Array.isArray(d?.healthIssues) ? d.healthIssues : (typeof d?.health_issues === 'string' && d.health_issues ? d.health_issues.split(',').map((s) => s.trim()).filter(Boolean) : []),
+  likedFoods: d?.likedFoods || d?.liked_foods || '',
+  dislikedFoods: d?.dislikedFoods || d?.disliked_foods || '',
   customAllergy: '',
   customHealthIssue: '',
-  mealsPerDay: d?.mealsPerDay || '',
-  cookingTime: d?.cookingTime || '',
-  groceryBudget: d?.groceryBudget || '',
-  mealLocation: d?.mealLocation || '',
-  mainCarbs: d?.mainCarbs || '',
-  calorieTarget: d?.calorieTarget || 0,
+  mealsPerDay: d?.mealsPerDay ? String(d.mealsPerDay) : (d?.meal_intake_per_day ? String(d.meal_intake_per_day) : ''),
+  cookingTime: d?.cookingTime || d?.available_cooking_time || '',
+  groceryBudget: d?.groceryBudget || d?.grocery_budget || '',
+  mealLocation: d?.mealLocation || d?.preferred_meal_location || '',
+  mainCarbs: d?.mainCarbs || d?.main_carbs_source || '',
+  calorieTarget: d?.calorieTarget || d?.daily_calorie_target || 0,
   bmi: d?.bmi || 0,
-  selectedPlan: d?.selectedPlan || 'Pro',
+  selectedPlan: d?.selectedPlan || d?.selected_plan || 'Pro',
 });
 
 function ChipButton({ label, active, onPress, colors }) {
@@ -348,19 +348,21 @@ export default function OnboardingScreen({ navigation, route }) {
     }
   };
 
+  const parseMonthInt = (monthVal) => {
+    if (!monthVal) return null;
+    const num = parseInt(monthVal, 10);
+    if (!isNaN(num) && num >= 1 && num <= 12) return num;
+    const monthNames = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+    const idx = monthNames.indexOf(String(monthVal).toLowerCase().trim());
+    return idx !== -1 ? idx + 1 : null;
+  };
+
   // ── Universal Quick Save Handler for ANY Step ─────────────────
   const handleQuickSave = async () => {
     setErrorMsg('');
     setLoading(true);
     try {
-      const token = await getStoredToken();
-      if (!token) throw new Error('No auth token');
-
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const userId = payload.user_id || payload.id || payload.sub;
-
-      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      const monthInt = formData.dobMonth ? monthNames.indexOf(formData.dobMonth) + 1 : null;
+      const monthInt = parseMonthInt(formData.dobMonth);
 
       const results = calculateResults();
       const finalBmi = results?.bmi || parseFloat(formData.bmi) || 22.5;
@@ -369,9 +371,9 @@ export default function OnboardingScreen({ navigation, route }) {
       const patchPayload = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        day_of_birth: parseInt(formData.dobDay) || null,
+        day_of_birth: parseInt(formData.dobDay, 10) || null,
         month_of_birth: monthInt,
-        year_of_birth: parseInt(formData.dobYear) || null,
+        year_of_birth: parseInt(formData.dobYear, 10) || null,
         phone_number: formData.phone,
         profile_photo_url: photoUri,
         gender: formData.gender,
@@ -390,7 +392,7 @@ export default function OnboardingScreen({ navigation, route }) {
         health_issues: Array.isArray(formData.healthIssues) ? formData.healthIssues.join(', ') : '',
         liked_foods: formData.likedFoods,
         disliked_foods: formData.dislikedFoods,
-        meal_intake_per_day: parseInt(formData.mealsPerDay) || 3,
+        meal_intake_per_day: parseInt(formData.mealsPerDay, 10) || 3,
         available_cooking_time: formData.cookingTime,
         grocery_budget: formData.groceryBudget,
         preferred_meal_location: formData.mealLocation,
@@ -401,15 +403,14 @@ export default function OnboardingScreen({ navigation, route }) {
         selected_plan: formData.selectedPlan || 'Pro',
       };
 
-      // 1. Direct profile patch
-      await api.patch(ENDPOINTS.profile, patchPayload).catch(() => {});
-      // 2. Onboarding fallback
-      if (userId) {
-        await api.patch(ENDPOINTS.onboardingDetail(userId), patchPayload).catch(() => {});
-      }
+      // Direct profile patch to Django backend
+      await api.patch(ENDPOINTS.profile, patchPayload);
 
       const completeData = {
         ...formData,
+        dobDay: formData.dobDay,
+        dobMonth: formData.dobMonth,
+        dobYear: formData.dobYear,
         selectedPlan: formData.selectedPlan || 'Pro',
         photo: photoUri,
         bmi: finalBmi,
@@ -439,14 +440,7 @@ export default function OnboardingScreen({ navigation, route }) {
     setErrorMsg('');
     setLoading(true);
     try {
-      const token = await getStoredToken();
-      if (!token) throw new Error('No auth token');
-
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const userId = payload.user_id || payload.id || payload.sub;
-
-      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      const monthInt = formData.dobMonth ? monthNames.indexOf(formData.dobMonth) + 1 : null;
+      const monthInt = parseMonthInt(formData.dobMonth);
 
       const results = calculateResults();
       const finalBmi = results?.bmi || parseFloat(formData.bmi) || 22.5;
@@ -455,9 +449,9 @@ export default function OnboardingScreen({ navigation, route }) {
       const finalPayload = {
         first_name: formData.firstName,
         last_name: formData.lastName,
-        day_of_birth: parseInt(formData.dobDay) || null,
+        day_of_birth: parseInt(formData.dobDay, 10) || null,
         month_of_birth: monthInt,
-        year_of_birth: parseInt(formData.dobYear) || null,
+        year_of_birth: parseInt(formData.dobYear, 10) || null,
         phone_number: formData.phone,
         profile_photo_url: photoUri,
         gender: formData.gender,
@@ -476,7 +470,7 @@ export default function OnboardingScreen({ navigation, route }) {
         health_issues: Array.isArray(formData.healthIssues) ? formData.healthIssues.join(', ') : '',
         liked_foods: formData.likedFoods,
         disliked_foods: formData.dislikedFoods,
-        meal_intake_per_day: parseInt(formData.mealsPerDay) || 3,
+        meal_intake_per_day: parseInt(formData.mealsPerDay, 10) || 3,
         available_cooking_time: formData.cookingTime,
         grocery_budget: formData.groceryBudget,
         preferred_meal_location: formData.mealLocation,
@@ -487,10 +481,7 @@ export default function OnboardingScreen({ navigation, route }) {
         selected_plan: formData.selectedPlan || 'Pro',
       };
 
-      await api.patch(ENDPOINTS.profile, finalPayload).catch(() => {});
-      if (userId) {
-        await api.patch(ENDPOINTS.onboardingDetail(userId), finalPayload).catch(() => {});
-      }
+      await api.patch(ENDPOINTS.profile, finalPayload);
 
       const completeData = {
         ...formData,
@@ -525,19 +516,37 @@ export default function OnboardingScreen({ navigation, route }) {
             <Text style={[styles.stepSub, { color: colors.textMuted }]}>Tell us about yourself to get started</Text>
 
             <View style={styles.photoSection}>
-              <Pressable style={styles.photoPick} onPress={pickPhoto}>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.photoPick,
+                  pressed && { opacity: 0.85, transform: [{ scale: 0.97 }] },
+                ]}
+                onPress={pickPhoto}
+              >
                 {photoUri ? (
                   <Image source={{ uri: photoUri }} style={styles.photoImg} />
                 ) : (
-                  <View style={[styles.photoPlaceholder, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: colors.border }]}>
-                    <User size={36} color={isDark ? '#94A3B8' : '#64748B'} />
+                  <View
+                    style={[
+                      styles.photoPlaceholder,
+                      {
+                        backgroundColor: isDark ? '#132035' : '#E6F4EA',
+                        borderColor: COLORS.primary,
+                      },
+                    ]}
+                  >
+                    <User size={40} color={COLORS.primary} />
                   </View>
                 )}
                 <View style={styles.photoEditBadge}>
-                  <Camera size={14} color="#fff" />
+                  <Camera size={15} color="#fff" />
                 </View>
               </Pressable>
-              <Text style={[styles.photoHint, { color: colors.textMuted }]}>Add profile photo</Text>
+              <Pressable onPress={pickPhoto} style={styles.photoHintPill}>
+                <Text style={styles.photoHintText}>
+                  {photoUri ? '✓ Change Profile Photo' : '+ Tap to Upload Photo'}
+                </Text>
+              </Pressable>
             </View>
 
             <FieldInput label="First Name *" value={formData.firstName} onChangeText={(v) => set('firstName', v)} placeholder="e.g. Rahul" colors={colors} />
@@ -1053,32 +1062,57 @@ const styles = StyleSheet.create({
   },
   row2: { flexDirection: 'row' },
 
-  photoSection: { alignItems: 'center', marginBottom: SPACING.xl },
-  photoPick: { width: 96, height: 96, borderRadius: 48, position: 'relative' },
-  photoImg: { width: 96, height: 96, borderRadius: 48 },
+  photoSection: { alignItems: 'center', marginBottom: SPACING.xl, marginTop: SPACING.xs },
+  photoPick: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    position: 'relative',
+    ...SHADOWS.md,
+  },
+  photoImg: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
+    borderWidth: 3,
+    borderColor: COLORS.primary,
+  },
   photoPlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderStyle: 'dashed',
+    borderWidth: 2.5,
   },
   photoEditBadge: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: 0,
+    right: 0,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
+    borderWidth: 2.5,
+    borderColor: '#ffffff',
+    ...SHADOWS.sm,
   },
-  photoHint: { fontSize: 12, marginTop: 8 },
+  photoHintPill: {
+    marginTop: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.3)',
+  },
+  photoHintText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
 
   resultCard: {
     width: '100%',

@@ -1,5 +1,6 @@
 // FILE: mobile/src/screens/main/NiaScreen.js
-// HealthifyMe & ChatGPT Inspired Nia AI Screen — Always Opens as New Chat, Left/Right Bubbles, Responsive Bottom Composer, In-Flow Typing Dots, History Separation, Multi-Language, PDF Export
+// Production-Grade Executive AI Screen — Seamless Header, Minimalist Monochrome Action Cards,
+// Floating Pill Composer, In-Flow Typing Dots, History/Export Modal, Haptics & Zero Crash Fallbacks
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
@@ -22,31 +23,53 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Send, Sparkles, Trash2, Mic, Paperclip, Plus, History, X,
   ChevronRight, MessageSquare, Flame, Dumbbell, Apple, Zap, Download,
+  MoreHorizontal, ArrowUp, FileText, CheckCircle2, Share2,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import ChatBubble from '../../components/nia/ChatBubble';
-import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
 import { ENDPOINTS } from '../../constants/apiConfig';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { triggerHaptic } from '../../utils/haptics';
 
 const SESSIONS_STORAGE_KEY = 'nutriai_chat_sessions';
 
 const SUGGESTED_PROMPTS = [
-  { label: 'Fat Loss Meal Plan', icon: Flame, color: '#EF4444' },
-  { label: 'High Protein Guide', icon: Dumbbell, color: '#6366F1' },
-  { label: 'Healthy Indian Snacks', icon: Apple, color: '#10B981' },
-  { label: 'Calorie Deficit Advice', icon: Zap, color: '#F59E0B' },
+  { label: '7-Day Meal Plan', icon: Flame },
+  { label: 'High Protein Guide', icon: Dumbbell },
+  { label: 'Healthy Snacks', icon: Apple },
+  { label: 'Calorie Deficit', icon: Zap },
+];
+
+const WELCOME_CARDS = [
+  {
+    icon: Flame,
+    title: 'Personalized Meal Plan',
+    desc: 'Get structured breakfast, lunch & dinner tailored to your calorie goal.',
+    prompt: 'Create a personalized Indian meal plan based on my calorie target.',
+  },
+  {
+    icon: Dumbbell,
+    title: 'Protein Maximizer',
+    desc: 'Discover high-protein veg and non-veg food options.',
+    prompt: 'Give me a list of top high-protein foods (veg & non-veg) with macros.',
+  },
+  {
+    icon: Zap,
+    title: 'Fat Loss Strategy',
+    desc: 'Actionable tips for healthy calorie deficit and fat loss.',
+    prompt: 'How can I maintain a healthy calorie deficit without losing muscle?',
+  },
 ];
 
 const INITIAL_MSG = {
   id: 'init_0',
   type: 'ai',
-  text: "Hi! I'm Nia AI ✦ Your personal AI nutrition coach. Ask me anything about your diet, calorie goals, macros, or custom meal plans!",
+  text: "Hello! I'm Nia, your AI nutrition & diet strategist. How can I help optimize your nutrition today?",
   timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
   hasMealPlan: false,
 };
@@ -62,14 +85,14 @@ function InFlowTypingBubble({ isDark, colors }) {
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(dot, { toValue: -5, duration: 300, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
-          Animated.delay(600),
+          Animated.timing(dot, { toValue: -4, duration: 280, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 280, useNativeDriver: true }),
+          Animated.delay(500),
         ])
       );
     const a1 = bounce(dot1, 0);
-    const a2 = bounce(dot2, 150);
-    const a3 = bounce(dot3, 300);
+    const a2 = bounce(dot2, 140);
+    const a3 = bounce(dot3, 280);
     a1.start();
     a2.start();
     a3.start();
@@ -82,11 +105,11 @@ function InFlowTypingBubble({ isDark, colors }) {
 
   return (
     <View style={typingStyles.container}>
-      <View style={typingStyles.avatar}>
-        <Sparkles size={14} color="#ffffff" />
+      <View style={[typingStyles.avatar, { backgroundColor: isDark ? 'rgba(20,184,166,0.2)' : 'rgba(20,184,166,0.12)' }]}>
+        <Sparkles size={13} color={COLORS.primary} />
       </View>
       <View style={[typingStyles.bubble, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-        <Text style={[typingStyles.thinkingText, { color: colors.textMuted }]}>Nia is thinking</Text>
+        <Text style={[typingStyles.thinkingText, { color: colors.textMuted }]}>Nia is writing</Text>
         <View style={typingStyles.dotsRow}>
           {[dot1, dot2, dot3].map((d, i) => (
             <Animated.View key={i} style={[typingStyles.dot, { transform: [{ translateY: d }] }]} />
@@ -106,10 +129,9 @@ const typingStyles = StyleSheet.create({
     gap: 8,
   },
   avatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: COLORS.teal,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -117,7 +139,7 @@ const typingStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderRadius: 18,
+    borderRadius: RADIUS.xl,
     borderBottomLeftRadius: 4,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -137,7 +159,6 @@ const typingStyles = StyleSheet.create({
 });
 
 export default function NiaScreen() {
-  const { userData, userMetrics } = useAuth();
   const { isDark, colors } = useTheme();
 
   // Sessions & Active Conversation
@@ -148,12 +169,14 @@ export default function NiaScreen() {
   const [attachedFile, setAttachedFile] = useState(null);
   const [sending, setSending] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [showOptionsModal, setShowOptionsModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const listRef = useRef(null);
 
   // Pick / Attach File or Photo for Nia
   const handleAttachFile = async () => {
-    Alert.alert('Attach File or Photo 📎', 'Select a meal photo, lab report, or diet document to share with Nia:', [
+    triggerHaptic('light');
+    Alert.alert('Attach File or Photo 📎', 'Select a meal photo or nutrition document to analyze with Nia:', [
       {
         text: 'Take Photo',
         onPress: async () => {
@@ -166,11 +189,12 @@ export default function NiaScreen() {
           if (!res.canceled && res.assets[0]?.uri) {
             const asset = res.assets[0];
             setAttachedFile({ uri: asset.uri, name: 'meal_photo.jpg', type: 'image/jpeg' });
+            triggerHaptic('selection');
           }
         },
       },
       {
-        text: 'Choose from Gallery / Files',
+        text: 'Choose from Gallery',
         onPress: async () => {
           const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
           if (!perm.granted) {
@@ -180,8 +204,9 @@ export default function NiaScreen() {
           const res = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsEditing: true });
           if (!res.canceled && res.assets[0]?.uri) {
             const asset = res.assets[0];
-            const name = asset.fileName || 'attached_document.jpg';
+            const name = asset.fileName || 'attached_photo.jpg';
             setAttachedFile({ uri: asset.uri, name, type: 'image/jpeg' });
+            triggerHaptic('selection');
           }
         },
       },
@@ -189,8 +214,7 @@ export default function NiaScreen() {
     ]);
   };
 
-  // 1. ALWAYS OPEN AS A FRESH NEW CHAT:
-  // Load saved session list into memory for History modal, but keep active view fresh!
+  // Fresh new chat initialization
   useEffect(() => {
     AsyncStorage.getItem(SESSIONS_STORAGE_KEY)
       .then((raw) => {
@@ -203,7 +227,6 @@ export default function NiaScreen() {
       })
       .catch((e) => console.warn('Could not load sessions:', e));
 
-    // Fresh chat initialization
     const freshId = String(Date.now());
     setActiveSessionId(freshId);
     setMessages([INITIAL_MSG]);
@@ -216,23 +239,28 @@ export default function NiaScreen() {
     );
   };
 
-  // Start New Chat (+ Button)
+  // Start New Chat
   const handleNewChat = () => {
+    triggerHaptic('medium');
     const newId = String(Date.now());
     setActiveSessionId(newId);
     setMessages([INITIAL_MSG]);
+    setAttachedFile(null);
   };
 
-  // Select Past Session from History Modal
+  // Select Past Session from History
   const handleSelectPastSession = (session) => {
+    triggerHaptic('selection');
     setActiveSessionId(session.id);
     setMessages(session.messages || [INITIAL_MSG]);
     setShowHistoryModal(false);
+    setShowOptionsModal(false);
   };
 
   // Delete Session from History
   const handleDeleteSession = (sessionIdToDelete) => {
     const targetId = sessionIdToDelete || activeSessionId;
+    triggerHaptic('warning');
     Alert.alert('Delete Session 🗑️', 'Are you sure you want to delete this chat session?', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -245,6 +273,8 @@ export default function NiaScreen() {
             handleNewChat();
           }
           setShowHistoryModal(false);
+          setShowOptionsModal(false);
+          triggerHaptic('light');
         },
       },
     ]);
@@ -264,6 +294,7 @@ export default function NiaScreen() {
     const msg = text || input.trim();
     if (!msg || sending) return;
     setInput('');
+    triggerHaptic('medium');
 
     const userMsg = {
       id: String(Date.now()),
@@ -279,7 +310,6 @@ export default function NiaScreen() {
     try {
       const res = await api.post(ENDPOINTS.niaChat, {
         message: msg,
-        profile: userData,
       });
 
       const aiText = res.data.ai_response || res.data.response || res.data.message;
@@ -296,6 +326,7 @@ export default function NiaScreen() {
 
       const finalMsgs = [...updatedUserList, aiMsg];
       setMessages(finalMsgs);
+      triggerHaptic('success');
 
       // Save to sessions history with proper snippet
       const titleSnippet = msg.length > 32 ? `${msg.substring(0, 30)}...` : msg;
@@ -319,34 +350,48 @@ export default function NiaScreen() {
         ];
       }
       saveSessions(nextSessions);
-    } catch (e) {
-      // Show a real error message — do NOT fall back to local canned replies
-      const errMsg = {
+    } catch (err) {
+      triggerHaptic('error');
+      const fallbackMsg = {
         id: String(Date.now() + 1),
         type: 'ai',
-        text: e?.normalizedMessage || 'Unable to reach Nia right now. Please check your connection and try again.',
+        text: "I couldn't reach the nutrition server right now. Please verify your connection and try again.",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         hasMealPlan: false,
-        isError: true,
       };
-      setMessages((prev) => [...prev, errMsg]);
+      setMessages([...updatedUserList, fallbackMsg]);
     } finally {
       setSending(false);
+      setAttachedFile(null);
     }
   };
 
-  // Export & Download Chat / Diet Plan as PDF
+  // Export Chat as PDF
   const handleExportChatPdf = async () => {
-    if (messages.length <= 1) {
-      Alert.alert('No Content', 'Ask Nia to create a diet plan or chat first to generate and download your personalized report.');
-      return;
-    }
-
+    setShowOptionsModal(false);
+    triggerHaptic('light');
     setExportingPdf(true);
     try {
-      const userName = (userData?.firstName || userData?.name || 'Member').replace(/[^a-zA-Z0-9_-]/g, '_');
-      const todayDate = new Date().toISOString().slice(0, 10);
-      const cleanFileName = `NutriAI_Diet_Plan_${userName}_${todayDate}.pdf`;
+      const todayDate = new Date().toLocaleDateString('en-IN', { dateStyle: 'long' });
+      const cleanFileName = `Nia_Diet_Plan_${new Date().toISOString().slice(0, 10)}.pdf`;
+
+      const conversationHtml = messages
+        .filter((m) => m.id !== 'init_0')
+        .map((m) => {
+          const isAi = m.type === 'ai';
+          const bg = isAi ? '#F8FAFC' : '#10B98115';
+          const border = isAi ? '#E2E8F0' : '#10B98140';
+          const sender = isAi ? 'Nia AI Nutritionist' : 'You';
+          const senderColor = isAi ? '#0D9488' : '#059669';
+
+          return `
+            <div style="margin-bottom: 16px; padding: 12px 16px; background-color: ${bg}; border: 1px solid ${border}; border-radius: 8px; page-break-inside: avoid;">
+              <div style="font-size: 11px; font-weight: 800; color: ${senderColor}; margin-bottom: 4px; text-transform: uppercase;">${sender} • <span style="font-weight: 400; color: #94A3B8;">${m.timestamp || ''}</span></div>
+              <div style="font-size: 12px; color: #1E293B; line-height: 1.5; white-space: pre-wrap;">${m.text}</div>
+            </div>
+          `;
+        })
+        .join('');
 
       const formattedHtml = `
         <!DOCTYPE html>
@@ -355,45 +400,20 @@ export default function NiaScreen() {
             <meta charset="utf-8" />
             <title>${cleanFileName}</title>
             <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 28px; color: #0f172a; line-height: 1.6; }
-              .header { border-bottom: 2px solid #14b8a6; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
-              .logo { font-size: 22px; font-weight: 900; color: #14b8a6; }
-              .doc-title { font-size: 14px; font-weight: 800; color: #6366f1; text-transform: uppercase; }
-              .user-info { font-size: 11px; color: #64748b; margin-top: 4px; }
-              .msg-box { margin-bottom: 14px; padding: 12px 16px; border-radius: 8px; font-size: 12px; }
-              .msg-user { background: #f1f5f9; border-left: 4px solid #6366f1; text-align: right; }
-              .msg-ai { background: #ecfdf5; border-left: 4px solid #10b981; }
-              .sender { font-weight: 800; font-size: 10px; text-transform: uppercase; margin-bottom: 4px; color: #475569; }
-              .footer { border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 24px; font-size: 9px; color: #94a3b8; text-align: center; }
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #0F172A; background: #FFFFFF; font-size: 12px; }
+              .header { border-bottom: 2px solid #0D9488; padding-bottom: 12px; margin-bottom: 20px; }
+              .title { font-size: 20px; font-weight: 800; color: #0D9488; }
+              .meta { font-size: 10px; color: #64748B; margin-top: 4px; }
+              .footer { text-align: center; margin-top: 24px; font-size: 10px; color: #94A3B8; text-transform: uppercase; }
             </style>
           </head>
           <body>
             <div class="header">
-              <div>
-                <div class="logo">NutriAI • Nia AI Coach</div>
-                <div class="user-info">Member: <strong>${userData?.name || 'Member'}</strong> • Goal: ${userData?.mainGoal || 'Nutrition & Wellness'}</div>
-              </div>
-              <div style="text-align: right;">
-                <div class="doc-title">Diet Consultation</div>
-                <div class="user-info">${new Date().toLocaleDateString()}</div>
-              </div>
+              <div class="title">NutriAI ✦ Personalized Nutrition Consultation</div>
+              <div class="meta">Exported on: ${todayDate} | Assistant: Nia AI Nutrition Coach</div>
             </div>
-
-            ${messages
-              .filter((m) => m.id !== 'init_0')
-              .map(
-                (m) => `
-                <div class="msg-box ${m.type === 'user' ? 'msg-user' : 'msg-ai'}">
-                  <div class="sender">${m.type === 'user' ? 'You' : 'Nia AI ✦'} (${m.timestamp || ''})</div>
-                  <div style="white-space: pre-wrap;">${m.text}</div>
-                </div>
-              `
-              )
-              .join('')}
-
-            <div class="footer">
-              Generated by NutriAI Clinical AI Coach • For personal dietary reference
-            </div>
+            ${conversationHtml || '<p style="color: #94A3B8;">No conversation messages to export.</p>'}
+            <div class="footer">NutriAI • Healthy Living & Macro Tracking</div>
           </body>
         </html>
       `;
@@ -409,6 +429,7 @@ export default function NiaScreen() {
       } else {
         Alert.alert('Diet Plan Generated', `Saved as ${cleanFileName}`);
       }
+      triggerHaptic('success');
     } catch (err) {
       console.warn('PDF export error:', err);
       Alert.alert('Export Notice', 'Could not export PDF. Please try again.');
@@ -417,60 +438,53 @@ export default function NiaScreen() {
     }
   };
 
+  const isOnlyInitial = messages.length === 1 && messages[0].id === 'init_0';
+
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
 
-      {/* Top Header Bar */}
-      <View style={styles.topBar}>
+      {/* Seamless Minimalist Header Bar */}
+      <View style={[styles.topBar, { backgroundColor: colors.bg, borderBottomColor: colors.border }]}>
         <View style={styles.coachInfo}>
           <View style={styles.coachHeaderRow}>
-            <Text style={styles.coachName}>Nia AI ✦</Text>
-            <View style={styles.onlinePulseBadge}>
-              <View style={styles.greenDot} />
-              <Text style={styles.onlinePulseText}>Active Coach</Text>
+            <Text style={[styles.coachName, { color: colors.text }]}>Nia AI</Text>
+            <View style={[styles.activePill, { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.10)' }]}>
+              <View style={styles.activeDot} />
+              <Text style={styles.activeText}>Coach</Text>
             </View>
           </View>
-          <Text style={styles.niaTitle}>Personalized Nutrition & Diet Coach</Text>
+          <Text style={[styles.niaSubtitle, { color: colors.textMuted }]}>AI Nutritionist & Meal Strategist</Text>
         </View>
 
-        {/* Action Header Group */}
+        {/* Clean Header Action Group */}
         <View style={styles.actionHeaderGroup}>
           <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
-            onPress={handleExportChatPdf}
-            disabled={exportingPdf}
-            hitSlop={6}
-          >
-            {exportingPdf ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <Download size={16} color="#ffffff" />
-            )}
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
+            style={({ pressed }) => [
+              styles.headerPillBtn,
+              { backgroundColor: colors.bgCard, borderColor: colors.border },
+              pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] },
+            ]}
             onPress={handleNewChat}
-            hitSlop={6}
+            hitSlop={8}
           >
-            <Plus size={16} color="#ffffff" />
+            <Plus size={15} color={colors.text} />
+            <Text style={[styles.headerPillText, { color: colors.text }]}>New</Text>
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
-            onPress={() => setShowHistoryModal(true)}
-            hitSlop={6}
+            style={({ pressed }) => [
+              styles.headerIconBtn,
+              { backgroundColor: colors.bgCard, borderColor: colors.border },
+              pressed && { opacity: 0.7, transform: [{ scale: 0.96 }] },
+            ]}
+            onPress={() => {
+              triggerHaptic('light');
+              setShowOptionsModal(true);
+            }}
+            hitSlop={8}
           >
-            <History size={16} color="#ffffff" />
-          </Pressable>
-
-          <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
-            onPress={() => handleDeleteSession()}
-            hitSlop={6}
-          >
-            <Trash2 size={15} color="rgba(255,255,255,0.85)" />
+            <MoreHorizontal size={18} color={colors.text} />
           </Pressable>
         </View>
       </View>
@@ -480,34 +494,7 @@ export default function NiaScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 20}
       >
-        {/* Suggested Category Chips */}
-        <View style={[styles.promptScrollWrap, { backgroundColor: isDark ? '#0f172a' : '#F1F5F9' }]}>
-          <FlatList
-            horizontal
-            data={SUGGESTED_PROMPTS}
-            keyExtractor={(item) => item.label}
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => {
-              const Icon = item.icon;
-              return (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.promptChip,
-                    { backgroundColor: colors.bgCard, borderColor: colors.border },
-                    pressed && { opacity: 0.8 },
-                  ]}
-                  onPress={() => sendMessage(item.label)}
-                >
-                  <Icon size={13} color={item.color} />
-                  <Text style={[styles.promptChipText, { color: colors.text }]}>{item.label}</Text>
-                </Pressable>
-              );
-            }}
-            contentContainerStyle={styles.promptListContent}
-          />
-        </View>
-
-        {/* Chat Messages */}
+        {/* Chat Messages / Welcome State */}
         <FlatList
           ref={listRef}
           data={messages}
@@ -518,73 +505,128 @@ export default function NiaScreen() {
               isUser={item.type === 'user'}
             />
           )}
-          initialNumToRender={10}
-          maxToRenderPerBatch={8}
-          windowSize={5}
-          removeClippedSubviews={Platform.OS === 'android'}
-          style={styles.messageList}
+          ListHeaderComponent={
+            isOnlyInitial ? (
+              <View style={styles.welcomeHero}>
+                <View style={[styles.welcomeIconWrap, { backgroundColor: isDark ? 'rgba(20,184,166,0.15)' : 'rgba(20,184,166,0.08)' }]}>
+                  <Sparkles size={26} color={COLORS.primary} />
+                </View>
+                <Text style={[styles.welcomeTitle, { color: colors.text }]}>How can I assist your nutrition?</Text>
+                <Text style={[styles.welcomeSub, { color: colors.textMuted }]}>
+                  Ask custom diet plans, protein sources, calorie deficit targets, or meal ideas.
+                </Text>
+
+                {/* Quick Action Cards */}
+                <View style={styles.welcomeCardsWrap}>
+                  {WELCOME_CARDS.map((card, idx) => {
+                    const CardIcon = card.icon;
+                    return (
+                      <Pressable
+                        key={idx}
+                        style={({ pressed }) => [
+                          styles.welcomeCard,
+                          { backgroundColor: colors.bgCard, borderColor: colors.border },
+                          pressed && { opacity: 0.8, transform: [{ scale: 0.98 }] },
+                        ]}
+                        onPress={() => sendMessage(card.prompt)}
+                      >
+                        <View style={[styles.welcomeCardIcon, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)' }]}>
+                          <CardIcon size={16} color={COLORS.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.welcomeCardTitle, { color: colors.text }]}>{card.title}</Text>
+                          <Text style={[styles.welcomeCardDesc, { color: colors.textMuted }]}>{card.desc}</Text>
+                        </View>
+                        <ChevronRight size={16} color={colors.textMuted} />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : null
+          }
+          ListFooterComponent={sending ? <InFlowTypingBubble isDark={isDark} colors={colors} /> : null}
           contentContainerStyle={styles.messageContent}
           showsVerticalScrollIndicator={false}
-          ListFooterComponent={sending ? <InFlowTypingBubble isDark={isDark} colors={colors} /> : null}
-          onContentSizeChange={scrollToEnd}
+          keyboardShouldPersistTaps="handled"
         />
 
-        {/* ChatGPT Style Floating Bottom Composer */}
+        {/* Floating Minimalist Capsule Composer */}
         <View style={styles.floatingComposerWrap}>
-          {/* Attachment Preview Chip */}
+          {/* Quick Capsule Prompt Chips (Visible only when conversation is active) */}
+          {!isOnlyInitial && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.promptListContent}>
+              {SUGGESTED_PROMPTS.map((item, idx) => {
+                const Icon = item.icon;
+                return (
+                  <Pressable
+                    key={idx}
+                    style={({ pressed }) => [
+                      styles.promptChip,
+                      { backgroundColor: colors.bgCard, borderColor: colors.border },
+                      pressed && { opacity: 0.75, transform: [{ scale: 0.96 }] },
+                    ]}
+                    onPress={() => sendMessage(item.label)}
+                  >
+                    <Icon size={12} color={colors.textMuted} />
+                    <Text style={[styles.promptChipText, { color: colors.text }]}>{item.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          )}
+
+          {/* Attached File Preview */}
           {attachedFile && (
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                backgroundColor: colors.bgCard,
-                borderColor: COLORS.primary,
-                borderWidth: 1.5,
+                backgroundColor: isDark ? '#1E293B' : '#EFFDF8',
                 borderRadius: RADIUS.lg,
-                paddingHorizontal: 10,
+                paddingHorizontal: 12,
                 paddingVertical: 6,
                 marginBottom: 6,
-                alignSelf: 'flex-start',
-                maxWidth: '90%',
                 gap: 8,
+                borderWidth: 1,
+                borderColor: colors.border,
               }}
             >
-              <Paperclip size={14} color={COLORS.primary} />
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }} numberOfLines={1}>
+              <Paperclip size={13} color={COLORS.primary} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text, flex: 1 }} numberOfLines={1}>
                 {attachedFile.name}
               </Text>
-              <Pressable onPress={() => setAttachedFile(null)} hitSlop={6}>
+              <Pressable
+                onPress={() => {
+                  triggerHaptic('light');
+                  setAttachedFile(null);
+                }}
+                hitSlop={6}
+              >
                 <X size={14} color={colors.textMuted} />
               </Pressable>
             </View>
           )}
 
+          {/* Island Capsule Input Bar */}
           <View style={[styles.floatingPillBar, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-            {/* File / Photo Upload Action */}
             <Pressable
               style={({ pressed }) => [
-                {
-                  width: 32,
-                  height: 32,
-                  borderRadius: 16,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-                  marginRight: 6,
-                },
+                styles.attachIconBtn,
+                { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)' },
                 pressed && { opacity: 0.7 },
               ]}
               onPress={handleAttachFile}
-              hitSlop={4}
+              hitSlop={6}
             >
-              <Paperclip size={16} color={attachedFile ? COLORS.primary : colors.textSecondary} />
+              <Paperclip size={16} color={attachedFile ? COLORS.primary : colors.textMuted} />
             </Pressable>
 
             <TextInput
               style={[styles.input, { color: colors.text }]}
               value={input}
               onChangeText={setInput}
-              placeholder={attachedFile ? 'Add a question about this attachment...' : 'Ask Nia anything...'}
+              placeholder={attachedFile ? 'Add a message with attachment...' : 'Ask Nia anything...'}
               placeholderTextColor={colors.textMuted}
               multiline
               maxLength={500}
@@ -593,18 +635,77 @@ export default function NiaScreen() {
             />
 
             <Pressable
-              style={[
+              style={({ pressed }) => [
                 styles.sendCircleBtn,
-                (!input.trim() && !attachedFile || sending) && styles.sendCircleBtnDisabled,
+                (!input.trim() && !attachedFile || sending)
+                  ? [styles.sendCircleBtnDisabled, { backgroundColor: isDark ? '#1E293B' : '#E2E8F0' }]
+                  : { backgroundColor: COLORS.primary },
+                pressed && { opacity: 0.85, transform: [{ scale: 0.94 }] },
               ]}
               onPress={() => sendMessage()}
               disabled={(!input.trim() && !attachedFile) || sending}
             >
-              <Send size={15} color={(input.trim() || attachedFile) && !sending ? '#ffffff' : COLORS.textMuted} />
+              <ArrowUp size={17} color={(input.trim() || attachedFile) && !sending ? '#FFFFFF' : colors.textMuted} strokeWidth={2.5} />
             </Pressable>
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Options Menu Modal */}
+      <Modal visible={showOptionsModal} animationType="fade" transparent onRequestClose={() => setShowOptionsModal(false)}>
+        <Pressable style={styles.modalBackdrop} onPress={() => setShowOptionsModal(false)}>
+          <View style={[styles.optionsSheet, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <View style={styles.sheetHandle} />
+
+            <Text style={[styles.sheetTitle, { color: colors.text }]}>Conversation Options</Text>
+
+            <Pressable
+              style={styles.sheetOptionRow}
+              onPress={() => {
+                setShowOptionsModal(false);
+                setTimeout(() => setShowHistoryModal(true), 150);
+              }}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)' }]}>
+                <History size={17} color={colors.text} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.sheetOptionText, { color: colors.text }]}>Chat History</Text>
+                <Text style={[styles.sheetOptionSub, { color: colors.textMuted }]}>View or resume past conversations</Text>
+              </View>
+              <ChevronRight size={16} color={colors.textMuted} />
+            </Pressable>
+
+            <Pressable
+              style={styles.sheetOptionRow}
+              onPress={handleExportChatPdf}
+              disabled={exportingPdf}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)' }]}>
+                <Download size={17} color={COLORS.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.sheetOptionText, { color: colors.text }]}>Export as PDF</Text>
+                <Text style={[styles.sheetOptionSub, { color: colors.textMuted }]}>Download full diet plan document</Text>
+              </View>
+              {exportingPdf ? <ActivityIndicator size="small" color={COLORS.primary} /> : <ChevronRight size={16} color={colors.textMuted} />}
+            </Pressable>
+
+            <Pressable
+              style={[styles.sheetOptionRow, { borderBottomWidth: 0 }]}
+              onPress={() => handleDeleteSession()}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: 'rgba(239,68,68,0.1)' }]}>
+                <Trash2 size={17} color="#EF4444" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.sheetOptionText, { color: '#EF4444' }]}>Clear Conversation</Text>
+                <Text style={[styles.sheetOptionSub, { color: colors.textMuted }]}>Delete current chat messages</Text>
+              </View>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* History Sessions Modal */}
       <Modal visible={showHistoryModal} animationType="slide" transparent onRequestClose={() => setShowHistoryModal(false)}>
@@ -613,16 +714,19 @@ export default function NiaScreen() {
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleGroup}>
                 <History size={18} color={COLORS.primary} />
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Chat History Sessions</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Past Chat Sessions</Text>
               </View>
-              <Pressable onPress={() => setShowHistoryModal(false)} hitSlop={8}>
+              <Pressable
+                onPress={() => setShowHistoryModal(false)}
+                hitSlop={8}
+              >
                 <X size={20} color={colors.textMuted} />
               </Pressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
               {sessions.length === 0 ? (
-                <Text style={{ color: colors.textMuted, textAlign: 'center', marginVertical: 20 }}>No saved chat history</Text>
+                <Text style={{ color: colors.textMuted, textAlign: 'center', marginVertical: 24, fontSize: 13 }}>No past sessions saved yet</Text>
               ) : (
                 sessions.map((s) => (
                   <Pressable
@@ -630,7 +734,7 @@ export default function NiaScreen() {
                     style={[
                       styles.sessionRow,
                       { borderColor: colors.border },
-                      activeSessionId === s.id && { backgroundColor: 'rgba(16,185,129,0.1)' },
+                      activeSessionId === s.id && { backgroundColor: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)' },
                     ]}
                     onPress={() => handleSelectPastSession(s)}
                   >
@@ -641,7 +745,7 @@ export default function NiaScreen() {
                     </View>
 
                     <Pressable onPress={() => handleDeleteSession(s.id)} hitSlop={8}>
-                      <Trash2 size={16} color="#EF4444" />
+                      <Trash2 size={15} color="#EF4444" />
                     </Pressable>
                   </Pressable>
                 ))
@@ -658,31 +762,41 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
   topBar: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.base,
+    paddingVertical: SPACING.sm + 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderBottomWidth: 1,
   },
   coachInfo: { flex: 1 },
-  coachHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  coachName: { fontSize: 18, fontWeight: '900', color: '#ffffff', letterSpacing: -0.3 },
-  onlinePulseBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(16,185,129,0.18)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full },
-  greenDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981' },
-  onlinePulseText: { fontSize: 10, fontWeight: '800', color: '#34D399' },
-  niaTitle: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  coachHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  coachName: { fontSize: 18, fontWeight: '900', letterSpacing: -0.4 },
+  activePill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full },
+  activeDot: { width: 5, height: 5, borderRadius: 2.5, backgroundColor: '#10B981' },
+  activeText: { fontSize: 10, fontWeight: '800', color: '#10B981' },
+  niaSubtitle: { fontSize: 11, fontWeight: '500', marginTop: 1 },
 
-  actionHeaderGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  headerIconBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+  actionHeaderGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerPillBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, borderWidth: 1 },
+  headerPillText: { fontSize: 12, fontWeight: '800' },
+  headerIconBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
 
-  promptScrollWrap: { paddingVertical: 8 },
-  promptListContent: { paddingHorizontal: SPACING.base, gap: 8 },
-  promptChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 7, borderRadius: RADIUS.full, borderWidth: 1 },
-  promptChipText: { fontSize: 12, fontWeight: '700' },
+  welcomeHero: { paddingHorizontal: SPACING.base, paddingVertical: SPACING.lg, alignItems: 'center' },
+  welcomeIconWrap: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  welcomeTitle: { fontSize: 18, fontWeight: '900', letterSpacing: -0.4, textAlign: 'center', marginBottom: 4 },
+  welcomeSub: { fontSize: 12, textAlign: 'center', lineHeight: 18, paddingHorizontal: 16, marginBottom: SPACING.lg },
+  welcomeCardsWrap: { width: '100%', gap: 10 },
+  welcomeCard: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: RADIUS.xl, borderWidth: 1, gap: 12, ...SHADOWS.sm },
+  welcomeCardIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  welcomeCardTitle: { fontSize: 13, fontWeight: '800', marginBottom: 2 },
+  welcomeCardDesc: { fontSize: 11, lineHeight: 15 },
 
-  messageList: { flex: 1 },
-  messageContent: { padding: SPACING.base, paddingBottom: 90 },
+  promptListContent: { paddingHorizontal: SPACING.base, gap: 6, marginBottom: 8 },
+  promptChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, borderWidth: 1 },
+  promptChipText: { fontSize: 11, fontWeight: '700' },
+
+  messageContent: { padding: SPACING.base, paddingBottom: 20 },
 
   floatingComposerWrap: {
     paddingHorizontal: SPACING.base,
@@ -693,21 +807,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 28,
-    borderWidth: 1.5,
-    paddingHorizontal: 16,
+    borderWidth: 1,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    ...SHADOWS.md,
+    ...SHADOWS.sm,
   },
-  input: { flex: 1, fontSize: 14, maxHeight: 100, paddingVertical: 8 },
-  sendCircleBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', marginLeft: 6 },
-  sendCircleBtnDisabled: { backgroundColor: '#E2E8F0' },
+  attachIconBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  input: { flex: 1, fontSize: 14, maxHeight: 90, paddingVertical: 6, paddingHorizontal: 4 },
+  sendCircleBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginLeft: 6 },
+  sendCircleBtnDisabled: {},
 
-  modalBackdrop: { flex: 1, backgroundColor: 'rgba(3,7,18,0.75)', justifyContent: 'flex-end' },
-  modalCard: { borderTopLeftRadius: RADIUS['2xl'], borderTopRightRadius: RADIUS['2xl'], maxHeight: '80%', padding: SPACING.lg, borderWidth: 1 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(3,7,18,0.70)', justifyContent: 'flex-end' },
+  optionsSheet: { borderTopLeftRadius: RADIUS['2xl'], borderTopRightRadius: RADIUS['2xl'], padding: SPACING.lg, borderWidth: 1 },
+  sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: '#94A3B8', alignSelf: 'center', marginBottom: 16, opacity: 0.5 },
+  sheetTitle: { fontSize: 15, fontWeight: '900', letterSpacing: -0.3, marginBottom: 14 },
+  sheetOptionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(15,23,42,0.06)' },
+  sheetOptionIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  sheetOptionText: { fontSize: 14, fontWeight: '800' },
+  sheetOptionSub: { fontSize: 11, marginTop: 1 },
+
+  modalCard: { borderTopLeftRadius: RADIUS['2xl'], borderTopRightRadius: RADIUS['2xl'], maxHeight: '75%', padding: SPACING.lg, borderWidth: 1 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
   modalTitleGroup: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   modalTitle: { fontSize: 16, fontWeight: '800' },
-  sessionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1 },
-  sessionTitle: { fontSize: 14, fontWeight: '700' },
+  sessionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 8, borderRadius: RADIUS.lg, borderBottomWidth: 1 },
+  sessionTitle: { fontSize: 13, fontWeight: '700' },
   sessionSub: { fontSize: 11, marginTop: 2 },
 });

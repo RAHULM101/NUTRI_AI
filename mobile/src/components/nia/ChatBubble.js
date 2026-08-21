@@ -1,14 +1,16 @@
 // FILE: mobile/src/components/nia/ChatBubble.js
-// HealthifyMe & Fittr Inspired Nia ChatBubble — Category-Tagged AI Response Cards, Emerald Callout Tips, 1-Tap Copy, Native Share, and Add to Today's Tracker Actions
+// Production-Grade Executive Chat Bubble — Fluid Borderless AI Response, Crisp User Pill,
+// Interactive 7-Day Meal Plan Table, 1-Tap PDF Export, Haptics & Clipboard Copy
 
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Clipboard, Share } from 'react-native';
-import { Sparkles, User, Utensils, Flame, Download, Copy, Plus, Check, Share2, ShieldCheck, Zap, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Sparkles, Utensils, Flame, Download, Copy, Plus, Check, Share2, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
+import { triggerHaptic } from '../../utils/haptics';
 
 // ── Foods database copied exactly from Web App (niaEngine.js) ───────────
 const FOODS = {
@@ -84,11 +86,11 @@ export const generateMealPlan = (calories = 2000, numDays = 7) => {
 };
 
 const MEAL_TAG_COLORS = {
-  Breakfast: { bg: 'rgba(20,184,166,0.15)', text: '#14B8A6', border: 'rgba(20,184,166,0.3)' },
-  Lunch: { bg: 'rgba(59,130,246,0.15)', text: '#3B82F6', border: 'rgba(59,130,246,0.3)' },
-  Dinner: { bg: 'rgba(139,92,246,0.15)', text: '#8B5CF6', border: 'rgba(139,92,246,0.3)' },
-  'Evening Snack': { bg: 'rgba(245,158,11,0.15)', text: '#F59E0B', border: 'rgba(245,158,11,0.3)' },
-  Snack: { bg: 'rgba(245,158,11,0.15)', text: '#F59E0B', border: 'rgba(245,158,11,0.3)' },
+  Breakfast: { bg: 'rgba(20,184,166,0.12)', text: '#0D9488', border: 'rgba(20,184,166,0.25)' },
+  Lunch: { bg: 'rgba(59,130,246,0.12)', text: '#2563EB', border: 'rgba(59,130,246,0.25)' },
+  Dinner: { bg: 'rgba(139,92,246,0.12)', text: '#7C3AED', border: 'rgba(139,92,246,0.25)' },
+  'Evening Snack': { bg: 'rgba(245,158,11,0.12)', text: '#D97706', border: 'rgba(245,158,11,0.25)' },
+  Snack: { bg: 'rgba(245,158,11,0.12)', text: '#D97706', border: 'rgba(245,158,11,0.25)' },
 };
 
 function MealPlanTable({ numDays = 7, isDark, colors }) {
@@ -101,6 +103,7 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
   const currentDayData = weeklyPlan[activeDayIdx] || weeklyPlan[0];
 
   const handleDownloadPDF = async () => {
+    triggerHaptic('light');
     setDownloading(true);
     try {
       const todayDate = new Date().toLocaleDateString('en-IN', { dateStyle: 'long' });
@@ -114,17 +117,17 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
             <title>NutriAI — ${numDays}-Day Meal Plan</title>
             <style>
               * { box-sizing: border-box; margin: 0; padding: 0; }
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 20px 24px; color: #0F172A; background: #FFFFFF; font-size: 12px; }
-              .header { border-bottom: 2px solid #E2E8F0; padding-bottom: 12px; margin-bottom: 16px; }
-              .title { font-size: 20px; font-weight: 900; color: #0D9488; letter-spacing: -0.5px; }
-              .meta { font-size: 10px; color: #64748B; margin-top: 4px; }
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #0F172A; background: #FFFFFF; font-size: 12px; }
+              .header { border-bottom: 2px solid #0D9488; padding-bottom: 12px; margin-bottom: 16px; }
+              .title { font-size: 20px; font-weight: 800; color: #0D9488; letter-spacing: -0.5px; }
+              .meta { font-size: 11px; color: #64748B; margin-top: 4px; }
               .day-card { border: 1px solid #E2E8F0; border-radius: 8px; margin-bottom: 16px; overflow: hidden; page-break-inside: avoid; }
               .day-head { background: #F0FDF4; border-bottom: 1px solid #D1FAE5; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; }
               .day-title { font-size: 12px; font-weight: 800; color: #0D9488; text-transform: uppercase; }
               .day-totals { font-size: 10px; font-weight: 700; color: #475569; }
               table { width: 100%; border-collapse: collapse; text-align: left; }
-              th { background: #F8FAFC; color: #64748B; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px; border-bottom: 1px solid #E2E8F0; }
-              td { padding: 8px 10px; border-bottom: 1px solid #F1F5F9; font-size: 11px; }
+              th { background: #F8FAFC; color: #64748B; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; padding: 7px 10px; border-bottom: 1px solid #E2E8F0; }
+              td { padding: 9px 10px; border-bottom: 1px solid #F1F5F9; font-size: 11px; }
               tr:nth-child(even) { background: #FAFAFA; }
               .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
               .badge-breakfast { background: rgba(20,184,166,0.15); color: #0D9488; }
@@ -132,20 +135,20 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
               .badge-snack { background: rgba(245,158,11,0.15); color: #D97706; }
               .badge-dinner { background: rgba(139,92,246,0.15); color: #7C3AED; }
               .cal-num { font-weight: 800; color: #EA580C; }
-              .footer { text-align: center; margin-top: 20px; font-size: 9px; color: #94A3B8; text-transform: uppercase; }
+              .footer { text-align: center; margin-top: 24px; font-size: 10px; color: #94A3B8; text-transform: uppercase; }
             </style>
           </head>
           <body>
             <div class="header">
-              <div class="title">NutriAI — ${numDays}-Day Nutrition Plan</div>
-              <div class="meta">Generated: ${todayDate} | Goal: ${goal} | Target: ${calGoal} kcal/day</div>
+              <div class="title">NutriAI ✦ ${numDays}-Day Nutrition & Meal Plan</div>
+              <div class="meta">Generated: ${todayDate} | Target: ${calGoal} kcal/day | Goal: ${goal}</div>
             </div>
 
             ${weeklyPlan.map((d) => `
               <div class="day-card">
                 <div class="day-head">
                   <span class="day-title">${d.day}</span>
-                  <span class="day-totals">Total: ${d.totals.cal} kcal | P: ${d.totals.p}g | C: ${d.totals.c}g | F: ${d.totals.f}g</span>
+                  <span class="day-totals">Total: ${d.totals.cal} kcal | Protein: ${d.totals.p}g | Carbs: ${d.totals.c}g | Fat: ${d.totals.f}g</span>
                 </div>
                 <table>
                   <thead>
@@ -173,7 +176,7 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
             `).join('')}
 
             <div class="footer">
-              NutriAI Personalized Nutrition Plan • Generated by Nia AI
+              NutriAI Personalized Nutrition Plan • Generated by Nia AI Coach
             </div>
           </body>
         </html>
@@ -187,13 +190,15 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: 'application/pdf',
-          dialogTitle: 'Download 7-Day Meal Plan PDF',
+          dialogTitle: 'Download Meal Plan PDF',
           UTI: 'com.adobe.pdf',
         });
       } else {
         Alert.alert('PDF Exported 📄', `PDF created at: ${uri}`);
       }
+      triggerHaptic('success');
     } catch (e) {
+      triggerHaptic('error');
       Alert.alert('PDF Export Error', e?.message || 'Could not export PDF.');
     } finally {
       setDownloading(false);
@@ -201,6 +206,7 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
   };
 
   const handleLogMealToToday = (mealItem) => {
+    triggerHaptic('selection');
     const calVal = mealItem.cal || 350;
     const protVal = mealItem.p || 20;
     const carbVal = mealItem.c || 40;
@@ -218,13 +224,16 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
   };
 
   return (
-    <View style={[tableStyles.container, { backgroundColor: isDark ? '#0f172a' : '#FFFFFF', borderColor: colors.border }]}>
-      {/* ── Top Bar (matches web DayPlanTable) ── */}
+    <View style={[tableStyles.container, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+      {/* Top Bar */}
       <View style={[tableStyles.topBar, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', borderBottomColor: colors.border }]}>
         <View style={tableStyles.topBarLeft}>
           <Pressable
             style={[tableStyles.navChevron, activeDayIdx === 0 && { opacity: 0.3 }]}
-            onPress={() => setActiveDayIdx((p) => Math.max(0, p - 1))}
+            onPress={() => {
+              triggerHaptic('light');
+              setActiveDayIdx((p) => Math.max(0, p - 1));
+            }}
             disabled={activeDayIdx === 0}
             hitSlop={8}
           >
@@ -235,7 +244,10 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
           
           <Pressable
             style={[tableStyles.navChevron, activeDayIdx === weeklyPlan.length - 1 && { opacity: 0.3 }]}
-            onPress={() => setActiveDayIdx((p) => Math.min(weeklyPlan.length - 1, p + 1))}
+            onPress={() => {
+              triggerHaptic('light');
+              setActiveDayIdx((p) => Math.min(weeklyPlan.length - 1, p + 1));
+            }}
             disabled={activeDayIdx === weeklyPlan.length - 1}
             hitSlop={8}
           >
@@ -249,20 +261,21 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
         </View>
 
         <Pressable
-          style={({ pressed }) => [tableStyles.pdfBtn, pressed && { opacity: 0.85 }]}
+          style={({ pressed }) => [tableStyles.pdfBtn, pressed && { opacity: 0.85, transform: [{ scale: 0.96 }] }]}
           onPress={handleDownloadPDF}
           disabled={downloading}
+          hitSlop={6}
         >
-          <Download size={12} color="#14B8A6" />
-          <Text style={tableStyles.pdfBtnText}>{downloading ? 'Exporting...' : 'Download PDF'}</Text>
+          <Download size={12} color={COLORS.primary} />
+          <Text style={tableStyles.pdfBtnText}>{downloading ? 'Exporting...' : 'PDF'}</Text>
         </Pressable>
       </View>
 
-      {/* ── Macro Strip (matches web) ── */}
+      {/* Macro Summary Strip */}
       <View style={[tableStyles.macroStrip, { borderBottomColor: colors.border }]}>
         <View style={[tableStyles.macroCol, { borderRightColor: colors.border }]}>
           <Text style={[tableStyles.macroNum, { color: '#F97316' }]}>{currentDayData.totals.cal} kcal</Text>
-          <Text style={[tableStyles.macroLabel, { color: colors.textMuted }]}>CALORIES</Text>
+          <Text style={[tableStyles.macroLabel, { color: colors.textMuted }]}>ENERGY</Text>
         </View>
         <View style={[tableStyles.macroCol, { borderRightColor: colors.border }]}>
           <Text style={[tableStyles.macroNum, { color: '#3B82F6' }]}>{currentDayData.totals.p}g</Text>
@@ -274,15 +287,14 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
         </View>
       </View>
 
-      {/* ── 7-Day Switcher Tabs ── */}
+      {/* 7-Day Switcher Tabs */}
       <ScrollView
         horizontal
         nestedScrollEnabled={true}
         keyboardShouldPersistTaps="handled"
-        scrollEventThrottle={16}
         showsHorizontalScrollIndicator={false}
         style={tableStyles.dayTabScroll}
-        contentContainerStyle={{ paddingHorizontal: 6, gap: 6 }}
+        contentContainerStyle={{ paddingHorizontal: 10, gap: 6 }}
       >
         {weeklyPlan.map((d, idx) => (
           <Pressable
@@ -292,34 +304,35 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
               { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9', borderColor: colors.border },
               activeDayIdx === idx && { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
             ]}
-            onPress={() => setActiveDayIdx(idx)}
+            onPress={() => {
+              triggerHaptic('selection');
+              setActiveDayIdx(idx);
+            }}
           >
-            <Text style={[tableStyles.dayTabText, { color: isDark ? '#94A3B8' : '#64748B' }, activeDayIdx === idx && { color: '#ffffff', fontWeight: '900' }]}>
+            <Text style={[tableStyles.dayTabText, { color: isDark ? '#94A3B8' : '#64748B' }, activeDayIdx === idx && { color: '#FFFFFF', fontWeight: '900' }]}>
               {d.day}
             </Text>
           </Pressable>
         ))}
       </ScrollView>
 
-      {/* ── Meals Table (matches web DayPlanTable) ── */}
+      {/* Meals Table */}
       <ScrollView
         horizontal
         nestedScrollEnabled={true}
         keyboardShouldPersistTaps="handled"
-        scrollEventThrottle={16}
         showsHorizontalScrollIndicator={true}
         contentContainerStyle={tableStyles.tableScroll}
       >
         <View>
           {/* Table Header */}
           <View style={[tableStyles.row, tableStyles.headerRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : '#F1F5F9' }]}>
-            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 75, color: colors.textMuted }]}>TIME</Text>
-            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 90, color: colors.textMuted }]}>MEAL</Text>
-            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 170, color: colors.textMuted }]}>FOOD</Text>
-            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 65, color: colors.textMuted }]}>CAL</Text>
-            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 65, color: colors.textMuted }]}>PROTEIN</Text>
-            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 60, color: colors.textMuted }]}>CARBS</Text>
-            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 45, color: colors.textMuted }]}>LOG</Text>
+            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 70, color: colors.textMuted }]}>TIME</Text>
+            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 85, color: colors.textMuted }]}>MEAL</Text>
+            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 160, color: colors.textMuted }]}>FOOD</Text>
+            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 60, color: colors.textMuted }]}>CAL</Text>
+            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 60, color: colors.textMuted }]}>PROTEIN</Text>
+            <Text style={[tableStyles.cell, tableStyles.cellHeader, { width: 40, color: colors.textMuted }]}>LOG</Text>
           </View>
 
           {/* Table Rows */}
@@ -334,32 +347,25 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
                   idx % 2 === 1 && { backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : '#F8FAFC' },
                 ]}
               >
-                <Text style={[tableStyles.cell, { width: 75, color: colors.textMuted, fontSize: 11, fontWeight: '600' }]}>{row.time}</Text>
-                <View style={{ width: 90, paddingHorizontal: 4 }}>
+                <Text style={[tableStyles.cell, { width: 70, color: colors.textMuted, fontSize: 11, fontWeight: '600' }]}>{row.time}</Text>
+                <View style={{ width: 85, paddingHorizontal: 4 }}>
                   <View style={[tableStyles.tagBadge, { backgroundColor: tagStyle.bg, borderColor: tagStyle.border }]}>
                     <Text style={[tableStyles.tagBadgeText, { color: tagStyle.text }]}>{row.type}</Text>
                   </View>
                 </View>
-                <Text style={[tableStyles.cell, { width: 170, color: colors.text, fontWeight: '600', fontSize: 12 }]} numberOfLines={2}>{row.food}</Text>
-                <Text style={[tableStyles.cell, { width: 65, color: '#F97316', fontWeight: '900', fontSize: 13 }]}>{row.cal}</Text>
-                <Text style={[tableStyles.cell, { width: 65, color: '#3B82F6', fontWeight: '800', fontSize: 12 }]}>{row.p}g</Text>
-                <Text style={[tableStyles.cell, { width: 60, color: '#F59E0B', fontWeight: '800', fontSize: 12 }]}>{row.c}g</Text>
-                <Pressable style={tableStyles.quickAddBtn} onPress={() => handleLogMealToToday(row)}>
-                  <Plus size={12} color="#ffffff" />
+                <Text style={[tableStyles.cell, { width: 160, color: colors.text, fontWeight: '600', fontSize: 12 }]} numberOfLines={2}>{row.food}</Text>
+                <Text style={[tableStyles.cell, { width: 60, color: '#F97316', fontWeight: '900', fontSize: 12 }]}>{row.cal}</Text>
+                <Text style={[tableStyles.cell, { width: 60, color: '#3B82F6', fontWeight: '800', fontSize: 12 }]}>{row.p}g</Text>
+                <Pressable
+                  style={tableStyles.quickAddBtn}
+                  onPress={() => handleLogMealToToday(row)}
+                  hitSlop={6}
+                >
+                  <Plus size={12} color="#FFFFFF" />
                 </Pressable>
               </View>
             );
           })}
-
-          {/* Daily Total Footer */}
-          <View style={[tableStyles.row, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : '#F8FAFC', borderTopWidth: 1, borderTopColor: colors.border }]}>
-            <Text style={[tableStyles.cell, { width: 165, fontWeight: '800', fontSize: 10, textTransform: 'uppercase', color: colors.textMuted }]}>DAILY TOTAL</Text>
-            <Text style={[tableStyles.cell, { width: 170 }]} />
-            <Text style={[tableStyles.cell, { width: 65, color: '#F97316', fontWeight: '900', fontSize: 13 }]}>{currentDayData.totals.cal}</Text>
-            <Text style={[tableStyles.cell, { width: 65, color: '#3B82F6', fontWeight: '900', fontSize: 12 }]}>{currentDayData.totals.p}g</Text>
-            <Text style={[tableStyles.cell, { width: 60, color: '#F59E0B', fontWeight: '900', fontSize: 12 }]}>{currentDayData.totals.c}g</Text>
-            <View style={{ width: 45 }} />
-          </View>
         </View>
       </ScrollView>
     </View>
@@ -368,9 +374,9 @@ function MealPlanTable({ numDays = 7, isDark, colors }) {
 
 const tableStyles = StyleSheet.create({
   container: {
-    borderRadius: RADIUS['2xl'],
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
-    marginVertical: 10,
+    marginVertical: 8,
     overflow: 'hidden',
     maxWidth: '100%',
     ...SHADOWS.sm,
@@ -379,11 +385,11 @@ const tableStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderBottomWidth: 1,
   },
-  topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   navChevron: {
     padding: 2,
     borderRadius: 4,
@@ -391,23 +397,23 @@ const tableStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   dayLabel: { fontSize: 13, fontWeight: '900' },
-  flameEmoji: { fontSize: 13 },
-  vDivider: { width: 1, height: 14, marginHorizontal: 2 },
-  calValue: { fontSize: 14, fontWeight: '900', color: '#14B8A6' },
-  calUnit: { fontSize: 11, fontWeight: '600' },
+  flameEmoji: { fontSize: 12 },
+  vDivider: { width: 1, height: 12, marginHorizontal: 2 },
+  calValue: { fontSize: 13, fontWeight: '900', color: COLORS.primary },
+  calUnit: { fontSize: 10, fontWeight: '600' },
 
   pdfBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: RADIUS.md,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
     backgroundColor: 'rgba(20,184,166,0.12)',
     borderWidth: 1,
     borderColor: 'rgba(20,184,166,0.25)',
   },
-  pdfBtnText: { color: '#14B8A6', fontSize: 11, fontWeight: '800' },
+  pdfBtnText: { color: COLORS.primary, fontSize: 11, fontWeight: '800' },
 
   macroStrip: {
     flexDirection: 'row',
@@ -416,40 +422,40 @@ const tableStyles = StyleSheet.create({
   macroCol: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRightWidth: 1,
   },
-  macroNum: { fontSize: 13, fontWeight: '900' },
-  macroLabel: { fontSize: 8, fontWeight: '800', letterSpacing: 0.8, marginTop: 1 },
+  macroNum: { fontSize: 12, fontWeight: '900' },
+  macroLabel: { fontSize: 8, fontWeight: '800', letterSpacing: 0.6, marginTop: 1 },
 
-  dayTabScroll: { paddingVertical: 8 },
+  dayTabScroll: { paddingVertical: 6 },
   dayTab: {
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: RADIUS.full,
     borderWidth: 1,
   },
   dayTabText: { fontSize: 11, fontWeight: '700' },
 
   tableScroll: { paddingBottom: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, paddingVertical: 9, paddingHorizontal: 6 },
-  headerRow: { paddingVertical: 6, borderBottomWidth: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, paddingVertical: 8, paddingHorizontal: 6 },
+  headerRow: { paddingVertical: 5, borderBottomWidth: 1 },
   cell: { fontSize: 11, paddingHorizontal: 4 },
-  cellHeader: { fontWeight: '800', fontSize: 9, letterSpacing: 0.6 },
+  cellHeader: { fontWeight: '800', fontSize: 9, letterSpacing: 0.5 },
 
   tagBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
     paddingVertical: 2,
-    borderRadius: 5,
+    borderRadius: 4,
     borderWidth: 1,
     alignSelf: 'flex-start',
   },
-  tagBadgeText: { fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3 },
+  tagBadgeText: { fontSize: 8.5, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.2 },
 
   quickAddBtn: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
@@ -457,7 +463,7 @@ const tableStyles = StyleSheet.create({
 });
 
 /**
- * Healthify & Fittr Inspired Formatted Text with Callout Card support
+ * Clean Formatted Text with Callout Card support
  */
 function FormattedText({ content, isUser, textColor }) {
   if (!content) return null;
@@ -484,7 +490,7 @@ function FormattedText({ content, isUser, textColor }) {
 
         return (
           <View key={lIdx} style={[styles.lineWrap, isBullet && styles.bulletWrap]}>
-            {isBullet && <Text style={[styles.bulletDot, { color: isUser ? '#ffffff' : COLORS.primary }]}>• </Text>}
+            {isBullet && <Text style={[styles.bulletDot, { color: isUser ? '#FFFFFF' : COLORS.primary }]}>• </Text>}
             <Text style={[styles.messageText, { color: textColor }]}>
               {parts.map((part, pIdx) => {
                 if (part.startsWith('**') && part.endsWith('**')) {
@@ -506,20 +512,8 @@ function FormattedText({ content, isUser, textColor }) {
 
 function ChatBubble({ message, isUser }) {
   const { isDark, colors } = useTheme();
-  const { addMealLog } = useAuth();
   const [copied, setCopied] = useState(false);
   const rawText = message.text || message.user_message || message.ai_response || '';
-
-  // Detect category tag
-  const categoryTag = !isUser
-    ? rawText.toLowerCase().includes('protein')
-      ? '💪 MACRO GUIDE'
-      : rawText.toLowerCase().includes('fat loss') || rawText.toLowerCase().includes('calorie')
-      ? '🔥 FAT LOSS TIP'
-      : rawText.toLowerCase().includes('water')
-      ? '💧 HYDRATION'
-      : '🥗 NUTRITION ADVICE'
-    : null;
 
   const lowerText = rawText.toLowerCase();
   let detectedDays = 7;
@@ -543,170 +537,89 @@ function ChatBubble({ message, isUser }) {
   );
 
   const handleCopyText = () => {
+    triggerHaptic('light');
     Clipboard.setString(rawText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleShareAdvice = () => {
+    triggerHaptic('light');
     Share.share({
       message: `NutriAI Health Advice:\n\n${rawText}`,
       title: 'NutriAI Advice',
     }).catch((e) => console.warn('Share error:', e));
   };
 
-  const handleDownloadMealPlanPdf = async () => {
-    try {
-      const todayDate = new Date().toLocaleDateString('en-IN', { dateStyle: 'long' });
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8" />
-            <title>NutriAI Meal Plan</title>
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #0F172A; background: #FFFFFF; font-size: 13px; line-height: 1.6; }
-              .header { border-bottom: 2px solid #0D9488; padding-bottom: 12px; margin-bottom: 16px; }
-              .title { font-size: 20px; font-weight: 800; color: #0D9488; }
-              .meta { font-size: 11px; color: #64748B; margin-top: 4px; }
-              .content { white-space: pre-wrap; font-size: 13px; }
-              .footer { text-align: center; margin-top: 24px; font-size: 10px; color: #94A3B8; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <div class="title">NutriAI ✦ Personalized Meal Plan</div>
-              <div class="meta">Generated by Nia AI Coach on ${todayDate}</div>
-            </div>
-            <div class="content">${rawText.replace(/\n/g, '<br/>')}</div>
-            <div class="footer">NutriAI • Healthy Living & Nutrition Coach</div>
-          </body>
-        </html>
-      `;
-
-      const { uri } = await Print.printToFileAsync({ html: htmlContent });
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri, {
-          UTI: '.pdf',
-          mimeType: 'application/pdf',
-          dialogTitle: 'Download NutriAI Meal Plan',
-        });
-      } else {
-        Alert.alert('Meal Plan Ready', 'Saved successfully!');
-      }
-    } catch (e) {
-      console.warn('PDF export error:', e);
-      Alert.alert('Download Notice', 'Could not generate PDF.');
-    }
-  };
-
-  const handleLogToDailyTracker = () => {
-    addMealLog({
-      calories: 380,
-      protein: 24,
-      carbs: 42,
-      fat: 10,
-      junkScore: 10,
-    });
-    Alert.alert('Logged to Tracker 🎯', 'Recommended meal logged to today\'s nutrition summary!');
-  };
-
   return (
     <View style={[styles.container, isUser ? styles.containerUser : styles.containerAi]}>
-      {/* Modern Emerald-Teal 3D Gradient AI Avatar */}
-      {!isUser && (
-        <View style={styles.aiGradientAvatar}>
-          <Sparkles size={15} color="#ffffff" />
-        </View>
-      )}
-
-      <View
-        style={[
-          styles.bubble,
-          isUser
-            ? styles.bubbleUser
-            : [
-                styles.bubbleAi,
-                { backgroundColor: colors.bgCard, borderColor: colors.border },
-                isMealPlan && styles.bubbleMealPlan,
-              ],
-        ]}
-      >
-        {/* Category Tag Badge for AI Replies */}
-        {categoryTag && (
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryBadgeText}>{categoryTag}</Text>
-          </View>
-        )}
-
-        {isMealPlan ? (
-          <View>
-            <FormattedText
-              content={
-                rawText.split(/\n(?=\||\*\*Day|Day \d|Breakfast)/)[0].trim() ||
-                "Here is your personalized nutrition & meal schedule:"
-              }
-              isUser={isUser}
-              textColor={colors.text}
-            />
-            <View style={{ marginTop: 8 }}>
-              <MealPlanTable numDays={detectedDays} isDark={isDark} colors={colors} />
-            </View>
-          </View>
-        ) : (
-          <FormattedText content={rawText} isUser={isUser} textColor={isUser ? '#ffffff' : colors.text} />
-        )}
-
-        {/* Healthify / Fittr Inspired Response Utility Action Bar for AI */}
-        {!isUser && (
-          <View style={[styles.utilityBar, { borderColor: colors.border }]}>
-            <Pressable style={styles.utilityBtn} onPress={handleCopyText}>
-              {copied ? <Check size={13} color={COLORS.primary} /> : <Copy size={13} color={colors.textMuted} />}
-              <Text style={[styles.utilityBtnText, { color: copied ? COLORS.primary : colors.textMuted }]}>
-                {copied ? 'Copied' : 'Copy'}
-              </Text>
-            </Pressable>
-
-            <Pressable style={styles.utilityBtn} onPress={handleShareAdvice}>
-              <Share2 size={13} color={colors.textMuted} />
-              <Text style={[styles.utilityBtnText, { color: colors.textMuted }]}>Share</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* Bubble Footer with Timestamp & User 1-Tap Copy */}
-        <View style={styles.footerRow}>
-          {isUser ? (
-            <Pressable
-              style={styles.userCopyBtn}
-              onPress={handleCopyText}
-              hitSlop={8}
-            >
-              {copied ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                  <Check size={10} color="rgba(255,255,255,0.95)" />
-                  <Text style={styles.userCopyText}>Copied</Text>
-                </View>
-              ) : (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                  <Copy size={10} color="rgba(255,255,255,0.7)" />
-                  <Text style={styles.userCopyText}>Copy</Text>
-                </View>
-              )}
-            </Pressable>
-          ) : <View />}
-
+      {isUser ? (
+        /* User Message Pill (Right Aligned, Crisp Dark/Primary Pill) */
+        <View style={[styles.userBubble, { backgroundColor: isDark ? '#1E293B' : '#0F172A' }]}>
+          <Text style={styles.userMessageText}>{rawText}</Text>
           {message.timestamp ? (
-            <Text style={[styles.timestamp, isUser ? styles.timestampUser : { color: colors.textMuted }]}>
-              {message.timestamp}
-            </Text>
+            <Text style={styles.userTimestamp}>{message.timestamp}</Text>
           ) : null}
         </View>
-      </View>
+      ) : (
+        /* AI Response Block (Fluid, Borderless, ChatGPT/Perplexity Style) */
+        <View style={styles.aiMessageBlock}>
+          {/* Subtle Coach Header */}
+          <View style={styles.aiHeaderRow}>
+            <View style={[styles.aiSparkleWrap, { backgroundColor: isDark ? 'rgba(20,184,166,0.18)' : 'rgba(20,184,166,0.10)' }]}>
+              <Sparkles size={11} color={COLORS.primary} />
+            </View>
+            <Text style={[styles.aiHeaderName, { color: COLORS.primary }]}>Nia AI</Text>
+            {message.timestamp ? (
+              <Text style={[styles.aiTimestamp, { color: colors.textMuted }]}>• {message.timestamp}</Text>
+            ) : null}
+          </View>
 
-      {isUser && (
-        <View style={styles.userAvatar}>
-          <User size={14} color="#ffffff" />
+          {/* Body Content */}
+          {isMealPlan ? (
+            <View>
+              <FormattedText
+                content={
+                  rawText.split(/\n(?=\||\*\*Day|Day \d|Breakfast)/)[0].trim() ||
+                  "Here is your customized nutrition plan:"
+                }
+                isUser={false}
+                textColor={colors.text}
+              />
+              <MealPlanTable numDays={detectedDays} isDark={isDark} colors={colors} />
+            </View>
+          ) : (
+            <FormattedText
+              content={rawText}
+              isUser={false}
+              textColor={colors.text}
+            />
+          )}
+
+          {/* Bottom Minimalist Utility Toolbar */}
+          {message.id !== 'init_0' && (
+            <View style={[styles.utilityBar, { borderTopColor: colors.border }]}>
+              <Pressable
+                style={({ pressed }) => [styles.utilityBtn, pressed && { opacity: 0.6 }]}
+                onPress={handleCopyText}
+                hitSlop={6}
+              >
+                {copied ? <Check size={12} color={COLORS.primary} /> : <Copy size={12} color={colors.textMuted} />}
+                <Text style={[styles.utilityBtnText, { color: copied ? COLORS.primary : colors.textMuted }]}>
+                  {copied ? 'Copied' : 'Copy'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [styles.utilityBtn, pressed && { opacity: 0.6 }]}
+                onPress={handleShareAdvice}
+                hitSlop={6}
+              >
+                <Share2 size={12} color={colors.textMuted} />
+                <Text style={[styles.utilityBtnText, { color: colors.textMuted }]}>Share</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -715,120 +628,115 @@ function ChatBubble({ message, isUser }) {
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
     marginVertical: 6,
     paddingHorizontal: SPACING.base,
-    gap: 8,
   },
-  containerUser: { justifyContent: 'flex-end' },
-  containerAi: { justifyContent: 'flex-start' },
-
-  aiGradientAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
-    borderWidth: 1.5,
-    borderColor: '#0EA5E9',
-    ...SHADOWS.emerald,
+  containerUser: {
+    alignItems: 'flex-end',
   },
-  userAvatar: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#6366F1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 2,
+  containerAi: {
+    alignItems: 'flex-start',
+    width: '100%',
   },
 
-  bubble: {
-    maxWidth: '85%',
+  // User Message Pill
+  userBubble: {
+    maxWidth: '82%',
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: RADIUS.xl,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderBottomRightRadius: 4,
     ...SHADOWS.sm,
   },
-  bubbleUser: {
-    backgroundColor: COLORS.primary,
-    borderBottomRightRadius: 4,
+  userMessageText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '500',
   },
-  bubbleAi: {
-    borderBottomLeftRadius: 4,
-    borderWidth: 1,
-  },
-  bubbleMealPlan: {
-    maxWidth: '96%',
-    width: '96%',
-    paddingHorizontal: 8,
-    paddingVertical: 10,
+  userTimestamp: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 9.5,
+    marginTop: 4,
+    alignSelf: 'flex-end',
   },
 
-  categoryBadge: {
-    backgroundColor: 'rgba(16,185,129,0.12)',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
+  // AI Response Block (Borderless & Fluid)
+  aiMessageBlock: {
+    width: '100%',
+    paddingVertical: 4,
+  },
+  aiHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 6,
   },
-  categoryBadgeText: { fontSize: 9, fontWeight: '900', color: COLORS.primary, letterSpacing: 0.5 },
+  aiSparkleWrap: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aiHeaderName: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  aiTimestamp: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
 
   calloutCard: {
-    backgroundColor: 'rgba(16,185,129,0.08)',
+    backgroundColor: 'rgba(20,184,166,0.08)',
     borderLeftWidth: 3,
     borderLeftColor: COLORS.primary,
     borderRadius: RADIUS.md,
-    padding: 8,
+    padding: 10,
     marginVertical: 6,
   },
 
-  lineWrap: { flexDirection: 'row', flexWrap: 'wrap', marginVertical: 2 },
-  bulletWrap: { paddingLeft: 6 },
-  bulletDot: { fontSize: 16, fontWeight: '900' },
-  messageText: { fontSize: 15, lineHeight: 22, fontWeight: '400' },
-  boldText: { fontWeight: '800' },
+  lineWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginVertical: 2.5,
+  },
+  bulletWrap: {
+    paddingLeft: 4,
+  },
+  bulletDot: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  messageText: {
+    fontSize: 14.5,
+    lineHeight: 22,
+    fontWeight: '400',
+  },
+  boldText: {
+    fontWeight: '800',
+  },
 
   utilityBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    marginTop: 10,
+    gap: 16,
+    marginTop: 8,
     paddingTop: 6,
     borderTopWidth: 1,
   },
-  utilityBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  utilityBtnText: { fontSize: 11, fontWeight: '700' },
-
-  footerRow: {
+  utilityBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 6,
+    gap: 4,
+    paddingVertical: 2,
   },
-  userCopyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: RADIUS.full,
-  },
-  userCopyText: {
-    color: '#ffffff',
-    fontSize: 10,
+  utilityBtnText: {
+    fontSize: 11,
     fontWeight: '700',
   },
-
-  timestamp: {
-    fontSize: 10,
-    alignSelf: 'flex-end',
-  },
-  timestampUser: { color: 'rgba(255,255,255,0.75)' },
 });
 
 export default React.memo(ChatBubble);

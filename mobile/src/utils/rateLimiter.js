@@ -1,8 +1,7 @@
-// FILE: mobile/src/utils/rateLimiter.js
-// Purpose: Client-side rate limiting to prevent API abuse and brute-force attacks
-// Used by: LoginScreen, SignupScreen, MealLogs (scan), NiaScreen (chat)
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const requestLog = {}; // { [key]: number[] } — timestamps of requests
+const STORAGE_PREFIX = 'nutriai_ratelimit_';
 
 // ── Check if a key is rate-limited ───────────────────────────
 // Returns true if the caller should be blocked
@@ -15,6 +14,8 @@ export function isRateLimited(key, maxRequests = 5, windowMs = 60000) {
   requestLog[key] = requestLog[key].filter((t) => now - t < windowMs);
 
   if (requestLog[key].length >= maxRequests) {
+    // Persist lockout timestamp asynchronously
+    AsyncStorage.setItem(`${STORAGE_PREFIX}${key}`, String(now)).catch(() => {});
     return true;
   }
 
@@ -39,6 +40,7 @@ export function getRemainingCooldownSecs(key, windowMs = 60000) {
 // ── Reset a key's rate limit counter ─────────────────────────
 export function resetRateLimit(key) {
   delete requestLog[key];
+  AsyncStorage.removeItem(`${STORAGE_PREFIX}${key}`).catch(() => {});
 }
 
 // ── Predefined rate limit configs ─────────────────────────────

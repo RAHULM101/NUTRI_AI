@@ -5,6 +5,7 @@
 //   - hooks into api.js 401 unauthorized callback for auto-logout on token expiry
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { fetchProfile } from '../services/profileService';
 import { saveProfileCache, setOnboarded, getIsOnboarded, logoutUser } from '../services/authService';
 import { updateWater } from '../services/mealService';
@@ -160,6 +161,11 @@ export function AuthProvider({ children }) {
       await logoutUser(); // ✅ clears JWT from SecureStore + AsyncStorage
     } catch (e) {
       console.warn('Logout cleanup error:', e.message);
+    }
+    try {
+      await GoogleSignin.signOut(); // ✅ clears Google session from device
+    } catch (e) {
+      // Ignore if user didn't log in via Google
     }
     setIsAuthenticated(false);
     setIsOnboardedState(false);

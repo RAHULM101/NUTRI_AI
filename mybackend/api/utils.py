@@ -11,11 +11,15 @@ from django.utils import timezone
 
 class MealAnalysis(BaseModel):
     detected_items: str = Field(description="A string summarizing what the food is.")
-    calories: int = Field(description="Estimated total calories.")
-    protein_gm: float = Field(description="Estimated protein in grams.")
-    carbs_gm: float = Field(description="Estimated carbohydrates in grams.")
-    fat_gm: float = Field(description="Estimated fat in grams.")
+    calories: int = Field(description="Estimated total calories for the ENTIRE visible food in the image.")
+    protein_gm: float = Field(description="Estimated protein in grams for the ENTIRE visible food.")
+    carbs_gm: float = Field(description="Estimated carbohydrates in grams for the ENTIRE visible food.")
+    fat_gm: float = Field(description="Estimated fat in grams for the ENTIRE visible food.")
     ai_insights: str = Field(description="A short sentence with a nutritional observation.")
+    # New fields for mobile portion/quantity features (optional, default safe values)
+    detected_count: int = Field(default=0, description="Number of individual countable items visible (e.g. 12 for 12 naans, 3 for 3 eggs). Set to 0 if not countable (e.g. curry, dal, rice).")
+    unit: str = Field(default="serving", description="Unit label for countable items: 'piece', 'slice', 'egg', 'roti', 'naan', 'bowl', etc. Use 'serving' if not countable.")
+    total_weight_g: float = Field(default=0.0, description="Estimated total weight in grams of ALL visible food in the image. Used for per-100g macro calculations.")
 
 def calculate_junk_score(calories, protein, carbs, fat, detected_items):
     """
@@ -58,13 +62,10 @@ def calculate_junk_score(calories, protein, carbs, fat, detected_items):
 def call_gemini_with_fallback(client, contents, response_schema=None):
     import time
     models_to_try = [
-        'gemini-3.5-flash-lite',        # 1. Primary: Highest quota & fastest vision (100% stable)
-        'gemini-3-flash-preview',       # 2. High availability Flash preview
-        'gemini-3.1-flash-lite-preview',# 3. High throughput Lite preview
-        'gemini-flash-latest',          # 4. Production alias
-        'gemini-3.6-flash',             # 5. Flagship Flash model
-        'gemini-3.5-flash',             # 6. Standard Flash model
-        'gemini-pro-latest',            # 7. Pro model fallback
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro',
     ]
     
     last_exception = None
@@ -98,7 +99,13 @@ def call_gemini_with_fallback(client, contents, response_schema=None):
     raise Exception("No active models available for content generation.")
 
 # Make sure you set GEMINI_API_KEY in your settings or .env file
-def analyze_meal_image_with_gemini(image_file):
+def analyze_meal_image_with_gemini(image_file, portion_hint=None):
+    """
+    Analyzes a meal image using Gemini Vision.
+    Returns rich nutritional data including detected_count, unit, and total_weight_g
+    for client-side portion math (no extra API calls needed after this).
+    Optional portion_hint (e.g. '2 pieces', '250g') improves accuracy.
+    """
     try:
         import re
         if hasattr(image_file, 'seek'):
@@ -112,27 +119,36 @@ def analyze_meal_image_with_gemini(image_file):
         
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
         client = genai.Client(api_key=api_key)
-        
-        prompt = """
+
+        # Build optional portion context line
+        portion_context = ""
+        if portion_hint and str(portion_hint).strip():
+            portion_context = f"\n        USER PORTION HINT: The user says they have approximately '{portion_hint.strip()}'. Use this to improve accuracy."
+
+        prompt = f"""
         Analyze this food image and identify the dishes accurately for nutritional tracking.
+        IMPORTANT: Estimate macros for the ENTIRE quantity of food visible in the image.
+        {portion_context}
+
         CRITICAL RULES:
         - If the image contains ANY food or drink (e.g. roti, naan, curry, dal, rice, salad, paneer, chicken, eggs, fruits, snacks, tea, coffee), accurately estimate:
-          * detected_items: Specific names of the dishes found
-          * calories: estimated total calories (integer > 0)
-          * protein_gm: estimated protein in grams (float)
-          * carbs_gm: estimated carbs in grams (float)
-          * fat_gm: estimated fat in grams (float)
-          * ai_insights: concise nutrition observation
+          * detected_items: Specific name(s) of the dishes (e.g. "Butter Naan", "Dal Makhani", "2 Scrambled Eggs")
+          * calories: estimated TOTAL calories for ALL food visible (integer > 0)
+          * protein_gm: estimated TOTAL protein in grams (float)
+          * carbs_gm: estimated TOTAL carbs in grams (float)
+          * fat_gm: estimated TOTAL fat in grams (float)
+          * ai_insights: one concise nutrition observation
+          * detected_count: if food items are individually countable (e.g. naan, roti, egg, samosa, idli), count how many you see. Set to 0 if not countable (curry, rice, dal, soup).
+          * unit: the singular unit name for countable items (e.g. "naan", "roti", "piece", "egg"). Use "serving" if not countable.
+          * total_weight_g: estimated total weight in grams of all visible food (e.g. 400.0). This is used for per-100g calculations.
         - If the image is strictly NON-FOOD (human selfie/face, pet, vehicle, furniture, text document), set:
           * detected_items: "No food detected - Non-food / Human photo"
-          * calories: 0
-          * protein_gm: 0.0
-          * carbs_gm: 0.0
-          * fat_gm: 0.0
+          * calories: 0, protein_gm: 0.0, carbs_gm: 0.0, fat_gm: 0.0
           * ai_insights: "Invalid Upload: No food detected."
+          * detected_count: 0, unit: "serving", total_weight_g: 0.0
         """
         
-        # 2. Try structured output first, with seamless fallback to raw JSON prompt
+        # Try structured output first, with seamless fallback to raw JSON prompt
         try:
             response = call_gemini_with_fallback(
                 client=client,
@@ -140,7 +156,12 @@ def analyze_meal_image_with_gemini(image_file):
                 response_schema=MealAnalysis
             )
         except Exception:
-            json_prompt = prompt + "\nReturn ONLY a valid JSON object matching: {\"detected_items\": \"...\", \"calories\": 0, \"protein_gm\": 0.0, \"carbs_gm\": 0.0, \"fat_gm\": 0.0, \"ai_insights\": \"...\"}"
+            json_prompt = prompt + (
+                "\nReturn ONLY a valid JSON object: "
+                '{"detected_items": "...", "calories": 0, "protein_gm": 0.0, '
+                '"carbs_gm": 0.0, "fat_gm": 0.0, "ai_insights": "...", '
+                '"detected_count": 0, "unit": "serving", "total_weight_g": 0.0}'
+            )
             response = call_gemini_with_fallback(
                 client=client,
                 contents=[json_prompt, img]
@@ -158,6 +179,11 @@ def analyze_meal_image_with_gemini(image_file):
             if raw_text.endswith("```"):
                 raw_text = raw_text[:-3]
             data = json.loads(raw_text.strip())
+
+        # Ensure new fields have safe defaults if AI didn't return them
+        data.setdefault('detected_count', 0)
+        data.setdefault('unit', 'serving')
+        data.setdefault('total_weight_g', 0.0)
         
         data['junk_score'] = calculate_junk_score(
             calories=data.get('calories', 0),
@@ -179,12 +205,71 @@ def analyze_meal_image_with_gemini(image_file):
             "traceback": error_trace
         }
 
+
+def auto_fix_macros_with_gemini(food_name, serving_desc='1 serving'):
+    """
+    Lightweight text-only macro lookup for corrected food names.
+    No image upload. No scan limit deduction. ~300ms response.
+    Called only when user explicitly taps 'Auto-Fix Macros' after editing food name.
+    """
+    try:
+        import re
+        api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
+        client = genai.Client(api_key=api_key)
+
+        prompt = (
+            f'Provide nutritional information for: "{food_name}" ({serving_desc}).\n'
+            'Return ONLY a JSON object with these exact keys:\n'
+            '{"calories": <int>, "protein_gm": <float>, "carbs_gm": <float>, '
+            '"fat_gm": <float>, "total_weight_g": <float>, "ai_insights": "<short note>"}\n'
+            'Use standard nutritional databases (USDA, Indian Food Composition). '
+            'Estimate for the most common restaurant/home portion if serving is not specified.'
+        )
+
+        response = call_gemini_with_fallback(client=client, contents=[prompt])
+        raw_text = (response.text or '').strip()
+
+        match = re.search(r'\{.*\}', raw_text, re.DOTALL)
+        if match:
+            data = json.loads(match.group(0))
+        else:
+            if raw_text.startswith('```'):
+                raw_text = raw_text.split('\n', 1)[-1]
+            if raw_text.endswith('```'):
+                raw_text = raw_text.rsplit('```', 1)[0]
+            data = json.loads(raw_text.strip())
+
+        data.setdefault('total_weight_g', 0.0)
+        data['junk_score'] = calculate_junk_score(
+            calories=data.get('calories', 0),
+            protein=data.get('protein_gm', 0),
+            carbs=data.get('carbs_gm', 0),
+            fat=data.get('fat_gm', 0),
+            detected_items=food_name
+        )
+        data['detected_items'] = food_name
+        return data
+
+    except Exception as e:
+        error_trace = traceback.format_exc()
+        print("--- AUTO FIX GEMINI ERROR ---")
+        print(error_trace)
+        return {"error": f"Auto-fix failed: {str(e)}"}
+
 def generate_nia_chat_response(user, user_message):
     try:
+        from .models import meal_logs
         # 1. Gather User Context from the Database
         profile = UserProfile.objects.filter(user=user).first()
         today = timezone.now().date()
         tracking = daily_tracking.objects.filter(user=user, created_at__date=today).first()
+        today_meals = meal_logs.objects.filter(user=user, meal_timedate__date=today)
+        
+        total_cals_today = sum(m.calories or 0 for m in today_meals)
+        total_protein_today = sum(float(m.protein_gm or 0) for m in today_meals)
+        total_carbs_today = sum(float(m.carbs_gm or 0) for m in today_meals)
+        total_fat_today = sum(float(m.fat_gm or 0) for m in today_meals)
+        meal_names = [m.detected_items for m in today_meals if m.detected_items]
         
         # 2. Format Context Strings
         profile_context = "No profile set yet."
@@ -192,8 +277,14 @@ def generate_nia_chat_response(user, user_message):
             profile_context = f"Goal: {profile.primary_goal or 'Healthy living'}, Target Calories: {profile.daily_calorie_target or 'Unknown'} kcal, Allergies/Preferences: {profile.allergies or 'None'}."
             
         tracking_context = "No food logged yet today."
-        if tracking:
-            tracking_context = f"Today's Stats: Consumed {tracking.total_calories_consumed or 0} kcal out of their target."
+        water_val = float(tracking.water_intake_liters or 0) if tracking else 0.0
+        if today_meals.exists() or water_val > 0:
+            food_summary = f"Meals logged today: {', '.join(meal_names)}" if meal_names else ""
+            tracking_context = (
+                f"Today's Stats: Consumed {total_cals_today} kcal (Protein: {round(total_protein_today, 1)}g, "
+                f"Carbs: {round(total_carbs_today, 1)}g, Fat: {round(total_fat_today, 1)}g). "
+                f"Water intake: {water_val}L. {food_summary}"
+            )
 
         # 3. Create the Master Prompt for Gemini
         system_prompt = f"""
@@ -254,12 +345,18 @@ def calculate_user_streak(user):
     
     # Get all distinct dates on which the user has logged meals, sorted in descending order
     logs = meal_logs.objects.filter(user=user).order_by('-meal_timedate')
-    logged_dates = sorted(list(set(log.meal_timedate.date() for log in logs)), reverse=True)
+    logged_dates = sorted(
+        list(set(
+            (timezone.localtime(log.meal_timedate).date() if timezone.is_aware(log.meal_timedate) else log.meal_timedate.date())
+            for log in logs
+        )),
+        reverse=True
+    )
     
     if not logged_dates:
         return 0
         
-    today = timezone.now().date()
+    today = timezone.localdate() if hasattr(timezone, 'localdate') else timezone.now().date()
     yesterday = today - timedelta(days=1)
     
     # The user must have logged a meal either today or yesterday to maintain/have a streak

@@ -41,16 +41,11 @@ export default function RootNavigator() {
         }
 
         // Token exists — try to verify it by fetching the profile from backend.
-        // If the server returns 401, the api.js interceptor will call signOut() automatically.
-        // We just proceed optimistically and let the interceptor handle expiry.
-        const onboarded = await getIsOnboarded();
+        const localOnboarded = await getIsOnboarded();
+        const profile = await loadUserProfile().catch(() => null);
+        const finalOnboarded = localOnboarded || profile?.is_onboarded === true;
 
-        if (onboarded) {
-          // Load profile in background for freshness — don't block navigation
-          loadUserProfile().catch(() => {});
-        }
-
-        await signIn(onboarded);
+        await signIn(finalOnboarded);
       } catch (e) {
         // If bootstrap fails for any reason, reset to unauthenticated state
         console.warn('Bootstrap error:', e.message);
