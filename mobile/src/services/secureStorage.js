@@ -24,18 +24,16 @@ export async function saveTokenSecure(token) {
 
 // ── Retrieve token (with legacy migration) ────────────────────
 export async function getTokenSecure() {
-  const sanitize = (val) => (val ? String(val).trim().replace(/^["']|["']$/g, '') : null);
-
   try {
     // Try SecureStore first
     const secureToken = await SecureStore.getItemAsync(SECURE_TOKEN_KEY);
-    if (secureToken) return sanitize(secureToken);
+    if (secureToken) return secureToken.replace(/['\"]+/g, '');
 
     // Migrate legacy token from AsyncStorage → SecureStore
     const legacy = await AsyncStorage.getItem(LEGACY_TOKEN_KEY);
     if (legacy) {
-      const clean = sanitize(legacy);
-      if (clean) await saveTokenSecure(clean); // migrate to secure storage
+      const clean = legacy.replace(/['\"]+/g, '');
+      await saveTokenSecure(clean); // migrate to secure storage
       return clean;
     }
 
@@ -43,7 +41,7 @@ export async function getTokenSecure() {
   } catch {
     // Final fallback to AsyncStorage
     const raw = await AsyncStorage.getItem(LEGACY_TOKEN_KEY);
-    return sanitize(raw);
+    return raw ? raw.replace(/['\"]+/g, '') : null;
   }
 }
 

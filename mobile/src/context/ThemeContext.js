@@ -39,15 +39,15 @@ export function ThemeProvider({ children }) {
   // Color mappings for light/dark themes
   const themeColors = {
     ...COLORS,
-    bg: isDark ? '#0F172A' : '#F8FAFC',
-    bgCard: isDark ? '#1E293B' : '#FFFFFF',
-    bgCardMuted: isDark ? 'rgba(30,41,59,0.7)' : '#F1F5F9',
-    text: isDark ? '#F8FAFC' : '#0F172A',
-    textSecondary: isDark ? '#CBD5E1' : '#475569',
-    textMuted: isDark ? '#64748B' : '#94A3B8',
-    border: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)',
+    bg: isDark ? '#0f172a' : '#f8fafc',
+    bgCard: isDark ? '#1e293b' : '#ffffff',
+    bgCardMuted: isDark ? 'rgba(30,41,59,0.7)' : '#f1f5f9',
+    text: isDark ? '#f8fafc' : '#0f172a',
+    textSecondary: isDark ? '#cbd5e1' : '#475569',
+    textMuted: isDark ? '#64748b' : '#94a3b8',
+    border: isDark ? '#334155' : '#e2e8f0',
     glassBg: isDark ? 'rgba(15,23,42,0.85)' : 'rgba(255,255,255,0.92)',
-    glassBorder: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(15,23,42,0.08)',
+    glassBorder: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.6)',
   };
 
   return (

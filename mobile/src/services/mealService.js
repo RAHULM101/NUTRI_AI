@@ -31,26 +31,20 @@ export async function deleteMealLog(mealId) {
 
 // ── Analyze food image via AI (Gemini) ───────────────────────
 // imageUri: local file URI from expo-image-picker (e.g. file:///...)
-// portionHint: optional user-provided context e.g. "2 pieces", "250g", "half plate"
-export async function analyzeMealImage(imageUri, imageName = 'meal.jpg', mimeType = 'image/jpeg', portionHint = '') {
+export async function analyzeMealImage(imageUri, imageName = 'meal.jpg', mimeType = 'image/jpeg') {
   const formData = new FormData();
 
   const filename = imageUri ? imageUri.split('/').pop() || imageName : imageName;
   const match = /\.(\w+)$/.exec(filename);
   const ext = match ? match[1].toLowerCase() : 'jpg';
   const type = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  const cleanUri = Platform.OS === 'android' ? imageUri : (imageUri.startsWith('file://') ? imageUri : `file://${imageUri}`);
+  const cleanUri = Platform.OS === 'android' ? imageUri : imageUri.replace('file://', '');
 
   formData.append('image', {
     uri: cleanUri,
     name: filename.includes('.') ? filename : `${filename}.${ext}`,
     type: type,
   });
-
-  // Pass optional portion context to backend for improved AI accuracy (no scan limit cost)
-  if (portionHint && portionHint.trim()) {
-    formData.append('portion_hint', portionHint.trim());
-  }
 
   const response = await uploadFormData(ENDPOINTS.mealAnalyze, formData);
   return response.data;

@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import uuid
 from django.db import models
+from pgvector.django import VectorField
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -19,7 +20,7 @@ class User(AbstractUser):
     
     # Timestamps
     created_at = models.DateTimeField(default=timezone.now)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.username
@@ -114,7 +115,7 @@ class meal_logs(models.Model):
     junk_score = models.IntegerField(null=True, blank=True)
     ai_insights = models.TextField(null=True, blank=True)
     meal_photo_url = models.TextField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now=True)
 
 
 class chat_logs(models.Model):
@@ -232,3 +233,18 @@ class AffiliateOrder(models.Model):
 
     class Meta:
         ordering = ['-created_at']
+
+
+class RagDocument(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dataset_type = models.CharField(max_length=50) # 'food_table', 'vikaspedia', 'pmc_research'
+    source_name = models.CharField(max_length=255)
+    page_number = models.IntegerField(null=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
+    content = models.TextField()
+    metadata = models.JSONField(default=dict, blank=True)
+    embedding = VectorField(dimensions=768, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"[{self.dataset_type}] {self.source_name} - {self.title or 'Chunk'}"

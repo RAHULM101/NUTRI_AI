@@ -109,7 +109,8 @@ export default function ProfileScreen({ navigation }) {
         text: 'Log Out',
         style: 'destructive',
         onPress: async () => {
-          await signOut();
+          await logoutUser();
+          signOut();
         },
       },
     ]);

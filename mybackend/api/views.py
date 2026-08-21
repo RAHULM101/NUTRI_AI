@@ -1,24 +1,33 @@
 import random
 from django.utils import timezone
+from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
-from rest_framework import status, viewsets, generics, authentication, permissions
+User = get_user_model()
+from .models import UserProfile,meal_logs,chat_logs
+from .serializer import RegisterSerializer, OnboardingSerializer,MealLogSerializer, MealImageUploadSerializer, ChatLogSerializer
+from rest_framework import status,viewsets,generics
+from rest_framework import authentication, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated
 from django.db import models
-from datetime import timedelta
+from .utils import analyze_meal_image_with_gemini,generate_nia_chat_response
 from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
 import requests as standard_requests
-from .models import UserProfile, meal_logs, chat_logs
-from .serializer import RegisterSerializer, OnboardingSerializer, MealLogSerializer, MealImageUploadSerializer, ChatLogSerializer
-from .utils import analyze_meal_image_with_gemini, generate_nia_chat_response, auto_fix_macros_with_gemini
+from google.auth.transport import requests as google_requests
+from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import timedelta
+
 
 User = get_user_model()
-
+from .models import UserProfile
+from .serializer import RegisterSerializer, OnboardingSerializer
+from rest_framework import status,viewsets
+from rest_framework import authentication, permissions
+from django.db import models
 
 class RegisterView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -132,6 +141,7 @@ class ProfileView(APIView):
                 sub.status = 'active'
                 sub.save()
                 profile.active_subscription = sub
+                profile.save()
 
             serializer = OnboardingSerializer(profile, data=request.data, partial=True)
             if serializer.is_valid():
@@ -193,8 +203,6 @@ class AnalyzeMealImageView(APIView):
     Takes an image, passes it to Gemini, calculates a junk score,
     and returns the data so the frontend can preview it.
     Does NOT save to the database.
-    Now supports optional 'portion_hint' text field for improved accuracy.
-    Also returns detected_count, unit, total_weight_g for client-side portion math.
     """
     # Requires multipart parsing for file uploads
     parser_classes = (MultiPartParser, FormParser)
@@ -205,11 +213,9 @@ class AnalyzeMealImageView(APIView):
             
             if serializer.is_valid():
                 image_file = serializer.validated_data['image']
-                # Optional portion hint from mobile (e.g. '2 pieces', '250g', 'half plate')
-                portion_hint = request.data.get('portion_hint', None)
                 
-                # Call our utility function with optional portion context
-                analysis_result = analyze_meal_image_with_gemini(image_file, portion_hint=portion_hint)
+                # Call our utility function
+                analysis_result = analyze_meal_image_with_gemini(image_file)
                 
                 if "error" in analysis_result:
                     return Response(analysis_result, status=status.HTTP_400_BAD_REQUEST)
@@ -225,30 +231,6 @@ class AnalyzeMealImageView(APIView):
                 {"error": f"Failed to process image: {str(e)}"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-
-class AutoFixMacrosView(APIView):
-    """
-    Lightweight text-only endpoint. No image required.
-    Called when user edits food name and taps 'Auto-Fix Macros'.
-    Does NOT count against the user's daily scan limit.
-    Returns estimated macros for the corrected food name.
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, *args, **kwargs):
-        food_name = request.data.get('food_name', '').strip()
-        serving_desc = request.data.get('serving', '1 serving').strip()
-
-        if not food_name:
-            return Response({'error': 'food_name is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        result = auto_fix_macros_with_gemini(food_name, serving_desc)
-
-        if 'error' in result:
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(result, status=status.HTTP_200_OK)
         
 class MealLogListCreateView(generics.ListCreateAPIView):
     """
@@ -266,31 +248,14 @@ class MealLogListCreateView(generics.ListCreateAPIView):
         
         today = timezone.now().date()
         # Find daily_tracking created today for this user, or create one
-        tracking = daily_tracking.objects.filter(
+        tracking, created = daily_tracking.objects.get_or_create(
             user=self.request.user,
             created_at__date=today,
-        ).first()
-
-        if not tracking:
-            tracking = daily_tracking.objects.create(
-                user=self.request.user,
-                behaviour_summary='Active',
-                water_intake_liters=0.0
-            )
+            defaults={'behaviour_summary': 'Active'}
+        )
         
-        # Save the meal log
-        meal = serializer.save(user=self.request.user, tracking_id=tracking)
-
-        # Aggregate today's stats for daily_tracking record
-        today_meals = meal_logs.objects.filter(user=self.request.user, meal_timedate__date=today)
-        tracking.total_calories_consumed = sum(m.calories or 0 for m in today_meals)
-        tracking.total_carbs = sum(float(m.carbs_gm or 0) for m in today_meals)
-        tracking.total_fat = sum(float(m.fat_gm or 0) for m in today_meals)
-        tracking.meal_count = today_meals.count()
-        valid_junks = [m.junk_score for m in today_meals if m.junk_score is not None]
-        if valid_junks:
-            tracking.junk_score_avg = round(sum(valid_junks) / len(valid_junks), 1)
-        tracking.save()
+        # Automatically assign the logged-in user and today's tracking record when saving
+        serializer.save(user=self.request.user, tracking_id=tracking)
 
 
 class MealLogDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -393,33 +358,29 @@ class DashboardSummaryView(APIView):
             from datetime import timedelta
             
             user = request.user
-            today = timezone.localdate() if hasattr(timezone, 'localdate') else timezone.now().date()
+            today = timezone.now().date()
             
             # Calculate the past 7 days (including today)
             days = []
             for i in range(6, -1, -1):
                 days.append(today - timedelta(days=i))
                 
-            # Get all meal logs around these days
+            # Get all meal logs for these days
             logs = meal_logs.objects.filter(
                 user=user,
-                meal_timedate__date__gte=days[0] - timedelta(days=1),
-                meal_timedate__date__lte=days[-1] + timedelta(days=1)
+                meal_timedate__date__gte=days[0],
+                meal_timedate__date__lte=days[-1]
             )
             
-            # Group by day using local timezone
+            # Group by day
             daily_data = {day: {'calories': 0, 'junk_score_sum': 0, 'count': 0} for day in days}
-            today_logs = []
             for log in logs:
-                log_dt = timezone.localtime(log.meal_timedate) if timezone.is_aware(log.meal_timedate) else log.meal_timedate
-                log_date = log_dt.date()
+                log_date = log.meal_timedate.date()
                 if log_date in daily_data:
                     daily_data[log_date]['calories'] += log.calories or 0
                     if log.junk_score is not None:
                         daily_data[log_date]['junk_score_sum'] += log.junk_score
                         daily_data[log_date]['count'] += 1
-                if log_date == today:
-                    today_logs.append(log)
                         
             cal_trend = []
             junk_trend = []
@@ -443,6 +404,7 @@ class DashboardSummaryView(APIView):
                 })
                 
             # Calculate today's aggregates for front-end hydration
+            today_logs = logs.filter(meal_timedate__date=today)
             today_calories = 0
             today_protein = 0.0
             today_carbs = 0.0
@@ -474,7 +436,7 @@ class DashboardSummaryView(APIView):
             try:
                 streak_val = calculate_user_streak(user)
             except Exception:
-                streak_val = 0
+                streak_val = 1
 
             return Response({
                 'cal_trend': cal_trend,
@@ -494,7 +456,7 @@ class DashboardSummaryView(APIView):
             return Response({
                 'cal_trend': [],
                 'junk_trend': [],
-                'streak': 0,
+                'streak': 1,
                 'today': {
                     'calories': 0,
                     'protein': 0.0,
@@ -509,32 +471,25 @@ class DashboardSummaryView(APIView):
 
 class UpdateWaterIntakeView(APIView):
     permission_classes = [IsAuthenticated]
-
+    
     def post(self, request):
+        from django.utils import timezone
         from .models import daily_tracking
-
+        
         water_amount = request.data.get('water')
         if water_amount is None:
             return Response({"error": "water amount required"}, status=400)
-
+            
         today = timezone.now().date()
-
-        # Fix: get_or_create doesn't support __date lookups — use filter().first() + create()
-        tracking = daily_tracking.objects.filter(
+        tracking, created = daily_tracking.objects.get_or_create(
             user=request.user,
-            created_at__date=today
-        ).first()
-
-        if not tracking:
-            tracking = daily_tracking.objects.create(
-                user=request.user,
-                behaviour_summary='Active',
-                water_intake_liters=0.0
-            )
-
+            created_at__date=today,
+            defaults={'behaviour_summary': 'Active', 'water_intake_liters': 0.0}
+        )
+        
         tracking.water_intake_liters = float(water_amount)
         tracking.save()
-
+        
         return Response({
             "message": "Water intake updated",
             "water": float(tracking.water_intake_liters)

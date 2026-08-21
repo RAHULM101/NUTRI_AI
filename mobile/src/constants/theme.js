@@ -12,29 +12,29 @@ export const COLORS = {
   teal: '#14B8A6',           // teal-500 (Dashboard accent)
   tealLight: '#99F6E4',      // teal-200
 
-  // Background (Softer, eye-friendly canvas)
-  bgLight: '#F8FAFC',        // slate-50 / soft canvas
-  bgWhite: '#FFFFFF',
-  bgDark: '#0F172A',         // slate-900
+  // Background
+  bgLight: '#f8fafc',        // slate-50
+  bgWhite: '#ffffff',
+  bgDark: '#0f172a',         // slate-900
   bgDarker: '#020617',       // slate-950
 
   // Surface
-  surfaceLight: '#FFFFFF',
-  surfaceMuted: '#F1F5F9',   // slate-100
-  surfaceDark: '#1E293B',    // slate-800
-  surfaceDarker: '#0F172A',  // slate-900
+  surfaceLight: '#ffffff',
+  surfaceMuted: '#f1f5f9',   // slate-100
+  surfaceDark: '#1e293b',    // slate-800
+  surfaceDarker: '#0f172a',  // slate-900
 
   // Text
-  textPrimary: '#0F172A',    // slate-900
+  textPrimary: '#0f172a',    // slate-900
   textSecondary: '#475569',  // slate-600
-  textMuted: '#94A3B8',      // slate-400
-  textLight: '#FFFFFF',
-  textDark: '#F8FAFC',
+  textMuted: '#94a3b8',      // slate-400
+  textLight: '#ffffff',
+  textDark: '#f8fafc',
 
-  // Border (Refined, non-harsh)
-  border: 'rgba(15, 23, 42, 0.08)',         // subtle 8% dark border
-  borderDark: 'rgba(255, 255, 255, 0.08)',   // subtle 8% light border
-  borderMuted: 'rgba(15, 23, 42, 0.04)',
+  // Border
+  border: '#e2e8f0',         // slate-200
+  borderDark: '#334155',     // slate-700
+  borderMuted: 'rgba(255,255,255,0.1)',
 
   // Semantic
   error: '#ef4444',          // red-500

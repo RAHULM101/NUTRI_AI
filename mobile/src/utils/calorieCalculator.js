@@ -8,13 +8,13 @@ export function calculateDailyCalorieTarget(userData, userMetrics) {
     return Number(explicit);
   }
 
-  // Extract biometric factors (if not filled, return 0)
+  // Extract biometric factors
   const weight = parseFloat(userData?.weight || userMetrics?.current_weight);
   const height = parseFloat(userData?.height);
   const age = parseInt(userData?.age);
 
   if (!weight || !height || !age) {
-    return 0;
+    return 2000; // Standard baseline target so progress ring and macros are always vibrant
   }
 
   const isMale = (userData?.gender || 'male').toLowerCase() === 'male';

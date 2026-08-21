@@ -19,7 +19,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Mail, Lock, Eye, EyeOff, ArrowLeft, Check, AlertCircle } from 'lucide-react-native';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
+import * as Google from 'expo-auth-session/providers/google';
 import LoadingOverlay from '../../components/common/LoadingOverlay';
 import GoogleIcon from '../../components/common/GoogleIcon';
 import AppleIcon from '../../components/common/AppleIcon';
@@ -30,8 +32,17 @@ import { triggerHaptic } from '../../utils/haptics';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 import { isRateLimited, RATE_LIMITS, getRemainingCooldownSecs } from '../../utils/rateLimiter';
 
+WebBrowser.maybeCompleteAuthSession();
+
 // ── Google OAuth Client IDs ─────────────────────────────────────────────────
+// Replace these with YOUR actual Client IDs from Google Cloud Console:
+//   https://console.cloud.google.com/apis/credentials
+// Create an "OAuth 2.0 Client ID" for:
+//   • Android → package: com.nutriai.mobile
+//   • iOS     → bundle: com.nutriai.mobile
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '';
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 
 // ── Email validation regex ────────────────────────────────────
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -41,7 +52,7 @@ const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 30000; // 30 seconds
 
 export default function LoginScreen({ navigation }) {
-  const { signIn, loadUserProfile, updateUserData } = useAuth();
+  const { signIn, loadUserProfile } = useAuth();
   const { isDark, colors } = useTheme();
 
   const [email, setEmail] = useState('');
@@ -57,16 +68,13 @@ export default function LoginScreen({ navigation }) {
   const [lockedUntil, setLockedUntil] = useState(null);
   const [cooldownSecs, setCooldownSecs] = useState(0);
 
-  // Configure Native Google Signin
-  useEffect(() => {
-    if (GOOGLE_WEB_CLIENT_ID) {
-      GoogleSignin.configure({
-        webClientId: GOOGLE_WEB_CLIENT_ID,
-        offlineAccess: true,
-        scopes: ['profile', 'email'],
-      });
-    }
-  }, []);
+  // ── Google OAuth Request (Web Client ID Flow) ──────────
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    clientId: GOOGLE_WEB_CLIENT_ID,
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    scopes: ['openid', 'profile', 'email'],
+    responseType: 'id_token token',
+  });
 
   // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -112,6 +120,38 @@ export default function LoginScreen({ navigation }) {
       Animated.timing(shakeAnim, { toValue: -6, duration: 60, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 0, duration: 60, useNativeDriver: true }),
     ]).start();
+  };
+
+  // ── Handle the OAuth response from Google ───────────────────────
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication, params } = response;
+      const token = authentication?.accessToken || authentication?.idToken || params?.access_token || params?.id_token;
+      handleGoogleToken(token);
+    } else if (response?.type === 'error') {
+      setErrorMsg('Google sign-in failed. Please try again.');
+      setGoogleLoading(false);
+    } else if (response?.type === 'cancel' || response?.type === 'dismiss') {
+      setGoogleLoading(false);
+    }
+  }, [response]);
+
+  const handleGoogleToken = async (accessToken) => {
+    if (!accessToken) {
+      setErrorMsg('Google authentication failed: missing access token.');
+      setGoogleLoading(false);
+      return;
+    }
+    try {
+      const authRes = await googleLogin(accessToken);
+      triggerHaptic('success');
+      await loadUserProfile().catch(() => {});
+      await signIn(authRes?.user?.is_onboarded || true);
+    } catch (err) {
+      setErrorMsg(err?.normalizedMessage || 'Google sign-in failed. Please try again.');
+    } finally {
+      setGoogleLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -160,12 +200,9 @@ export default function LoginScreen({ navigation }) {
     try {
       const authRes = await loginUser(email.trim(), password);
       triggerHaptic('success');
-      const profile = await loadUserProfile().catch((e) => {
-        console.warn('Profile hydration notice:', e?.message);
-        return null;
-      });
-      const userOnboarded = authRes?.user?.is_onboarded === true || profile?.is_onboarded === true;
-      await signIn(userOnboarded);
+      const isOnboarded = authRes?.user?.is_onboarded !== undefined ? authRes.user.is_onboarded : true;
+      loadUserProfile().catch((e) => console.warn('Profile hydration notice:', e?.message));
+      await signIn(isOnboarded);
       setFailedAttempts(0); // Reset on success
     } catch (err) {
       const newAttempts = failedAttempts + 1;
@@ -190,7 +227,12 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleGoogleLogin = async () => {
-    if (googleLoading) return;
+    if (googleLoading || !request) {
+      if (!request) {
+        console.warn('Google Auth Request is not ready yet.');
+      }
+      return;
+    }
 
     // ── Rate limiting for Google auth ─────────────────────────
     if (isRateLimited(RATE_LIMITS.GOOGLE_AUTH.key, RATE_LIMITS.GOOGLE_AUTH.maxRequests, RATE_LIMITS.GOOGLE_AUTH.windowMs)) {
@@ -202,47 +244,10 @@ export default function LoginScreen({ navigation }) {
     setErrorMsg('');
     setGoogleLoading(true);
     try {
-      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-      // Force account picker by clearing any previously cached session
-      await GoogleSignin.signOut().catch(() => {});
-      const userInfo = await GoogleSignin.signIn();
-      const token = userInfo.data?.idToken || userInfo.idToken;
-
-      if (!token) {
-        throw new Error('Google authentication failed: missing ID token.');
-      }
-
-      const authRes = await googleLogin(token);
-      triggerHaptic('success');
-
-      const googlePhoto = userInfo.data?.user?.photo || userInfo.user?.photo;
-      const googleFirstName = userInfo.data?.user?.givenName || userInfo.user?.givenName;
-      const googleLastName = userInfo.data?.user?.familyName || userInfo.user?.familyName;
-      if (googlePhoto || googleFirstName) {
-        updateUserData({
-          photo: googlePhoto,
-          firstName: googleFirstName,
-          lastName: googleLastName,
-        }).catch(() => {});
-      }
-
-      const profile = await loadUserProfile().catch(() => null);
-      const userOnboarded = authRes?.user?.is_onboarded === true || profile?.is_onboarded === true;
-      await signIn(userOnboarded);
+      await promptAsync();
     } catch (err) {
-      if (err?.code === statusCodes?.SIGN_IN_CANCELLED) {
-        // User cancelled sign-in
-      } else if (err?.code === statusCodes?.IN_PROGRESS) {
-        // Sign-in already in progress
-      } else if (err?.code === statusCodes?.PLAY_SERVICES_NOT_AVAILABLE) {
-        setErrorMsg('Google Play Services is not available or outdated.');
-        triggerShake();
-      } else {
-        console.warn('Google Login error:', err);
-        setErrorMsg(err?.normalizedMessage || err?.message || 'Google sign-in failed. Please try again.');
-        triggerShake();
-      }
-    } finally {
+      console.warn('Google Login prompt error:', err);
+      setErrorMsg('Google sign-in failed. Please try again.');
       setGoogleLoading(false);
     }
   };

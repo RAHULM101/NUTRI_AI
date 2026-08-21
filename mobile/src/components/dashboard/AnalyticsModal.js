@@ -40,7 +40,7 @@ export default function AnalyticsModal({ visible, onClose, dashData, userData, u
     { name: 'Sun', val: 1780 },
   ];
 
-  const junkTrend = (dashData?.junk_trend && dashData.junk_trend.length > 0) ? dashData.junk_trend : [
+  const junkTrend = [
     { name: 'Mon', score: 25 },
     { name: 'Tue', score: 32 },
     { name: 'Wed', score: 18 },

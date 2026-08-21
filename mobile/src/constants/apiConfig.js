@@ -24,7 +24,6 @@ export const ENDPOINTS = {
   // Meal Logs
   mealLogs: '/api/meal-logs/',
   mealAnalyze: '/api/meal-logs/analyze/',
-  mealAutoFix: '/api/meal-logs/auto-fix/',
   mealLogsDetail: (id) => `/api/meal-logs/${id}/`,
 
   // Nia AI

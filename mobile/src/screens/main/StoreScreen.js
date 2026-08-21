@@ -28,24 +28,17 @@ import { getProducts } from '../../services/storeService';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 const CATEGORIES = [
-  { label: 'All',                    slug: '' },
-  { label: 'High Protein',           slug: 'high-protein' },
-  { label: 'Breakfast',              slug: 'breakfast' },
-  { label: 'High Protein Breakfast', slug: 'high-protein-breakfast' },
-  { label: 'Muesli',                 slug: 'muesli' },
-  { label: 'Healthy Snacks',         slug: 'healthy-snacks' },
-  { label: 'Peanut Butter',          slug: 'peanut-butter' },
-  { label: 'Dairy & Yogurt',         slug: 'dairy' },
-  { label: 'Beverages',              slug: 'beverages' },
-  { label: 'Supplements',            slug: 'supplements' },
+  { label: 'All',            slug: '' },
+  { label: 'High Protein',   slug: 'high-protein' },
+  { label: 'Supplements',    slug: 'supplements' },
+  { label: 'Healthy Snacks', slug: 'healthy-snacks' },
+  { label: 'Organic Meals',  slug: 'organic-meals' },
+  { label: 'Beverages',      slug: 'beverages' },
 ];
 
 const PARTNER_STYLE = {
   'Blinkit':          { bg: '#ECFDF5', text: '#059669', border: '#A7F3D0', emoji: '🟢', color: '#10B981' },
   'Zepto':            { bg: '#FAF5FF', text: '#9333EA', border: '#E9D5FF', emoji: '🟣', color: '#A855F7' },
-  'BigBasket':        { bg: '#FEFCE8', text: '#CA8A04', border: '#FEF08A', emoji: '🟡', color: '#EAB308' },
-  'Alpino':           { bg: '#FFF7ED', text: '#C2410C', border: '#FFEDD5', emoji: '🥜', color: '#EA580C' },
-  'Tata Nutrikorner': { bg: '#F0FDF4', text: '#15803D', border: '#BBF7D0', emoji: '🍃', color: '#16A34A' },
   'Swiggy Instamart': { bg: '#FFF7ED', text: '#EA580C', border: '#FED7AA', emoji: '🟠', color: '#FC8019' },
   'Zomato':           { bg: '#FEF2F2', text: '#DC2626', border: '#FECACA', emoji: '🔴', color: '#EF4444' },
   'HealthKart':       { bg: '#F0FDFA', text: '#0D9488', border: '#99F6E4', emoji: '🩵', color: '#14B8A6' },
@@ -65,19 +58,13 @@ const LOCAL_PRODUCT_IMAGES = {
 };
 
 export function getProductImageSource(item) {
-  // 1. If product has a direct high-res web image URL, prioritize it
-  if (item?.image_link && typeof item.image_link === 'string' && (item.image_link.startsWith('http://') || item.image_link.startsWith('https://'))) {
-    return { uri: item.image_link };
-  }
-
-  // 2. Otherwise map to local high-res asset fallback
   const name = (item?.name || '').toLowerCase();
-  if (name.includes('peanut butter') || name.includes('alpino') || name.includes('pintola')) return LOCAL_PRODUCT_IMAGES.alpino_pb;
+  if (name.includes('peanut butter') || name.includes('alpino')) return LOCAL_PRODUCT_IMAGES.alpino_pb;
   if (name.includes('creatine')) return LOCAL_PRODUCT_IMAGES.mb_creatine;
   if (name.includes('whey') && name.includes('muscleblaze')) return LOCAL_PRODUCT_IMAGES.mb_whey;
   if (name.includes('whey') || name.includes('gold standard')) return LOCAL_PRODUCT_IMAGES.on_whey;
-  if (name.includes('muesli') || name.includes('granola')) return LOCAL_PRODUCT_IMAGES.true_elements_granola;
-  if (name.includes('oat') || name.includes('oats') || name.includes('quaker')) return LOCAL_PRODUCT_IMAGES.true_elements_oats;
+  if (name.includes('granola')) return LOCAL_PRODUCT_IMAGES.true_elements_granola;
+  if (name.includes('oat') || name.includes('oats')) return LOCAL_PRODUCT_IMAGES.true_elements_oats;
   if (name.includes('yogurt') || name.includes('epigamia')) return LOCAL_PRODUCT_IMAGES.epigamia_yogurt;
   if (name.includes('makhana') || name.includes('farmley')) return LOCAL_PRODUCT_IMAGES.farmley_makhana;
   if (name.includes('tea') || name.includes('tetley')) return LOCAL_PRODUCT_IMAGES.tetley_tea;
@@ -88,30 +75,19 @@ export function getProductImageSource(item) {
 const EXACT_WEB_PRODUCTS = [
   {
     id: 1,
-    name: 'True Elements Rolled Oats (1kg)',
-    brand: 'True Elements',
-    partner_name: 'Blinkit',
-    website_name: 'Blinkit',
-    category: 'breakfast',
-    category_name: 'Breakfast',
-    price: 253,
-    original_price: 400,
-    delivery_eta: '10 mins',
+    name: 'Optimum Nutrition (ON) Gold Standard 100% Whey Protein (Double Rich Chocolate 1kg)',
+    brand: 'HealthKart',
+    partner_name: 'HealthKart',
+    category: 'high-protein',
+    category_name: 'High Protein',
+    price: 3299,
+    original_price: 3899,
+    delivery_eta: 'Same Day',
     is_featured: true,
-    macro_tag: 'Whole Grain • High Fiber',
-    description:
-      'True Elements Wholegrain Rolled Oats made from 100% natural wholegrain rolled oats. Rich in dietary fiber and essential minerals.',
-    nutrition: {
-      calories: '363 kcal',
-      protein: '13.1g',
-      carbs: '65g',
-      fat: '7.8g'
-    },
-    affiliate_link:
-      'https://blinkit.com/prn/true-elements-wholegrain-rolled-oats/prid/473034',
-    image_link:
-      'https://m.media-amazon.com/images/I/71N1t2s49TL._SL1500_.jpg',
-    verified: true
+    macro_tag: '24g Protein • 5.5g BCAAs',
+    description: 'World #1 Optimum Nutrition Gold Standard 100% Whey Protein with Whey Protein Isolate as the primary ingredient to build and maintain lean muscle.',
+    nutrition: { calories: '120 kcal', protein: '24g', carbs: '3g', fat: '1g' },
+    affiliate_link: 'https://www.healthkart.com',
   },
   {
     id: 2,
@@ -128,441 +104,135 @@ const EXACT_WEB_PRODUCTS = [
     description: 'Clinically tested 25g protein per serving and fortified with DigeZyme enzyme complex for 50% higher protein absorption.',
     nutrition: { calories: '113 kcal', protein: '25g', carbs: '2.5g', fat: '1g' },
     affiliate_link: 'https://www.healthkart.com',
-    image_link: 'https://m.media-amazon.com/images/I/71y+m6gJ+fL._SL1500_.jpg',
-    verified: true
   },
   {
     id: 3,
-    name: 'Epigamia Natural Greek Yogurt (400g)',
-    brand: 'Epigamia',
-    partner_name: 'BigBasket',
-    website_name: 'BigBasket',
-    category: 'dairy',
-    category_name: 'Dairy & Yogurt',
-    price: 223,
-    original_price: 250,
-    delivery_eta: 'Available according to location',
-    is_featured: true,
-    macro_tag: 'Greek Yogurt • High Protein',
-    description:
-      'Epigamia Natural Greek Yogurt, 400g cup. Strained authentic Greek yogurt packed with gut-healthy probiotics and natural protein.',
-    nutrition: {
-      calories: '65 kcal',
-      protein: '7g',
-      carbs: '5g',
-      fat: '2g'
-    },
-    affiliate_link:
-      'https://www.bigbasket.com/pd/40103424/epigamia-greek-yogurt-natural-low-fat-400-g-cup/',
-    image_link:
-      'https://m.media-amazon.com/images/I/61kYQJv7rOL._SL1200_.jpg',
-    verified: true
+    name: 'Alpino All-Natural Peanut Butter (Crunchy 1kg)',
+    brand: 'Zepto',
+    partner_name: 'Zepto',
+    category: 'high-protein',
+    category_name: 'High Protein',
+    price: 399,
+    original_price: 499,
+    delivery_eta: '10 mins',
+    is_featured: false,
+    macro_tag: '30g Protein • 100% Roasted Peanuts',
+    description: 'Clean roasted slow-ground organic peanuts with zero hydrogenated oils, zero added sugar, and zero preservatives. Rich in protein and healthy fats.',
+    nutrition: { calories: '620 kcal', protein: '30g', carbs: '18g', fat: '49g' },
+    affiliate_link: 'https://www.zeptonow.com',
   },
   {
     id: 4,
-    name: 'Yoga Bar 20g Protein Bar - Chocolate Brownie',
-    brand: 'Yoga Bar',
-    partner_name: 'BigBasket',
-    website_name: 'BigBasket',
+    name: 'Epigamia Natural Greek Yogurt (400g)',
+    brand: 'Blinkit',
+    partner_name: 'Blinkit',
     category: 'healthy-snacks',
     category_name: 'Healthy Snacks',
-    price: 749,
-    original_price: null,
-    delivery_eta: 'Available according to location',
+    price: 130,
+    original_price: 150,
+    delivery_eta: '12 mins',
     is_featured: false,
-    macro_tag: '20g Protein • High Fibre',
-    description:
-      'Yoga Bar Chocolate Brownie Protein Bar, 20g protein per bar.',
-    nutrition: {
-      calories: '299 kcal',
-      protein: '20g',
-      carbs: '30.8g',
-      fat: '11.9g'
-    },
-    affiliate_link:
-      'https://www.bigbasket.com/pd/40095298/yoga-bar-whey-protein-bar-chocolate-brownie-60-g-box/',
-    image_link:
-      'https://cdn.grofers.com/app/images/products/sliding_image/424391a.jpg?ts=1690816007',
-    verified: true
+    macro_tag: '8g Protein • Probiotic Rich',
+    description: 'Thick, strained authentic Greek yogurt packed with gut-friendly live probiotics, rich bioavailable calcium, and zero added sugar.',
+    nutrition: { calories: '75 kcal', protein: '8g', carbs: '4g', fat: '3g' },
+    affiliate_link: 'https://blinkit.com',
   },
   {
     id: 5,
-    name: 'Farmley Prasadam Makhana (Foxnuts) 100g',
-    brand: 'Farmley',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
+    name: 'Yoga Bar 20g Whey Protein Bars (Pack of 6 Assorted)',
+    brand: 'Zomato',
+    partner_name: 'Zomato',
     category: 'healthy-snacks',
     category_name: 'Healthy Snacks',
-    price: 173,
-    original_price: 299,
-    delivery_eta: 'Available according to location',
+    price: 349,
+    original_price: 420,
+    delivery_eta: '25 mins',
     is_featured: false,
-    macro_tag: 'Makhana • Healthy Snack',
-    description:
-      'Farmley Prasadam Makhana (Foxnuts), 100g pack.',
-    nutrition: {
-      calories: '350 kcal',
-      protein: '9.7g',
-      carbs: '64g',
-      fat: '1.2g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/farmley-prasadam-makhana-foxnuts/pvid/2d4a5eba-80a2-4382-ad26-efb6100a18e2',
-    image_link:
-      'https://www.zepto.com/pn/farmley-prasadam-makhana-foxnuts/pvid/2d4a5eba-80a2-4382-ad26-efb6100a18e2',
-    verified: true
+    macro_tag: '20g Whey Protein • 10g Fiber',
+    description: 'Delicious snack on-the-go made from whole almonds, chia seeds, dark cocoa, and clean whey protein isolate with no artificial sweeteners.',
+    nutrition: { calories: '240 kcal', protein: '20g', carbs: '22g', fat: '8g' },
+    affiliate_link: 'https://www.zomato.com',
   },
   {
     id: 6,
-    name: 'Pintola All Natural Peanut Butter Crunchy (1kg)',
-    brand: 'Pintola',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
-    category: 'peanut-butter',
-    category_name: 'Peanut Butter',
-    price: 383,
-    original_price: 430,
-    delivery_eta: 'Same Day',
+    name: 'True Elements Rolled Oats (1kg)',
+    brand: 'Blinkit',
+    partner_name: 'Blinkit',
+    category: 'organic-meals',
+    category_name: 'Organic Meals',
+    price: 240,
+    original_price: 299,
+    delivery_eta: '12 mins',
     is_featured: false,
-    macro_tag: '30g Protein • 100% Roasted Peanuts',
-    description:
-      'Pintola All Natural Peanut Butter Crunchy made from pure roasted peanuts with no added sugar or salt.',
-    nutrition: {
-      calories: '639 kcal',
-      protein: '30g',
-      carbs: '18g',
-      fat: '49g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/pintola-all-natural-peanut-butter-crunchy/pvid/58b1451e-7330-4886-a914-724616c8d9ca',
-    image_link:
-      'https://www.zepto.com/pn/pintola-all-natural-peanut-butter-crunchy/pvid/58b1451e-7330-4886-a914-724616c8d9ca',
-    verified: true
+    macro_tag: '100% Whole Grain • High Fiber',
+    description: '100% whole grain rolled oats rich in beta-glucan soluble fiber that helps lower cholesterol and provides steady, all-day sustained energy.',
+    nutrition: { calories: '389 kcal', protein: '13g', carbs: '67g', fat: '8g' },
+    affiliate_link: 'https://blinkit.com',
   },
   {
     id: 7,
-    name: 'Alpino Natural Peanut Butter Crunch (1kg)',
-    brand: 'Alpino',
-    partner_name: 'Alpino',
-    website_name: 'Alpino Official Store',
-    category: 'peanut-butter',
-    category_name: 'Peanut Butter',
-    price: 349,
-    original_price: 419,
-    delivery_eta: 'According to pincode',
+    name: 'Farmley Premium Roasted Foxnuts (Makhana 100g)',
+    brand: 'Zepto',
+    partner_name: 'Zepto',
+    category: 'healthy-snacks',
+    category_name: 'Healthy Snacks',
+    price: 160,
+    original_price: 199,
+    delivery_eta: '10 mins',
     is_featured: false,
-    macro_tag: '30g Protein • 100% Natural',
-    description:
-      'Alpino Natural Peanut Butter Crunch made from 100% roasted peanuts with no added sugar, salt or palm oil.',
-    nutrition: {
-      calories: '620 kcal',
-      protein: '30g',
-      carbs: '18g',
-      fat: '49g'
-    },
-    affiliate_link:
-      'https://alpino.store/collections/peanut-butter/products/alpino-natural-peanut-butter-crunch',
-    image_link:
-      'https://alpino.store/collections/peanut-butter/products/alpino-natural-peanut-butter-crunch',
-    verified: true
+    macro_tag: 'Low GI • Crunchy Fiber Snack',
+    description: 'Air-popped jumbo makhana lightly roasted with olive oil and savory peri peri spice mix. Perfect healthy low-calorie snack.',
+    nutrition: { calories: '347 kcal', protein: '9g', carbs: '64g', fat: '2g' },
+    affiliate_link: 'https://www.zeptonow.com',
   },
   {
     id: 8,
+    name: 'MuscleBlaze Creatine Monohydrate (100g)',
+    brand: 'HealthKart',
+    partner_name: 'HealthKart',
+    category: 'supplements',
+    category_name: 'Supplements',
+    price: 499,
+    original_price: 599,
+    delivery_eta: 'Same Day',
+    is_featured: false,
+    macro_tag: '100% Micronized • ATP Boost',
+    description: '100% pure micronized creatine monohydrate for rapid ATP resynthesis, enhanced strength, and muscle volumization.',
+    nutrition: { calories: '0 kcal', protein: '0g', carbs: '0g', fat: '0g' },
+    affiliate_link: 'https://www.healthkart.com',
+  },
+  {
+    id: 9,
+    name: 'True Elements Crunchy Granola (Dark Chocolate & Cranberry 400g)',
+    brand: 'Swiggy Instamart',
+    partner_name: 'Swiggy Instamart',
+    category: 'organic-meals',
+    category_name: 'Organic Meals',
+    price: 320,
+    original_price: 390,
+    delivery_eta: '15 mins',
+    is_featured: false,
+    macro_tag: 'Real Berries • 0% Refined Sugar',
+    description: 'Wholesome baked rolled oats, raw seeds, dark chocolate, and dried cranberries sweetened naturally with raw honey.',
+    nutrition: { calories: '430 kcal', protein: '10g', carbs: '60g', fat: '14g' },
+    affiliate_link: 'https://www.swiggy.com/instamart',
+  },
+  {
+    id: 10,
     name: 'Tetley Long Leaf Green Tea (100g)',
-    brand: 'Tetley',
-    partner_name: 'Tata Nutrikorner',
-    website_name: 'Tata Nutrikorner',
+    brand: 'Blinkit',
+    partner_name: 'Blinkit',
     category: 'beverages',
     category_name: 'Beverages',
     price: 190,
     original_price: 225,
-    delivery_eta: 'According to pincode',
+    delivery_eta: '12 mins',
     is_featured: false,
-    macro_tag: 'Green Tea • Antioxidants',
-    description:
-      'Tetley Long Leaf Green Tea 100g.',
-    nutrition: {
-      calories: '0 kcal',
-      protein: '0g',
-      carbs: '0g',
-      fat: '0g'
-    },
-    affiliate_link:
-      'https://www.tatanutrikorner.com/products/tetley-green-leaf',
-    image_link:
-      'https://www.tatanutrikorner.com/products/tetley-green-leaf',
-    verified: true
+    macro_tag: 'Rich in Antioxidants • 0 Cal',
+    description: 'Finest long leaf whole green tea handpicked to deliver a rich antioxidant-packed brew that boosts metabolism and mental clarity.',
+    nutrition: { calories: '0 kcal', protein: '0g', carbs: '0g', fat: '0g' },
+    affiliate_link: 'https://blinkit.com',
   },
-  {
-    id: 9,
-    name: 'True Elements Dark Chocolate Granola (400g)',
-    brand: 'True Elements',
-    partner_name: 'Blinkit',
-    website_name: 'Blinkit',
-    category: 'breakfast',
-    category_name: 'Breakfast',
-    price: 255,
-    original_price: 260,
-    delivery_eta: 'Available according to location',
-    is_featured: false,
-    macro_tag: 'Oats • Seeds • Dark Chocolate',
-    description:
-      'True Elements Dark Chocolate Granola made with rolled oats, seeds and dried fruit.',
-    nutrition: {
-      calories: '430 kcal',
-      protein: '10.5g',
-      carbs: '62g',
-      fat: '14.8g'
-    },
-    affiliate_link:
-      'https://blinkit.com/prn/x/prid/532241',
-    image_link:
-      'https://prithvienterprises.co.in/products/true-elements-dark-chocolate-granola-400-g',
-    verified: true
-  },
-  {
-    id: 10,
-    name: 'Quaker Rolled Instant Oats (1.5kg)',
-    brand: 'Quaker',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
-    category: 'breakfast',
-    category_name: 'Breakfast',
-    price: 283,
-    original_price: 312,
-    delivery_eta: 'Fast Delivery',
-    is_featured: false,
-    macro_tag: 'Whole Grain • High Fibre',
-    description:
-      'Quaker Rolled Instant Oats made from premium whole grain oats and suitable for everyday breakfast.',
-    nutrition: {
-      calories: '407 kcal',
-      protein: '11.8g',
-      carbs: '68.5g',
-      fat: '9.5g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/quaker-oats/pvid/b5bd9583-7356-457d-b64a-9a5c8b658d84',
-    image_link:
-      'https://www.zepto.com/pn/quaker-oats/pvid/b5bd9583-7356-457d-b64a-9a5c8b658d84',
-    verified: true
-  },
-  {
-    id: 11,
-    name: 'Quaker Rolled Instant Oats (1kg)',
-    brand: 'Quaker',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
-    category: 'breakfast',
-    category_name: 'Breakfast',
-    price: 175,
-    original_price: 210,
-    delivery_eta: 'Fast Delivery',
-    is_featured: false,
-    macro_tag: 'Whole Grain • High Protein',
-    description:
-      'Quaker Rolled Instant Oats made from wholegrain rolled oat flakes and suitable for a quick breakfast.',
-    nutrition: {
-      calories: '407 kcal',
-      protein: '11.8g',
-      carbs: '68.5g',
-      fat: '9.5g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/quaker-rolled-instant-oats-high-protein-breakfast-cereal/pvid/e3c72ece-b8f3-4443-b12c-500be91dc767',
-    image_link:
-      'https://www.zepto.com/pn/quaker-rolled-instant-oats-high-protein-breakfast-cereal/pvid/e3c72ece-b8f3-4443-b12c-500be91dc767',
-    verified: true
-  },
-  {
-    id: 12,
-    name: 'Alpino 25g High Protein Super Oats Chocolate with Almonds & Raisins (1kg)',
-    brand: 'Alpino',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
-    category: 'high-protein-breakfast',
-    category_name: 'High Protein Breakfast',
-    price: 437,
-    original_price: 519,
-    delivery_eta: 'Same Day',
-    is_featured: true,
-    macro_tag: '25g Protein • No Added Sugar & Salt',
-    description:
-      'Alpino High Protein Super Oats with chocolate, almonds and raisins, made with rolled oats, peanut butter, cocoa and nuts and seeds.',
-    nutrition: {
-      calories: '451 kcal',
-      protein: '25g',
-      carbs: '56g',
-      fat: '16.5g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/alpino-peanut-butter-super-oats-chocolate/pvid/c799ecc3-fc6f-42f7-9b26-c55059ba2545',
-    image_link:
-      'https://www.zepto.com/pn/alpino-peanut-butter-super-oats-chocolate/pvid/c799ecc3-fc6f-42f7-9b26-c55059ba2545',
-    verified: true
-  },
-  {
-    id: 13,
-    name: 'Alpino High Protein Super Rolled Oats Honey (1kg)',
-    brand: 'Alpino',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
-    category: 'high-protein-breakfast',
-    category_name: 'High Protein Breakfast',
-    price: 237,
-    original_price: 249,
-    delivery_eta: 'Fast Delivery',
-    is_featured: false,
-    macro_tag: '15g Protein • High Fibre',
-    description:
-      'Alpino High Protein Super Rolled Oats Honey made with rolled oats, honey and unsweetened peanut butter.',
-    nutrition: {
-      calories: '386 kcal',
-      protein: '15g',
-      carbs: '61g',
-      fat: '11g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/alpino-high-protein-super-rolled-oats-honey/pvid/984be424-308b-40ba-ba1c-49d23c5c0640',
-    image_link:
-      'https://www.zepto.com/pn/alpino-high-protein-super-rolled-oats-honey/pvid/984be424-308b-40ba-ba1c-49d23c5c0640',
-    verified: true
-  },
-  {
-    id: 14,
-    name: 'True Elements Fruit & Nut Muesli (1kg)',
-    brand: 'True Elements',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
-    category: 'muesli',
-    category_name: 'Muesli',
-    price: 437,
-    original_price: 615,
-    delivery_eta: 'Fast Delivery',
-    is_featured: true,
-    macro_tag: 'Real Fruits & Nuts • Fibre Rich',
-    description:
-      'True Elements Fruit & Nut Muesli made with rolled oats, wheat flakes, millets, almonds, seeds and dried fruits.',
-    nutrition: {
-      calories: '400 kcal',
-      protein: '9.38g',
-      carbs: '77.2g',
-      fat: '6.4g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/true-elements-fruit-nut-muesli/pvid/c01f0e14-25c1-4599-b228-e2f66904debe',
-    image_link:
-      'https://www.zepto.com/pn/true-elements-fruit-nut-muesli/pvid/c01f0e14-25c1-4599-b228-e2f66904debe',
-    verified: true
-  },
-  {
-    id: 15,
-    name: 'True Elements No Added Sugar Muesli Fruit & Nut (400g)',
-    brand: 'True Elements',
-    partner_name: 'Zepto',
-    website_name: 'Zepto',
-    category: 'muesli',
-    category_name: 'Muesli',
-    price: 240,
-    original_price: 350,
-    delivery_eta: 'Fast Delivery',
-    is_featured: false,
-    macro_tag: '13.5g Protein • 11.5g Fibre',
-    description:
-      'True Elements Fruit & Nut Muesli made with real fruits and nuts, whole grains and no added sugar.',
-    nutrition: {
-      calories: '425.4 kcal',
-      protein: '13.5g',
-      carbs: '68.1g',
-      fat: '10.9g'
-    },
-    affiliate_link:
-      'https://www.zepto.com/pn/true-elements-no-added-sugar-muesli-fruit-nut-muesli-rich-in-protein-fibre/pvid/22065015-d70f-4952-b5aa-447cd2681a84',
-    image_link:
-      'https://www.zepto.com/pn/true-elements-no-added-sugar-muesli-fruit-nut-muesli-rich-in-protein-fibre/pvid/22065015-d70f-4952-b5aa-447cd2681a84',
-    verified: true
-  },
-  {
-    id: 16,
-    name: 'True Elements Fruits, Nuts & Seeds Muesli (1kg)',
-    brand: 'True Elements',
-    partner_name: 'Blinkit',
-    website_name: 'Blinkit',
-    category: 'muesli',
-    category_name: 'Muesli',
-    price: 422,
-    original_price: 615,
-    delivery_eta: 'Available according to location',
-    is_featured: false,
-    macro_tag: '13g Protein • Fruits & Nuts',
-    description:
-      'True Elements Fruits, Nuts & Seeds Muesli made with real fruits, nuts, seeds and whole grains.',
-    nutrition: {
-      calories: '418 kcal',
-      protein: '13g',
-      carbs: '66.5g',
-      fat: '11.2g'
-    },
-    affiliate_link:
-      'https://blinkit.com/prn/true-elements-fruit-and-nut-muesli/prid/473004',
-    image_link:
-      'https://blinkit.com/prn/true-elements-fruit-and-nut-muesli/prid/473004',
-    verified: true
-  },
-  {
-    id: 17,
-    name: 'True Elements High Protein Fruit, Nuts & Seeds Muesli (400g)',
-    brand: 'True Elements',
-    partner_name: 'Blinkit',
-    website_name: 'Blinkit',
-    category: 'high-protein-breakfast',
-    category_name: 'High Protein Breakfast',
-    price: 299,
-    original_price: 370,
-    delivery_eta: 'Available according to location',
-    is_featured: true,
-    macro_tag: 'High Protein • Fruits & Nuts',
-    description:
-      'True Elements High Protein Fruit, Nuts & Seeds Muesli, a convenient high-protein breakfast option.',
-    nutrition: {
-      calories: '445 kcal',
-      protein: '20g',
-      carbs: '54.5g',
-      fat: '16.8g'
-    },
-    affiliate_link:
-      'https://blinkit.com/prn/true-elements-high-protein-fruit-nuts-seeds-muesli/prid/776005',
-    image_link:
-      'https://blinkit.com/prn/true-elements-high-protein-fruit-nuts-seeds-muesli/prid/776005',
-    verified: true
-  },
-  {
-    id: 18,
-    name: 'Yoga Bar Fruits + Nuts & Seeds Muesli (700g)',
-    brand: 'Yoga Bar',
-    partner_name: 'Blinkit',
-    website_name: 'Blinkit',
-    category: 'muesli',
-    category_name: 'Muesli',
-    price: 296,
-    original_price: 399,
-    delivery_eta: 'Available according to location',
-    is_featured: false,
-    macro_tag: '13g Protein • Fruits & Seeds',
-    description:
-      'Yoga Bar Fruits, Nuts & Seeds Muesli made for a convenient breakfast.',
-    nutrition: {
-      calories: '412 kcal',
-      protein: '13g',
-      carbs: '67g',
-      fat: '10.5g'
-    },
-    affiliate_link:
-      'https://blinkit.com/prn/x/prid/438608',
-    image_link:
-      'https://blinkit.com/prn/x/prid/438608',
-    verified: true
-  }
 ];
 
 // ── Product Card Component ─────────────────────────────────────
@@ -881,13 +551,12 @@ export default function StoreScreen() {
   useEffect(() => {
     getProducts()
       .then((res) => {
-        if (res?.products && Array.isArray(res.products) && res.products.length >= EXACT_WEB_PRODUCTS.length) {
+        if (res?.products && Array.isArray(res.products) && res.products.length > 0) {
           setProducts(res.products);
-        } else {
-          setProducts(EXACT_WEB_PRODUCTS);
         }
       })
       .catch(() => {
+        // Fallback to exact web products list
         setProducts(EXACT_WEB_PRODUCTS);
       });
   }, []);
