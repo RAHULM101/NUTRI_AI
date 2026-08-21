@@ -243,6 +243,22 @@ GUARDRAILS & INSTRUCTIONS:
 Answer the user's message: "{user_message}"
 """
 
+        # Pre-check for clear off-topic queries
+        lower_msg = user_message.lower()
+        off_topic_keywords = [
+            'fifa', 'world cup', 'cricket', 'football', 'ipl', 'match score', 
+            'movie', 'actor', 'actress', 'coding', 'python', 'javascript', 
+            'politics', 'election', 'president', 'prime minister', 'weather', 'stock market'
+        ]
+        is_off_topic = any(kw in lower_msg for kw in off_topic_keywords)
+        if is_off_topic:
+            return (
+                "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
+                "I specialize strictly in food, nutrition, diet, weight management, and fitness. "
+                "I cannot assist with non-health topics like sports, general trivia, or news. "
+                "How can I help you with your meal plan or macro goals today?"
+            )
+
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
         client = None
         if api_key and api_key != "your_gemini_api_key_here":
@@ -292,7 +308,11 @@ Answer the user's message: "{user_message}"
                 "• **Snack:** Almonds and Walnuts (~160 kcal, 6g protein)\n"
                 "• **Dinner:** Lentil/Chicken Soup with sautéed veggies (~340 kcal, 24g protein)\n"
             )
-        return "I'm Nia, your AI Nutrition Assistant! How can I help you reach your daily health and macro goals today?"
+        return (
+            "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
+            "I specialize strictly in food, nutrition, diet, weight management, and fitness. "
+            "How can I help you with your meal plan, recipes, or macro goals today?"
+        )
 
 def calculate_user_streak(user):
     from datetime import timedelta

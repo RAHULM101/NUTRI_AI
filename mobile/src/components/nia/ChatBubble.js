@@ -511,8 +511,16 @@ function ChatBubble({ message, isUser }) {
   const rawText = message.text || message.user_message || message.ai_response || '';
 
   // Detect category tag
+  const isRefusal = !isUser && (
+    rawText.toLowerCase().includes('cannot assist with non-health') ||
+    rawText.toLowerCase().includes('specialize strictly in food') ||
+    rawText.toLowerCase().includes('i am nia')
+  );
+
   const categoryTag = !isUser
-    ? rawText.toLowerCase().includes('protein')
+    ? isRefusal
+      ? 'ℹ️ NIA GUIDELINE'
+      : rawText.toLowerCase().includes('protein')
       ? '💪 MACRO GUIDE'
       : rawText.toLowerCase().includes('fat loss') || rawText.toLowerCase().includes('calorie')
       ? '🔥 FAT LOSS TIP'
