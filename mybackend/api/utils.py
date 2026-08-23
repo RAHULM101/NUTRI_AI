@@ -224,7 +224,7 @@ def generate_nia_chat_response(user, user_message):
         profile_info = ctx["profile"]
         today_stats = ctx["today_stats"]
 
-        # ── Step 1c: Instant Handler for Personal Tracking Queries ───────────
+        # ── Step 1c: Instant Handler for Personal Tracking & Profile Queries ──
         personal_tracking_terms = [
             'protein left', 'calories left', 'carbs left', 'fat left', 'water left',
             'i left for today', 'left for today', 'left today', 'consumed today',
@@ -234,7 +234,10 @@ def generate_nia_chat_response(user, user_message):
             'how many calories did i', 'my budget', 'what did i log', 'protein remaining', 'calorie remaining',
             'macros left', 'macro summary', 'today macro', 'todays macro', 'todays macros',
             'what did i log', 'what meals did i log', 'what did i eat today', 'my logged meals',
-            'logged meals today', 'meals logged today', 'what food did i eat', 'show my meals'
+            'logged meals today', 'meals logged today', 'what food did i eat', 'show my meals',
+            'activity level', 'my activity', 'allergies', 'my allergies', 'diet preference', 'my diet',
+            'health issues', 'health conditions', 'my health', 'full profile', 'show my profile',
+            'what do you know about me', 'my details', 'my height', 'my weight', 'target weight'
         ]
 
         if any(term in lower_msg for term in personal_tracking_terms):
@@ -261,6 +264,51 @@ def generate_nia_chat_response(user, user_message):
             meals_summary = ctx.get('logged_meals_summary', '')
             count = today_stats.get('logged_meals_count', 0)
 
+            # 1. Full Profile Query
+            if any(term in lower_msg for term in ['full profile', 'show my profile', 'what do you know about me', 'my details', 'my information']):
+                return (
+                    f"**📋 Full Database Profile for {profile_info['name']}:**\n\n"
+                    f"• **Goal:** {profile_info['primary_goal']}\n"
+                    f"• **Activity Level:** {profile_info['activity_level']}\n"
+                    f"• **Dietary Preference:** {profile_info['dietary_preference']} ({profile_info['regional_culture']})\n"
+                    f"• **Weight:** {profile_info['current_weight_kg'] or 'Not set'} kg (Target: {profile_info['targeted_weight_kg'] or 'Not set'} kg)\n"
+                    f"• **Height:** {profile_info['height_cm'] or 'Not set'} cm | **Age:** {profile_info['age']} | **Gender:** {profile_info['gender']}\n"
+                    f"• **Allergies:** {profile_info['allergies']}\n"
+                    f"• **Health Conditions:** {profile_info['health_issues']}\n"
+                    f"• **Daily Target:** {today_stats['calorie_target']} kcal ({profile_info['meal_intake_per_day']} meals/day)\n"
+                    f"• **Water Goal:** {today_stats['water_target']}L/day | **Sleep:** {profile_info['sleep_schedule']}\n"
+                    f"• **Cooking:** {profile_info['available_cooking_time']} prep time | **Oil:** {profile_info['preferred_cooking_oil']}\n"
+                    f"• **Main Carbs:** {profile_info['main_carbs_source']} | **Budget:** {profile_info['grocery_budget']}"
+                )
+
+            # 2. Activity Level Query
+            if any(term in lower_msg for term in ['activity level', 'my activity']):
+                return (
+                    f"Your recorded activity level in your profile is **{profile_info['activity_level']}**. 🏃‍♂️\n\n"
+                    f"Primary Goal: **{profile_info['primary_goal']}** (Target Calorie Budget: {today_stats['calorie_target']} kcal/day)."
+                )
+
+            # 3. Allergies Query
+            if any(term in lower_msg for term in ['allergies', 'my allergies', 'allergic']):
+                return (
+                    f"Your recorded allergies in your profile: **{profile_info['allergies']}**. ⚠️\n\n"
+                    f"Nia automatically filters out all food recommendations containing your listed allergens!"
+                )
+
+            # 4. Dietary Preference Query
+            if any(term in lower_msg for term in ['diet preference', 'my diet', 'dietary preference']):
+                return (
+                    f"Your recorded dietary preference is **{profile_info['dietary_preference']}** "
+                    f"with a **{profile_info['regional_culture']}** regional focus. 🥗"
+                )
+
+            # 5. Health Conditions Query
+            if any(term in lower_msg for term in ['health issues', 'health conditions', 'my health']):
+                return (
+                    f"Your recorded health conditions / medical notes in your profile: **{profile_info['health_issues']}**. 🩺"
+                )
+
+            # 6. Logged Meals Query
             if any(term in lower_msg for term in ['what did i log', 'what meals did i log', 'what did i eat today', 'my logged meals', 'logged meals today', 'meals logged today', 'show my meals']):
                 if count > 0 and meals_summary and "No food logged" not in meals_summary:
                     return (
@@ -357,14 +405,17 @@ def generate_nia_chat_response(user, user_message):
 
         master_prompt = f"""You are Nia, a warm, concise, evidence-based AI Nutritionist and Health Assistant.
 
-REAL-TIME USER DATABASE PROFILE:
+REAL-TIME USER FULL DATABASE PROFILE:
 - Name: {profile_info['name']}
 - Primary Goal: {profile_info['primary_goal']}
-- Weight: {profile_info.get('current_weight_kg', 'Not specified')} kg (Target: {profile_info.get('targeted_weight_kg', 'Not specified')} kg)
-- Dietary Preference: {profile_info.get('dietary_preference', 'Flexible')}
-- Regional Culture: {profile_info.get('regional_culture', 'Standard Indian')}
-- Allergies: {profile_info.get('allergies', 'None')}
-- Health Issues: {profile_info.get('health_issues', 'None')}
+- Activity Level: {profile_info['activity_level']}
+- Current Weight: {profile_info.get('current_weight_kg', 'Not specified')} kg | Target Weight: {profile_info.get('targeted_weight_kg', 'Not specified')} kg
+- Height: {profile_info.get('height_cm', 'Not specified')} cm | Age: {profile_info.get('age', 'Not specified')} | Gender: {profile_info.get('gender', 'Not specified')}
+- Dietary Preference: {profile_info.get('dietary_preference', 'Flexible')} | Regional Culture: {profile_info.get('regional_culture', 'Standard Indian')}
+- Allergies: {profile_info.get('allergies', 'None reported')}
+- Health Issues / Conditions: {profile_info.get('health_issues', 'None reported')}
+- Daily Schedule & Preferences: {profile_info.get('meal_intake_per_day', 3)} meals/day, Sleep: {profile_info.get('sleep_schedule', '7-8 hrs')}, Cooking Time: {profile_info.get('available_cooking_time', '30 min')}
+- Cooking Oil: {profile_info.get('preferred_cooking_oil', 'Standard')}, Main Carbs: {profile_info.get('main_carbs_source', 'Rice/Roti')}, Grocery Budget: {profile_info.get('grocery_budget', 'Moderate')}
 - Daily Calorie Target: {today_stats['calorie_target']} kcal
 - Consumed Today: {today_stats['calories_consumed']} kcal / {today_stats['calorie_target']} kcal (Remaining: {today_stats['calories_remaining']} kcal)
 - Consumed Macros Today: {today_stats['protein_g']}g Protein | {today_stats['carbs_g']}g Carbs | {today_stats['fat_g']}g Fat
@@ -378,13 +429,14 @@ TODAY'S NAMED LOGGED MEALS FROM USER DATABASE:
 CONCISE FORMATTING & STYLE RULES:
 1. ALWAYS be concise, friendly, and direct (1 to 3 short paragraphs max).
 2. Address the user by their clean name ({profile_info['name']}).
-3. You have full access to the user's database — if asked about logged meals, reference the exact meal names and macros listed under TODAY'S NAMED LOGGED MEALS.
-4. DO NOT copy-paste long textbook paragraphs or long raw research papers.
-5. NEVER include raw document titles, dataset names (e.g., [Local Source 1: ...]), file paths, or markdown URL links in your chat text. Speak naturally!
-6. If asked about calories or protein in a specific food (e.g., ragi, oats, paneer), provide a clean, 2-line bulleted breakdown (per 100g or serving).
+3. You have complete access to the user's full profile — strictly honor their activity level ({profile_info['activity_level']}), allergies ({profile_info['allergies']}), health conditions ({profile_info['health_issues']}), and dietary preferences ({profile_info['dietary_preference']}).
+4. If asked about logged meals, reference the exact meal names and macros listed under TODAY'S NAMED LOGGED MEALS.
+5. DO NOT copy-paste long textbook paragraphs or long raw research papers.
+6. NEVER include raw document titles, dataset names (e.g., [Local Source 1: ...]), file paths, or markdown URL links in your chat text. Speak naturally!
 
 Answer the user's message: "{user_message}"
 """
+
 
 
         # ── Step 5: Call Gemini with fallback chain ──────────────────────────

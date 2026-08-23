@@ -48,20 +48,42 @@ def get_user_realtime_context(user):
         except Exception:
             streak = 0
 
-    # 1. Profile Context
+    # Calculate age if birth year present
+    age = None
+    if profile and getattr(profile, 'year_of_birth', None):
+        import datetime
+        now_year = datetime.date.today().year
+        age = now_year - profile.year_of_birth
+
+    # 1. Full User Database Profile Context
     display_name = get_clean_user_name(user, profile)
     profile_info = {
         "name": display_name,
-        "primary_goal": getattr(profile, 'primary_goal', None) or 'Healthy living',
-        "daily_calorie_target": getattr(profile, 'daily_calorie_target', None) or 2000,
+        "first_name": getattr(profile, 'first_name', None) or display_name,
+        "last_name": getattr(profile, 'last_name', None) or "",
+        "age": age if age else "Not specified",
+        "gender": getattr(profile, 'gender', None) or "Not specified",
+        "height_cm": float(profile.height_cm) if profile and getattr(profile, 'height_cm', None) else None,
         "current_weight_kg": float(profile.current_weight_kg) if profile and getattr(profile, 'current_weight_kg', None) else None,
         "targeted_weight_kg": float(profile.targeted_weight_kg) if profile and getattr(profile, 'targeted_weight_kg', None) else None,
-        "allergies": getattr(profile, 'allergies', None) or "None",
-        "health_issues": getattr(profile, 'health_issues', None) or "None",
+        "activity_level": getattr(profile, 'activity_level', None) or "Moderate",
+        "primary_goal": getattr(profile, 'primary_goal', None) or "Healthy living",
+        "daily_calorie_target": getattr(profile, 'daily_calorie_target', None) or 2000,
+        "allergies": getattr(profile, 'allergies', None) or "None reported",
+        "health_issues": getattr(profile, 'health_issues', None) or "None reported",
         "dietary_preference": getattr(profile, 'dietary_preference', None) or "Flexible",
+        "meal_intake_per_day": getattr(profile, 'meal_intake_per_day', None) or 3,
+        "water_intake_litres": float(profile.water_intake_litres) if profile and getattr(profile, 'water_intake_litres', None) else 3.0,
+        "sleep_schedule": getattr(profile, 'sleep_schedule', None) or "Standard (7-8 hours)",
         "regional_culture": getattr(profile, 'regional_culture', None) or "Standard Indian",
+        "available_cooking_time": getattr(profile, 'available_cooking_time', None) or "30 mins",
+        "preferred_cooking_oil": getattr(profile, 'preferred_cooking_oil', None) or "Mustard / Olive Oil",
+        "grocery_budget": getattr(profile, 'grocery_budget', None) or "Moderate",
+        "preferred_meal_location": getattr(profile, 'preferred_meal_location', None) or "Home",
+        "main_carbs_source": getattr(profile, 'main_carbs_source', None) or "Rice / Roti",
         "streak": streak
     }
+
 
 
     # 2. Live Today Stats Context
