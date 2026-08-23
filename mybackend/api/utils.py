@@ -61,13 +61,11 @@ def call_gemini_with_fallback(client, contents, response_schema=None):
         raise ValueError("Gemini API Client is not configured. Please set GEMINI_API_KEY.")
 
     models_to_try = [
-        'gemini-3.5-flash-lite',        # 1. Primary: Highest quota & fastest vision (100% stable)
-        'gemini-3-flash-preview',       # 2. High availability Flash preview
-        'gemini-3.1-flash-lite-preview',# 3. High throughput Lite preview
-        'gemini-flash-latest',          # 4. Production alias
-        'gemini-3.6-flash',             # 5. Flagship Flash model
-        'gemini-3.5-flash',             # 6. Standard Flash model
-        'gemini-pro-latest',            # 7. Pro model fallback
+        'gemini-2.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+        'gemini-1.5-flash',
+        'gemini-1.5-pro',
     ]
     
     last_exception = None
@@ -98,7 +96,8 @@ def call_gemini_with_fallback(client, contents, response_schema=None):
             
     if last_exception:
         raise last_exception
-    raise Exception("No active models available for content generation.")
+    raise Exception("No active Gemini models available for content generation.")
+
 
 # Make sure you set GEMINI_API_KEY in your settings or .env file
 def analyze_meal_image_with_gemini(image_file):
@@ -368,10 +367,13 @@ Answer the user's message: "{user_message}"
                 "• **Dinner:** Lentil/Chicken Soup with sautéed veggies (~340 kcal, 24g protein)"
             )
 
+        err_msg = str(e)
         return (
-            "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
-            "How can I help you with your meal plan, recipes, macro targets, or diet guidance today?"
+            f"⚠️ **AI Service Notice**: Unable to generate AI response.\n"
+            f"**Error Details:** `{err_msg[:150]}`\n\n"
+            "Please verify your `GEMINI_API_KEY` in `.env` or check server logs."
         )
+
 
 
 
