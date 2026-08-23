@@ -42,29 +42,46 @@ def get_user_realtime_context(user):
     }
 
     # 2. Live Today Stats Context
-    consumed_cals = getattr(tracking, 'total_calories_consumed', 0) or 0
-    consumed_carbs = float(getattr(tracking, 'total_carbs', 0.0) or 0.0)
-    consumed_fat = float(getattr(tracking, 'total_fat', 0.0) or 0.0)
+    if today_meals:
+        consumed_cals = sum(int(m.calories or 0) for m in today_meals)
+        consumed_protein = sum(float(m.protein_gm or 0.0) for m in today_meals)
+        consumed_carbs = sum(float(m.carbs_gm or 0.0) for m in today_meals)
+        consumed_fat = sum(float(m.fat_gm or 0.0) for m in today_meals)
+    else:
+        consumed_cals = getattr(tracking, 'total_calories_consumed', 0) or 0
+        consumed_protein = float(getattr(tracking, 'total_protein', 0.0) or 0.0)
+        consumed_carbs = float(getattr(tracking, 'total_carbs', 0.0) or 0.0)
+        consumed_fat = float(getattr(tracking, 'total_fat', 0.0) or 0.0)
+
     water_liters = float(getattr(tracking, 'water_intake_liters', 0.0) or 0.0)
-
-    # Protein: calculate sum from today's meal logs
-    consumed_protein = sum(float(m.protein_gm or 0) for m in today_meals) if today_meals else float(getattr(tracking, 'total_protein', 0.0) or 0.0)
-
-    
     target_cals = profile_info["daily_calorie_target"]
     remaining_cals = max(0, target_cals - consumed_cals)
 
+    # Calculate dynamic macro targets based on daily calorie target
+    target_protein = round((target_cals * 0.30) / 4, 1)
+    target_carbs = round((target_cals * 0.45) / 4, 1)
+    target_fat = round((target_cals * 0.25) / 9, 1)
+    water_target = float(getattr(profile, 'water_intake_litres', 3.0) or 3.0)
 
     today_stats = {
         "calories_consumed": consumed_cals,
         "calorie_target": target_cals,
         "calories_remaining": remaining_cals,
         "protein_g": round(consumed_protein, 1),
+        "target_protein": target_protein,
+        "protein_remaining": max(0.0, round(target_protein - consumed_protein, 1)),
         "carbs_g": round(consumed_carbs, 1),
+        "target_carbs": target_carbs,
+        "carbs_remaining": max(0.0, round(target_carbs - consumed_carbs, 1)),
         "fat_g": round(consumed_fat, 1),
+        "target_fat": target_fat,
+        "fat_remaining": max(0.0, round(target_fat - consumed_fat, 1)),
         "water_liters": water_liters,
+        "water_target": water_target,
+        "water_remaining": max(0.0, round(water_target - water_liters, 2)),
         "logged_meals_count": len(today_meals)
     }
+
 
     # 3. Logged Meals Summary
     logged_meals_text = []

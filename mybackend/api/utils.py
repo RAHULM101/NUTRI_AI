@@ -226,39 +226,71 @@ def generate_nia_chat_response(user, user_message):
 
         # ── Step 1c: Instant Handler for Personal Tracking Queries ───────────
         personal_tracking_terms = [
-            'protein left', 'calories left', 'carbs left', 'fat left',
+            'protein left', 'calories left', 'carbs left', 'fat left', 'water left',
             'i left for today', 'left for today', 'left today', 'consumed today',
-            'remaining calories', 'remaining protein', 'remaining macros',
-            'my goal', 'my profile', 'how much protein do i', 'how much protein i',
-            'how many calories did i', 'my budget', 'what did i log', 'protein remaining', 'calorie remaining'
+            'remaining calories', 'remaining protein', 'remaining macros', 'remaining carbs', 'remaining fat', 'remaining water',
+            'water intake left', 'how much water left', 'how much water i', 'water intake remaining',
+            'my goal', 'my profile', 'how much protein do i', 'how much protein i', 'how much carbs', 'how much fat',
+            'how many calories did i', 'my budget', 'what did i log', 'protein remaining', 'calorie remaining',
+            'macros left', 'macro summary', 'today macro', 'todays macro', 'todays macros'
         ]
 
         if any(term in lower_msg for term in personal_tracking_terms):
-            consumed_p = today_stats.get('protein_g', 0)
-            target_p = profile_info.get('target_protein', 70) if profile_info.get('target_protein') else 70.0
-            remaining_p = max(0.0, target_p - consumed_p)
+            consumed_p = today_stats.get('protein_g', 0.0)
+            target_p = today_stats.get('target_protein', 70.0)
+            remaining_p = today_stats.get('protein_remaining', max(0.0, target_p - consumed_p))
+
+            consumed_c = today_stats.get('carbs_g', 0.0)
+            target_c = today_stats.get('target_carbs', 200.0)
+            remaining_c = today_stats.get('carbs_remaining', max(0.0, target_c - consumed_c))
+
+            consumed_f = today_stats.get('fat_g', 0.0)
+            target_f = today_stats.get('target_fat', 50.0)
+            remaining_f = today_stats.get('fat_remaining', max(0.0, target_f - consumed_f))
+
+            consumed_w = today_stats.get('water_liters', 0.0)
+            target_w = today_stats.get('water_target', 3.0)
+            remaining_w = today_stats.get('water_remaining', max(0.0, target_w - consumed_w))
 
             consumed_cal = today_stats.get('calories_consumed', 0)
             target_cal = today_stats.get('calorie_target', 2000)
-            remaining_cal = max(0, target_cal - consumed_cal)
+            remaining_cal = today_stats.get('calories_remaining', max(0, target_cal - consumed_cal))
 
-            if 'protein' in lower_msg:
+            if 'water' in lower_msg:
                 return (
-                    f"You have consumed **{consumed_p:.1f}g** of protein today.\n\n"
-                    f"You have **{remaining_p:.1f}g of protein remaining** out of your daily goal! 🥗"
+                    f"You have logged **{consumed_w:.1f}L** of water today. 💧\n\n"
+                    f"You have **{remaining_w:.1f}L of water remaining** out of your {target_w:.1f}L daily goal!"
+                )
+            elif 'protein' in lower_msg:
+                return (
+                    f"You have consumed **{consumed_p:.1f}g** of protein today. 🥗\n\n"
+                    f"You have **{remaining_p:.1f}g of protein remaining** out of your {target_p:.1f}g daily goal!"
+                )
+            elif 'carb' in lower_msg:
+                return (
+                    f"You have consumed **{consumed_c:.1f}g** of carbs today. 🌾\n\n"
+                    f"You have **{remaining_c:.1f}g of carbs remaining** out of your {target_c:.1f}g daily target!"
+                )
+            elif 'fat' in lower_msg:
+                return (
+                    f"You have consumed **{consumed_f:.1f}g** of fats today. 🥑\n\n"
+                    f"You have **{remaining_f:.1f}g of fat remaining** out of your {target_f:.1f}g daily target!"
                 )
             elif 'calorie' in lower_msg or 'budget' in lower_msg:
                 return (
-                    f"You have consumed **{consumed_cal} kcal** today.\n\n"
-                    f"You have **{remaining_cal} kcal remaining** out of your {target_cal} kcal daily budget! 🔥"
+                    f"You have consumed **{consumed_cal} kcal** today. 🔥\n\n"
+                    f"You have **{remaining_cal} kcal remaining** out of your {target_cal} kcal daily budget!"
                 )
             else:
                 return (
-                    f"**Today's Macro Summary for {profile_info['name']}:** 📊\n"
+                    f"**Today's Live Macro & Water Summary for {profile_info['name']}:** 📊\n\n"
                     f"• **Calories:** {consumed_cal} / {target_cal} kcal ({remaining_cal} kcal left)\n"
-                    f"• **Protein:** {consumed_p:.1f}g consumed ({remaining_p:.1f}g left)\n"
-                    f"• **Carbs:** {today_stats.get('carbs_g', 0):.1f}g | **Fat:** {today_stats.get('fat_g', 0):.1f}g"
+                    f"• **Protein:** {consumed_p:.1f}g / {target_p:.1f}g ({remaining_p:.1f}g left)\n"
+                    f"• **Carbs:** {consumed_c:.1f}g / {target_c:.1f}g ({remaining_c:.1f}g left)\n"
+                    f"• **Fats:** {consumed_f:.1f}g / {target_f:.1f}g ({remaining_f:.1f}g left)\n"
+                    f"• **Water:** {consumed_w:.1f}L / {target_w:.1f}L ({remaining_w:.1f}L left) 💧"
                 )
+
 
         # ── Step 2: Local RAG Retrieval ──────────────────────────────────────
         rag_docs = retrieve_relevant_context(user_message, top_k=3)
