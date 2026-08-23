@@ -224,13 +224,47 @@ def generate_nia_chat_response(user, user_message):
         profile_info = ctx["profile"]
         today_stats = ctx["today_stats"]
 
+        # ── Step 1c: Instant Handler for Personal Tracking Queries ───────────
+        personal_tracking_terms = [
+            'protein left', 'calories left', 'carbs left', 'fat left',
+            'consumed today', 'remaining calories', 'remaining protein', 'remaining macros',
+            'my goal', 'my profile', 'how much protein', 'how many calories did i',
+            'my budget', 'what did i log', 'protein remaining', 'calorie remaining'
+        ]
+        if any(term in lower_msg for term in personal_tracking_terms):
+            consumed_p = today_stats.get('protein_g', 0)
+            target_p = profile_info.get('target_protein', 70) if profile_info.get('target_protein') else 70.0
+            remaining_p = max(0.0, target_p - consumed_p)
+
+            consumed_cal = today_stats.get('calories_consumed', 0)
+            target_cal = today_stats.get('calorie_target', 2000)
+            remaining_cal = max(0, target_cal - consumed_cal)
+
+            if 'protein' in lower_msg:
+                return (
+                    f"You have consumed **{consumed_p:.1f}g** of protein today.\n\n"
+                    f"You have **{remaining_p:.1f}g of protein remaining** out of your daily goal! 🥗"
+                )
+            elif 'calorie' in lower_msg or 'budget' in lower_msg:
+                return (
+                    f"You have consumed **{consumed_cal} kcal** today.\n\n"
+                    f"You have **{remaining_cal} kcal remaining** out of your {target_cal} kcal daily budget! 🔥"
+                )
+            else:
+                return (
+                    f"**Today's Macro Summary for {profile_info['name']}:** 📊\n"
+                    f"• **Calories:** {consumed_cal} / {target_cal} kcal ({remaining_cal} kcal left)\n"
+                    f"• **Protein:** {consumed_p:.1f}g consumed ({remaining_p:.1f}g left)\n"
+                    f"• **Carbs:** {today_stats.get('carbs_g', 0):.1f}g | **Fat:** {today_stats.get('fat_g', 0):.1f}g"
+                )
+
         # ── Step 2: Local RAG Retrieval ──────────────────────────────────────
-        rag_docs = retrieve_relevant_context(user_message, top_k=4)
+        rag_docs = retrieve_relevant_context(user_message, top_k=3)
         rag_text_blocks = []
 
         for idx, doc in enumerate(rag_docs):
             rag_text_blocks.append(
-                f"[Local Source {idx+1}: {doc['title']} ({doc['dataset_type']})]\n{doc['content']}"
+                f"Nutritional Reference {idx+1}:\n{doc['content']}"
             )
 
         rag_knowledge_context = "\n\n".join(rag_text_blocks) if rag_text_blocks else ""
@@ -245,74 +279,38 @@ def generate_nia_chat_response(user, user_message):
                 if web_results:
                     web_context_block = build_web_context_block(web_results)
                     web_search_used = True
-                    print(f"[NIA] Web search used for: '{user_message}' — {len(web_results)} trusted results")
 
         # ── Step 4: Build Master Prompt ──────────────────────────────────────
         knowledge_section = ""
         if rag_knowledge_context and web_context_block:
-            knowledge_section = f"""LOCAL NUTRITION DATABASE (ICMR/PMC/Vikaspedia):
----
-{rag_knowledge_context}
----
-
-WEB SEARCH RESULTS (from verified trusted sources only):
----
-{web_context_block}
----"""
+            knowledge_section = f"""NUTRITIONAL DATA:\n{rag_knowledge_context}\n\nWEB DATA:\n{web_context_block}"""
         elif rag_knowledge_context:
-            knowledge_section = f"""RETRIEVED NUTRITIONAL SCIENCE & FOOD TABLE KNOWLEDGE:
----
-{rag_knowledge_context}
----"""
+            knowledge_section = f"""NUTRITIONAL DATA:\n{rag_knowledge_context}"""
         elif web_context_block:
-            knowledge_section = f"""WEB SEARCH RESULTS (from verified trusted sources only):
----
-{web_context_block}
----
-NOTE: Local database did not have specific information on this topic.
-The above web results are from trusted health authorities only."""
+            knowledge_section = f"""WEB DATA:\n{web_context_block}"""
         else:
-            knowledge_section = "Note: No external research documents retrieved. Rely on your core nutrition expertise and user profile data."
+            knowledge_section = "Note: No specific research document retrieved."
 
-        web_instruction = ""
-        if web_search_used:
-            web_instruction = (
-                "\n6. WEB SOURCE CITATION: You used trusted web search results above. "
-                "Always mention the source name (e.g., 'According to Healthline...', "
-                "'As per NIH guidelines...') when citing facts from a web result."
-            )
-
-        master_prompt = f"""You are Nia, an evidence-based, empathetic AI Nutritionist and Health Assistant.
+        master_prompt = f"""You are Nia, a warm, concise, evidence-based AI Nutritionist and Health Assistant.
 
 REAL-TIME USER PROFILE:
 - Name: {profile_info['name']}
 - Primary Goal: {profile_info['primary_goal']}
-- Weight: {profile_info['current_weight_kg'] or 'Not specified'} kg (Target: {profile_info['targeted_weight_kg'] or 'Not specified'} kg)
-- Allergies: {profile_info['allergies']}
-- Health Conditions: {profile_info['health_issues']}
-- Dietary Preference: {profile_info['dietary_preference']}
-- Regional Culture: {profile_info['regional_culture']}
 - Daily Calorie Target: {today_stats['calorie_target']} kcal
 - Consumed Today: {today_stats['calories_consumed']} kcal (Remaining: {today_stats['calories_remaining']} kcal)
 - Macros Consumed Today: {today_stats['protein_g']}g Protein | {today_stats['carbs_g']}g Carbs | {today_stats['fat_g']}g Fat
-- Meals Logged Today:
-{ctx['logged_meals_summary']}
-
-RECENT CONVERSATION HISTORY:
-{ctx['chat_history']}
 
 {knowledge_section}
 
-GUARDRAILS & INSTRUCTIONS:
-1. ALWAYS provide a helpful, detailed, and accurate response for any food, nutrition, diet, meal planning, macro tracking, or health-related query.
-2. Ground your answer in the RETRIEVED KNOWLEDGE or WEB SEARCH RESULTS whenever available.
-3. Always keep the user's real-time remaining calorie/macro budget and dietary preferences in mind.
-4. MEDICAL DISCLAIMER: If the user asks about health conditions, provide nutritional guidance AND state: "Consult a certified medical professional or dietitian for medical diagnosis."
-5. If creating a meal plan, format clearly with headers, meals (Breakfast, Lunch, Snack, Dinner), portions, calories, and protein.{web_instruction}
+CONCISE FORMATTING & STYLE RULES:
+1. ALWAYS be concise, friendly, and direct (1 to 3 short paragraphs max).
+2. DO NOT copy-paste long textbook paragraphs or long raw research papers.
+3. NEVER include raw document titles, dataset names (e.g., [Local Source 1: ...]), file paths, or markdown URL links in your chat text. Speak naturally!
+4. If asked about calories or protein in a specific food (e.g., ragi, oats, paneer), provide a clean, 2-line bulleted breakdown (per 100g or serving).
+5. If creating a meal plan, format clearly with headers and concise meal lines.
 
 Answer the user's message: "{user_message}"
 """
-
 
         # ── Step 5: Call Gemini with fallback chain ──────────────────────────
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
@@ -326,7 +324,12 @@ Answer the user's message: "{user_message}"
         response = call_gemini_with_fallback(client=client, contents=master_prompt)
 
         if response and response.text:
-            return response.text.strip()
+            # Clean response of any leftover source tags if model outputted them
+            clean_text = response.text.strip()
+            import re
+            clean_text = re.sub(r'\[Local Source \d+:[^\]]+\]', '', clean_text)
+            clean_text = re.sub(r'\[Web Source \d+:[^\]]+\]', '', clean_text)
+            return clean_text.strip()
         raise Exception("Empty response from AI")
 
     except Exception as e:
@@ -336,32 +339,9 @@ Answer the user's message: "{user_message}"
         print(error_trace)
         print("-------------------------------------")
 
-        # 1. Try to return grounded RAG documents if available
-        try:
-            from .rag_service import retrieve_relevant_context
-            rag_docs = retrieve_relevant_context(user_message, top_k=3)
-            if rag_docs:
-                response_lines = ["I found the following grounded nutritional data for your query:\n"]
-                for doc in rag_docs:
-                    response_lines.append(f"**[{doc['title']}]** ({doc['dataset_type']})\n{doc['content']}\n")
-                return "\n".join(response_lines)
-        except Exception:
-            pass
-
-        # 2. Try to return Web Search results if available
-        try:
-            from .web_search_service import search_trusted_nutrition_web
-            web_results = search_trusted_nutrition_web(user_message, max_results=2)
-            if web_results:
-                response_lines = ["Here is verified information from trusted health authorities:\n"]
-                for r in web_results:
-                    response_lines.append(f"**[{r['title']}]** ({r['domain']})\n{r['content']}\n")
-                return "\n".join(response_lines)
-        except Exception:
-            pass
-
-        # 3. Intelligent topic-specific fallback (NEVER a refusal for valid nutrition queries)
+        # Concise, high-quality fallbacks (No raw document dumping, no URL links!)
         lower_msg = user_message.lower()
+
         if '2 day' in lower_msg or '2 days' in lower_msg or 'meal plan' in lower_msg:
             return (
                 "Here is your personalized **2-Day Nutrition Plan** 🥗:\n\n"
@@ -381,46 +361,40 @@ Answer the user's message: "{user_message}"
             return (
                 "**Ragi (Finger Millet) Nutrition (per 100g):** 🌾\n\n"
                 "• **Calories:** ~328 kcal\n"
-                "• **Protein:** ~7.3g\n"
-                "• **Carbohydrates:** ~72g\n"
-                "• **Dietary Fiber:** ~11.5g\n"
-                "• **Calcium:** ~344 mg (Exceptionally high! Great for bone health)\n"
-                "• **Iron:** ~3.9 mg\n\n"
-                "Ragi is gluten-free, low glycemic index, and excellent for diabetes management and weight loss."
+                "• **Protein:** ~7.3g | **Carbs:** ~72g | **Fiber:** ~11.5g\n"
+                "• **Calcium:** ~344 mg (Exceptionally high for bone health!)\n\n"
+                "Ragi is low glycemic index, gluten-free, and great for diabetes management and weight loss."
             )
 
         if 'pcos' in lower_msg:
             return (
-                "**ICMR & Clinical Nutrition Guidelines for PCOS Management:** 🌸\n\n"
-                "1. **Low Glycemic Index (GI) Carbs:** Choose complex carbs like oats, ragi, quinoa, and brown rice to regulate insulin.\n"
-                "2. **High Protein Intake:** Include dal, paneer, eggs, sprouts, and Greek yogurt in every meal.\n"
-                "3. **Healthy Fats:** Consume omega-3 rich foods like flaxseeds, chia seeds, walnuts, and extra virgin olive oil.\n"
-                "4. **Anti-inflammatory Foods:** Add turmeric, cinnamon, spearmint tea, and green leafy vegetables.\n"
-                "5. **Avoid:** Refined sugars, processed foods, and sugary beverages."
+                "**PCOS Nutrition Guidelines:** 🌸\n\n"
+                "• **Complex Carbs:** Choose low-GI oats, ragi, and quinoa to regulate insulin.\n"
+                "• **High Protein & Healthy Fats:** Include paneer, eggs, sprouts, and walnuts.\n"
+                "• **Anti-inflammatory:** Add turmeric, cinnamon, and spearmint tea."
             )
 
         if 'dragon fruit' in lower_msg or 'pitaya' in lower_msg:
             return (
-                "**Dragon Fruit (Pitaya) Nutrition & Health Benefits:** 🐉\n\n"
+                "**Dragon Fruit (Pitaya) Nutrition:** 🐉\n\n"
                 "• **Calories:** ~60 kcal per 100g\n"
-                "• **Fiber:** ~3g\n"
-                "• **Vitamin C:** ~9% DV\n"
-                "• **Iron:** ~4% DV\n"
-                "• **Key Benefits:** High in antioxidants (betalains & carotenoids), supports gut microbiome, low calorie for weight loss."
+                "• **Fiber:** ~3g | **Vitamin C:** ~9% DV\n"
+                "• **Benefits:** Rich in antioxidants, supports gut microbiome, low calorie for weight loss."
             )
 
         # Diagnostics: check if API key is missing
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
         if not api_key or api_key == 'your_gemini_api_key_here':
             return (
-                "⚠️ **API Key Notice**: `GEMINI_API_KEY` is not configured in your environment.\n\n"
-                "Please add `GEMINI_API_KEY=your_key` to your `.env` file or Render Environment Variables to enable dynamic AI responses!"
+                "⚠️ **API Key Notice**: `GEMINI_API_KEY` is not set in your `.env` file.\n\n"
+                "Please add `GEMINI_API_KEY=your_key` to your environment variables to enable dynamic AI responses."
             )
 
         return (
             "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
             "How can I help you with your meal plan, recipes, macro targets, or diet guidance today?"
         )
+
 
 
 def calculate_user_streak(user):
