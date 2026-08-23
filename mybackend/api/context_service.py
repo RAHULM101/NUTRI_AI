@@ -108,6 +108,9 @@ def get_user_realtime_context(user):
     target_fat = round((target_cals * 0.25) / 9, 1)
     water_target = float(getattr(profile, 'water_intake_litres', 3.0) or 3.0)
 
+    junk_scores = [m.junk_score for m in today_meals if m.junk_score is not None]
+    today_junk_avg = round(sum(junk_scores) / len(junk_scores), 1) if junk_scores else 0
+
     today_stats = {
         "calories_consumed": consumed_cals,
         "calorie_target": target_cals,
@@ -124,8 +127,11 @@ def get_user_realtime_context(user):
         "water_liters": water_liters,
         "water_target": water_target,
         "water_remaining": max(0.0, round(water_target - water_liters, 2)),
-        "logged_meals_count": len(today_meals)
+        "logged_meals_count": len(today_meals),
+        "junk_score": today_junk_avg,
+        "junk_count": len(junk_scores)
     }
+
 
 
     # 3. Logged Meals Summary

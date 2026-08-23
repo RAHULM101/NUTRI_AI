@@ -508,7 +508,8 @@ export default function Nia({ dark, profileData, niaMsgs, setNiaMsgs }) {
           <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <div className="flex flex-col items-end">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Junk Score</span>
-              <span className={`text-[12px] font-black ${todayJunk >= 7 ? 'text-red-500' : todayJunk >= 5 ? 'text-amber-500' : 'text-emerald-500'}`}>{todayJunk}/10</span>
+              <span className={`text-[12px] font-black ${todayJunk >= 75 ? 'text-red-500' : todayJunk >= 40 ? 'text-amber-500' : 'text-emerald-500'}`}>{todayJunk}/100</span>
+
             </div>
             <div className="w-[1px] h-6 bg-slate-300 dark:bg-slate-700"></div>
             <div className="flex flex-col items-end">

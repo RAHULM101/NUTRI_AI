@@ -237,7 +237,8 @@ def generate_nia_chat_response(user, user_message):
             'logged meals today', 'meals logged today', 'what food did i eat', 'show my meals',
             'activity level', 'my activity', 'allergies', 'my allergies', 'diet preference', 'my diet',
             'health issues', 'health conditions', 'my health', 'full profile', 'show my profile',
-            'what do you know about me', 'my details', 'my height', 'my weight', 'target weight'
+            'what do you know about me', 'my details', 'my height', 'my weight', 'target weight',
+            'junk score', 'my junk score', 'junk food score', 'junk meter'
         ]
 
         if any(term in lower_msg for term in personal_tracking_terms):
@@ -263,6 +264,7 @@ def generate_nia_chat_response(user, user_message):
 
             meals_summary = ctx.get('logged_meals_summary', '')
             count = today_stats.get('logged_meals_count', 0)
+            junk_score_val = today_stats.get('junk_score', 0)
 
             # 1. Full Profile Query
             if any(term in lower_msg for term in ['full profile', 'show my profile', 'what do you know about me', 'my details', 'my information']):
@@ -277,9 +279,25 @@ def generate_nia_chat_response(user, user_message):
                     f"• **Health Conditions:** {profile_info['health_issues']}\n"
                     f"• **Daily Target:** {today_stats['calorie_target']} kcal ({profile_info['meal_intake_per_day']} meals/day)\n"
                     f"• **Water Goal:** {today_stats['water_target']}L/day | **Sleep:** {profile_info['sleep_schedule']}\n"
+                    f"• **Today's Junk Score:** {junk_score_val} / 100 (Scale: 0 = Clean, 100 = Junk)\n"
                     f"• **Cooking:** {profile_info['available_cooking_time']} prep time | **Oil:** {profile_info['preferred_cooking_oil']}\n"
                     f"• **Main Carbs:** {profile_info['main_carbs_source']} | **Budget:** {profile_info['grocery_budget']}"
                 )
+
+            # 2. Junk Score Query
+            if any(term in lower_msg for term in ['junk score', 'my junk score', 'junk food score', 'junk meter']):
+                if count == 0:
+                    return (
+                        "You haven't logged any meals today yet to calculate a Junk Score! 🥗\n\n"
+                        "Log your meals to track your daily food quality score (Scale: 0 = Clean Whole Foods, 100 = Highly Processed Junk)."
+                    )
+                else:
+                    category = "Clean & Whole Foods 🥗" if junk_score_val < 35 else ("Moderate Control ⚠️" if junk_score_val < 70 else "High Junk Food Intake 🍔")
+                    return (
+                        f"Your average **Junk Food Score** today is **{junk_score_val} / 100** ({category}).\n\n"
+                        f"*(Scale: 0 = Pure Whole Foods, 100 = Highly Processed Junk. Calculated across {count} logged meal(s) today).* "
+                    )
+
 
             # 2. Activity Level Query
             if any(term in lower_msg for term in ['activity level', 'my activity']):
@@ -420,6 +438,8 @@ REAL-TIME USER FULL DATABASE PROFILE:
 - Consumed Today: {today_stats['calories_consumed']} kcal / {today_stats['calorie_target']} kcal (Remaining: {today_stats['calories_remaining']} kcal)
 - Consumed Macros Today: {today_stats['protein_g']}g Protein | {today_stats['carbs_g']}g Carbs | {today_stats['fat_g']}g Fat
 - Consumed Water Today: {today_stats['water_liters']}L / {today_stats['water_target']}L
+- Today's Average Junk Food Score: {today_stats.get('junk_score', 0)} / 100 (Scale: 0 = Clean Whole Foods, 100 = Highly Processed Junk)
+
 
 TODAY'S NAMED LOGGED MEALS FROM USER DATABASE:
 {ctx.get('logged_meals_summary', 'No meals logged yet today.')}

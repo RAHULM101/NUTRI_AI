@@ -45,9 +45,10 @@ const DASHBOARD_DATA = {
     { name: 'Thu', val: 1650 }, { name: 'Fri', val: 2100 }, { name: 'Sat', val: 2200 }, { name: 'Sun', val: 1780 } 
   ],
   junkScore: [ 
-    { name: 'Mon', score: 8.5 }, { name: 'Tue', score: 9 }, { name: 'Wed', score: 7.5 }, 
-    { name: 'Thu', score: 8 }, { name: 'Fri', score: 6.5 }, { name: 'Sat', score: 5 }, { name: 'Sun', score: 8 } 
+    { name: 'Mon', score: 25 }, { name: 'Tue', score: 35 }, { name: 'Wed', score: 20 }, 
+    { name: 'Thu', score: 40 }, { name: 'Fri', score: 30 }, { name: 'Sat', score: 15 }, { name: 'Sun', score: 25 } 
   ],
+
   goalPrediction: [
     { name: 'Day 1', actual: 80.5 }, { name: 'Day 2', actual: 80.2 }, { name: 'Day 3', actual: 79.9 },
     { name: 'Day 4', actual: 80.0 }, { name: 'Day 5', actual: 79.6 }, { name: 'Day 6', actual: 79.4 },
