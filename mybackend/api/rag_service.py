@@ -18,11 +18,12 @@ def get_query_embedding(query_text):
     try:
         client = genai.Client(api_key=api_key)
         res = client.models.embed_content(
-            model='text-embedding-004',
+            model='gemini-embedding-001',
             contents=query_text[:1000]
         )
         if res and hasattr(res, 'embedding') and hasattr(res.embedding, 'values'):
             return res.embedding.values
+
     except Exception as e:
         print(f"--- Query Embedding Warning: {e} ---")
     return None
