@@ -32,21 +32,24 @@ def get_user_realtime_context(user):
         "name": (user.first_name or user.username) if user and getattr(user, 'is_authenticated', False) else "Guest",
         "primary_goal": getattr(profile, 'primary_goal', None) or 'Healthy living',
         "daily_calorie_target": getattr(profile, 'daily_calorie_target', None) or 2000,
-        "current_weight_kg": float(profile.current_weight_kg) if profile and profile.current_weight_kg else None,
-        "targeted_weight_kg": float(profile.targeted_weight_kg) if profile and profile.targeted_weight_kg else None,
-        "allergies": profile.allergies if profile and profile.allergies else "None",
-        "health_issues": profile.health_issues if profile and profile.health_issues else "None",
-        "dietary_preference": profile.dietary_preference if profile and profile.dietary_preference else "Flexible",
-        "regional_culture": profile.regional_culture if profile and profile.regional_culture else "Standard Indian",
+        "current_weight_kg": float(profile.current_weight_kg) if profile and getattr(profile, 'current_weight_kg', None) else None,
+        "targeted_weight_kg": float(profile.targeted_weight_kg) if profile and getattr(profile, 'targeted_weight_kg', None) else None,
+        "allergies": getattr(profile, 'allergies', None) or "None",
+        "health_issues": getattr(profile, 'health_issues', None) or "None",
+        "dietary_preference": getattr(profile, 'dietary_preference', None) or "Flexible",
+        "regional_culture": getattr(profile, 'regional_culture', None) or "Standard Indian",
         "streak": streak
     }
 
     # 2. Live Today Stats Context
-    consumed_cals = tracking.total_calories_consumed if tracking and tracking.total_calories_consumed else 0
-    consumed_protein = float(tracking.total_protein) if tracking and tracking.total_protein else 0.0
-    consumed_carbs = float(tracking.total_carbs) if tracking and tracking.total_carbs else 0.0
-    consumed_fat = float(tracking.total_fat) if tracking and tracking.total_fat else 0.0
-    water_liters = float(tracking.water_intake_liters) if tracking and tracking.water_intake_liters else 0.0
+    consumed_cals = getattr(tracking, 'total_calories_consumed', 0) or 0
+    consumed_carbs = float(getattr(tracking, 'total_carbs', 0.0) or 0.0)
+    consumed_fat = float(getattr(tracking, 'total_fat', 0.0) or 0.0)
+    water_liters = float(getattr(tracking, 'water_intake_liters', 0.0) or 0.0)
+
+    # Protein: calculate sum from today's meal logs
+    consumed_protein = sum(float(m.protein_gm or 0) for m in today_meals) if today_meals else float(getattr(tracking, 'total_protein', 0.0) or 0.0)
+
     
     target_cals = profile_info["daily_calorie_target"]
     remaining_cals = max(0, target_cals - consumed_cals)
