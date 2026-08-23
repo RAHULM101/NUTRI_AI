@@ -232,7 +232,9 @@ def generate_nia_chat_response(user, user_message):
             'water intake left', 'how much water left', 'how much water i', 'water intake remaining',
             'my goal', 'my profile', 'how much protein do i', 'how much protein i', 'how much carbs', 'how much fat',
             'how many calories did i', 'my budget', 'what did i log', 'protein remaining', 'calorie remaining',
-            'macros left', 'macro summary', 'today macro', 'todays macro', 'todays macros'
+            'macros left', 'macro summary', 'today macro', 'todays macro', 'todays macros',
+            'what did i log', 'what meals did i log', 'what did i eat today', 'my logged meals',
+            'logged meals today', 'meals logged today', 'what food did i eat', 'show my meals'
         ]
 
         if any(term in lower_msg for term in personal_tracking_terms):
@@ -255,6 +257,23 @@ def generate_nia_chat_response(user, user_message):
             consumed_cal = today_stats.get('calories_consumed', 0)
             target_cal = today_stats.get('calorie_target', 2000)
             remaining_cal = today_stats.get('calories_remaining', max(0, target_cal - consumed_cal))
+
+            meals_summary = ctx.get('logged_meals_summary', '')
+            count = today_stats.get('logged_meals_count', 0)
+
+            if any(term in lower_msg for term in ['what did i log', 'what meals did i log', 'what did i eat today', 'my logged meals', 'logged meals today', 'meals logged today', 'show my meals']):
+                if count > 0 and meals_summary and "No food logged" not in meals_summary:
+                    return (
+                        f"**Here are the meals you have logged today ({count} logged):** 🍽️\n\n"
+                        f"{meals_summary}\n\n"
+                        f"**Total Today:** {consumed_cal} / {target_cal} kcal ({remaining_cal} kcal left)"
+                    )
+                else:
+                    return (
+                        f"You haven't logged any meals yet today. 🍽️\n\n"
+                        f"Your daily budget is **{target_cal} kcal** ({target_p}g protein | {target_c}g carbs | {target_f}g fat).\n"
+                        f"Let me know when you'd like to log a meal or get food suggestions!"
+                    )
 
             if 'water' in lower_msg:
                 return (
@@ -327,24 +346,35 @@ def generate_nia_chat_response(user, user_message):
 
         master_prompt = f"""You are Nia, a warm, concise, evidence-based AI Nutritionist and Health Assistant.
 
-REAL-TIME USER PROFILE:
+REAL-TIME USER DATABASE PROFILE:
 - Name: {profile_info['name']}
 - Primary Goal: {profile_info['primary_goal']}
+- Weight: {profile_info.get('current_weight_kg', 'Not specified')} kg (Target: {profile_info.get('targeted_weight_kg', 'Not specified')} kg)
+- Dietary Preference: {profile_info.get('dietary_preference', 'Flexible')}
+- Regional Culture: {profile_info.get('regional_culture', 'Standard Indian')}
+- Allergies: {profile_info.get('allergies', 'None')}
+- Health Issues: {profile_info.get('health_issues', 'None')}
 - Daily Calorie Target: {today_stats['calorie_target']} kcal
-- Consumed Today: {today_stats['calories_consumed']} kcal (Remaining: {today_stats['calories_remaining']} kcal)
-- Macros Consumed Today: {today_stats['protein_g']}g Protein | {today_stats['carbs_g']}g Carbs | {today_stats['fat_g']}g Fat
+- Consumed Today: {today_stats['calories_consumed']} kcal / {today_stats['calorie_target']} kcal (Remaining: {today_stats['calories_remaining']} kcal)
+- Consumed Macros Today: {today_stats['protein_g']}g Protein | {today_stats['carbs_g']}g Carbs | {today_stats['fat_g']}g Fat
+- Consumed Water Today: {today_stats['water_liters']}L / {today_stats['water_target']}L
+
+TODAY'S NAMED LOGGED MEALS FROM USER DATABASE:
+{ctx.get('logged_meals_summary', 'No meals logged yet today.')}
 
 {knowledge_section}
 
 CONCISE FORMATTING & STYLE RULES:
 1. ALWAYS be concise, friendly, and direct (1 to 3 short paragraphs max).
-2. DO NOT copy-paste long textbook paragraphs or long raw research papers.
-3. NEVER include raw document titles, dataset names (e.g., [Local Source 1: ...]), file paths, or markdown URL links in your chat text. Speak naturally!
-4. If asked about calories or protein in a specific food (e.g., ragi, oats, paneer), provide a clean, 2-line bulleted breakdown (per 100g or serving).
-5. If creating a meal plan, format clearly with headers and concise meal lines.
+2. Address the user by their clean name ({profile_info['name']}).
+3. You have full access to the user's database — if asked about logged meals, reference the exact meal names and macros listed under TODAY'S NAMED LOGGED MEALS.
+4. DO NOT copy-paste long textbook paragraphs or long raw research papers.
+5. NEVER include raw document titles, dataset names (e.g., [Local Source 1: ...]), file paths, or markdown URL links in your chat text. Speak naturally!
+6. If asked about calories or protein in a specific food (e.g., ragi, oats, paneer), provide a clean, 2-line bulleted breakdown (per 100g or serving).
 
 Answer the user's message: "{user_message}"
 """
+
 
         # ── Step 5: Call Gemini with fallback chain ──────────────────────────
         raw_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')

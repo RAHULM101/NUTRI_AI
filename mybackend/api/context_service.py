@@ -2,6 +2,27 @@ from django.utils import timezone
 from .models import UserProfile, daily_tracking, meal_logs, chat_logs
 from .utils import calculate_user_streak
 
+def get_clean_user_name(user, profile):
+    if profile:
+        first_name = (getattr(profile, 'first_name', '') or '').strip()
+        if first_name and '@' not in first_name:
+            return first_name.capitalize()
+    if user:
+        first_name = (getattr(user, 'first_name', '') or '').strip()
+        if first_name and '@' not in first_name:
+            return first_name.capitalize()
+        username = (getattr(user, 'username', '') or '').strip()
+        if username:
+            if '@' in username:
+                username = username.split('@')[0]
+            cleaned = username.replace('.', ' ').replace('_', ' ').strip().title()
+            if cleaned:
+                # If there are numbers at end like rahulmahata55208, trim trailing digits for clean display
+                import re
+                clean_no_digits = re.sub(r'\d+$', '', cleaned).strip()
+                return clean_no_digits.title() if clean_no_digits else cleaned.title()
+    return "Friend"
+
 def get_user_realtime_context(user):
     """
     Hydrates live database state for the user: Profile, Today's Intake, Macro Deficit, and Chat Memory.
@@ -28,8 +49,9 @@ def get_user_realtime_context(user):
             streak = 0
 
     # 1. Profile Context
+    display_name = get_clean_user_name(user, profile)
     profile_info = {
-        "name": (user.first_name or user.username) if user and getattr(user, 'is_authenticated', False) else "Guest",
+        "name": display_name,
         "primary_goal": getattr(profile, 'primary_goal', None) or 'Healthy living',
         "daily_calorie_target": getattr(profile, 'daily_calorie_target', None) or 2000,
         "current_weight_kg": float(profile.current_weight_kg) if profile and getattr(profile, 'current_weight_kg', None) else None,
@@ -40,6 +62,7 @@ def get_user_realtime_context(user):
         "regional_culture": getattr(profile, 'regional_culture', None) or "Standard Indian",
         "streak": streak
     }
+
 
     # 2. Live Today Stats Context
     if today_meals:
@@ -86,7 +109,9 @@ def get_user_realtime_context(user):
     # 3. Logged Meals Summary
     logged_meals_text = []
     for m in today_meals:
-        logged_meals_text.append(f"• {m.meal_type or 'Meal'}: {m.detected_items or 'Food'} ({m.calories or 0} kcal, {m.protein_gm or 0}g protein)")
+        meal_name = m.detected_items or m.meal_type or 'Meal'
+        logged_meals_text.append(f"• **{m.meal_type or 'Meal'}**: {meal_name} ({m.calories or 0} kcal | {m.protein_gm or 0}g protein | {m.carbs_gm or 0}g carbs | {m.fat_gm or 0}g fat)")
+
 
     # 4. Sliding Window Chat Session Memory (Last 6 Exchanges)
     recent_history = []
