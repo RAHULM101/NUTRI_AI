@@ -2,7 +2,80 @@ from django.utils import timezone
 from .models import UserProfile, daily_tracking, meal_logs, chat_logs
 from .utils import calculate_user_streak
 
+def get_user_plan_tier(user, profile=None):
+
+    """
+    Returns normalized plan tier: 'free', 'pro', or 'premium'.
+    """
+    if not user or not getattr(user, 'is_authenticated', False):
+        return 'free'
+        
+    plan_str = ''
+    try:
+        if profile and getattr(profile, 'active_subscription', None):
+            plan_str = str(profile.active_subscription.plan_type or '').strip().lower()
+        if not plan_str and hasattr(user, 'subscriptions'):
+            latest_sub = user.subscriptions.order_by('-created_at').first()
+            if latest_sub:
+                plan_str = str(latest_sub.plan_type or '').strip().lower()
+    except Exception:
+        pass
+        
+    if not plan_str:
+        return 'free'
+        
+    if any(k in plan_str for k in ['premium', 'gym', 'athlete', 'ultimate', 'vip']):
+        return 'premium'
+    elif any(k in plan_str for k in ['pro', 'student', 'working professional', 'standard', 'plus']):
+        return 'pro'
+    return 'free'
+
+def get_plan_limits(plan_tier):
+    if plan_tier == 'premium':
+        return {
+            "tier": "premium",
+            "tier_display": "Premium Plan",
+            "meal_scans_per_day": 20,
+            "chats_per_day": 999999,
+            "history_days": 30,
+            "report_generation": "weekly_monthly",
+            "smart_reminders": True,
+            "meal_plan_generator": "customized",
+            "response_priority": "Highest",
+            "rag_knowledge": True,
+            "web_search": True
+        }
+    elif plan_tier == 'pro':
+        return {
+            "tier": "pro",
+            "tier_display": "Pro Plan",
+            "meal_scans_per_day": 10,
+            "chats_per_day": 20,
+            "history_days": 7,
+            "report_generation": "weekly",
+            "smart_reminders": False,
+            "meal_plan_generator": "interactive",
+            "response_priority": "Standard",
+            "rag_knowledge": True,
+            "web_search": False
+        }
+    else:
+        return {
+            "tier": "free",
+            "tier_display": "Free Plan",
+            "meal_scans_per_day": 3,
+            "chats_per_day": 0,
+            "history_days": 0,
+            "report_generation": False,
+            "smart_reminders": False,
+            "meal_plan_generator": False,
+            "response_priority": "None",
+            "rag_knowledge": False,
+            "web_search": False
+        }
+
 def get_clean_user_name(user, profile):
+
     if profile:
         first_name = (getattr(profile, 'first_name', '') or '').strip()
         if first_name and '@' not in first_name:
@@ -155,9 +228,17 @@ def get_user_realtime_context(user):
             pass
 
 
+    plan_tier = get_user_plan_tier(user, profile)
+    plan_limits = get_plan_limits(plan_tier)
+    profile_info["plan_tier"] = plan_tier
+    profile_info["plan_limits"] = plan_limits
+
     return {
         "profile": profile_info,
+        "plan_tier": plan_tier,
+        "plan_limits": plan_limits,
         "today_stats": today_stats,
         "logged_meals_summary": "\n".join(logged_meals_text) if logged_meals_text else "No food logged yet today.",
         "chat_history": "\n".join(recent_history) if recent_history else "No previous conversation context."
     }
+

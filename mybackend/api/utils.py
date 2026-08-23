@@ -223,6 +223,29 @@ def generate_nia_chat_response(user, user_message):
         ctx = get_user_realtime_context(user)
         profile_info = ctx["profile"]
         today_stats = ctx["today_stats"]
+        plan_tier = ctx.get("plan_tier", "free")
+        plan_limits = ctx.get("plan_limits", {})
+
+        # ── Layer 1c: Plan Tier Chat Access & Daily Limit Enforcement ────────
+        chats_allowed = plan_limits.get("chats_per_day", 0)
+        if chats_allowed == 0:
+            return (
+                "🔒 **NIA AI Chat is locked on the Free Plan.**\n\n"
+                "Your current **Free Plan** does not include NIA Chat access. "
+                "Please upgrade to the **Pro Plan** (20 chats/day) or **Premium Plan** (Unlimited chats) to unlock NIA AI!"
+            )
+
+        if chats_allowed < 999999 and user and getattr(user, 'is_authenticated', False):
+            from django.utils import timezone
+            from .models import chat_logs
+            today_chats_count = chat_logs.objects.filter(user=user, created_at__date=timezone.now().date()).count()
+            if today_chats_count >= chats_allowed:
+                return (
+                    f"⚠️ **Daily Chat Limit Reached ({today_chats_count}/{chats_allowed})**\n\n"
+                    f"You have used all {chats_allowed} NIA chats for today on your **{plan_limits.get('tier_display', 'Pro Plan')}**. "
+                    f"Upgrade to the **Premium Plan** for Unlimited daily chats!"
+                )
+
 
         # ── Step 1c: Instant Handler for Personal Tracking & Profile Queries ──
         personal_tracking_terms = [
@@ -388,27 +411,29 @@ def generate_nia_chat_response(user, user_message):
 
 
 
-        # ── Step 2: Local RAG Retrieval ──────────────────────────────────────
-        rag_docs = retrieve_relevant_context(user_message, top_k=3)
+        # ── Step 2: Local RAG Retrieval (Enforced by Plan Tier) ──────────────
         rag_text_blocks = []
-
-        for idx, doc in enumerate(rag_docs):
-            rag_text_blocks.append(
-                f"Nutritional Reference {idx+1}:\n{doc['content']}"
-            )
+        rag_docs = []
+        if plan_limits.get("rag_knowledge", False):
+            rag_docs = retrieve_relevant_context(user_message, top_k=3)
+            for idx, doc in enumerate(rag_docs):
+                rag_text_blocks.append(
+                    f"Nutritional Reference {idx+1}:\n{doc['content']}"
+                )
 
         rag_knowledge_context = "\n\n".join(rag_text_blocks) if rag_text_blocks else ""
 
-        # ── Step 3: Web Search Fallback (Threshold = 1) ──────────────────────
+        # ── Step 3: Web Search Fallback (Enforced by Plan Tier: Premium Only) ──
         web_context_block = ""
         web_search_used = False
 
-        if len(rag_docs) <= 1:
-            if is_nutrition_query(user_message):
+        if plan_limits.get("web_search", False):
+            if len(rag_docs) <= 1 and is_nutrition_query(user_message):
                 web_results = search_trusted_nutrition_web(user_message, max_results=3)
                 if web_results:
                     web_context_block = build_web_context_block(web_results)
                     web_search_used = True
+
 
         # ── Step 4: Build Master Prompt ──────────────────────────────────────
         knowledge_section = ""

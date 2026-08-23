@@ -202,19 +202,31 @@ class AnalyzeMealImageView(APIView):
     """
     Takes an image, passes it to Gemini, calculates a junk score,
     and returns the data so the frontend can preview it.
-    Does NOT save to the database.
+    Does NOT save to the database. Enforces tier meal scan limits.
     """
-    # Requires multipart parsing for file uploads
     parser_classes = (MultiPartParser, FormParser)
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         try:
+            user = request.user
+            from .context_service import get_user_plan_tier, get_plan_limits
+            profile = getattr(user, 'profile', None)
+            plan_tier = get_user_plan_tier(user, profile)
+            plan_limits = get_plan_limits(plan_tier)
+            max_scans = plan_limits.get("meal_scans_per_day", 3)
+            
+            today = timezone.now().date()
+            today_scans = meal_logs.objects.filter(user=user, meal_timedate__date=today).count()
+            if today_scans >= max_scans:
+                return Response(
+                    {"error": f"Daily meal scan limit reached ({today_scans}/{max_scans} scans used). Upgrade your plan to get up to {20 if plan_tier == 'pro' else 10} scans/day!"},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
             serializer = MealImageUploadSerializer(data=request.data)
             
             if serializer.is_valid():
                 image_file = serializer.validated_data['image']
-                
-                # Call our utility function
                 analysis_result = analyze_meal_image_with_gemini(image_file)
                 
                 if "error" in analysis_result:
@@ -235,27 +247,41 @@ class AnalyzeMealImageView(APIView):
 class MealLogListCreateView(generics.ListCreateAPIView):
     """
     Handles saving a finalized meal log (POST) 
-    and fetching a user's logs (GET).
+    and fetching a user's logs (GET) filtered by subscription tier meal history days.
     """
     serializer_class = MealLogSerializer
     permission_classes = [IsAuthenticated]
     def get_queryset(self):
-        # Only return meal logs for the logged-in user
-        return meal_logs.objects.filter(user=self.request.user).order_by('-meal_timedate')
+        user = self.request.user
+        from .context_service import get_user_plan_tier, get_plan_limits
+        profile = getattr(user, 'profile', None)
+        plan_tier = get_user_plan_tier(user, profile)
+        plan_limits = get_plan_limits(plan_tier)
+        history_days = plan_limits.get("history_days", 0)
+
+        today = timezone.now().date()
+        qs = meal_logs.objects.filter(user=user)
+        if history_days == 0:
+            qs = qs.filter(meal_timedate__date=today)
+        else:
+            start_date = today - timedelta(days=history_days)
+            qs = qs.filter(meal_timedate__date__gte=start_date)
+
+        return qs.order_by('-meal_timedate')
+
     def perform_create(self, serializer):
         from django.utils import timezone
         from .models import daily_tracking
         
         today = timezone.now().date()
-        # Find daily_tracking created today for this user, or create one
         tracking, created = daily_tracking.objects.get_or_create(
             user=self.request.user,
             created_at__date=today,
             defaults={'behaviour_summary': 'Active'}
         )
         
-        # Automatically assign the logged-in user and today's tracking record when saving
         serializer.save(user=self.request.user, tracking_id=tracking)
+
 
 
 class MealLogDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -431,17 +457,23 @@ class DashboardSummaryView(APIView):
             if tracking_today and getattr(tracking_today, 'water_intake_liters', None) is not None:
                 today_water = float(tracking_today.water_intake_liters)
 
-            from .utils import calculate_user_streak
-            streak_val = 0
-            try:
-                streak_val = calculate_user_streak(user)
-            except Exception:
-                streak_val = 1
+            from .context_service import get_user_plan_tier, get_plan_limits
+            profile = getattr(user, 'profile', None)
+            plan_tier = get_user_plan_tier(user, profile)
+            plan_limits = get_plan_limits(plan_tier)
+            scans_used = logs.filter(meal_timedate__date=today).count()
+            chats_used = chat_logs.objects.filter(user=user, created_at__date=today).count()
 
             return Response({
                 'cal_trend': cal_trend,
                 'junk_trend': junk_trend,
                 'streak': streak_val,
+                'plan_tier': plan_tier,
+                'plan_limits': plan_limits,
+                'usage': {
+                    'scans_used': scans_used,
+                    'chats_used': chats_used,
+                },
                 'today': {
                     'calories': today_calories,
                     'protein': round(today_protein, 1),
@@ -452,6 +484,7 @@ class DashboardSummaryView(APIView):
                     'water': today_water
                 }
             })
+
         except Exception as e:
             return Response({
                 'cal_trend': [],

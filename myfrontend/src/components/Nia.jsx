@@ -507,16 +507,18 @@ export default function Nia({ dark, profileData, niaMsgs, setNiaMsgs }) {
           {/* User Context Preview */}
           <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Junk Score</span>
-              <span className={`text-[12px] font-black ${todayJunk >= 75 ? 'text-red-500' : todayJunk >= 40 ? 'text-amber-500' : 'text-emerald-500'}`}>{todayJunk}/100</span>
-
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Plan Tier</span>
+              <span className={`text-[12px] font-black ${userData?.plan_tier === 'premium' ? 'text-emerald-500' : userData?.plan_tier === 'pro' ? 'text-blue-500' : 'text-amber-500'}`}>
+                {userData?.plan_tier === 'premium' ? 'Premium (Unlimited)' : userData?.plan_tier === 'pro' ? 'Pro (20 chats/day)' : 'Free (Locked)'}
+              </span>
             </div>
             <div className="w-[1px] h-6 bg-slate-300 dark:bg-slate-700"></div>
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Daily Goal</span>
-              <span className="text-[12px] font-black text-teal-500">{calGoal} kcal</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-none">Junk Score</span>
+              <span className={`text-[12px] font-black ${todayJunk >= 75 ? 'text-red-500' : todayJunk >= 40 ? 'text-amber-500' : 'text-emerald-500'}`}>{todayJunk}/100</span>
             </div>
           </div>
+
 
           <div className="flex items-center gap-1">
             <button
@@ -832,52 +834,65 @@ export default function Nia({ dark, profileData, niaMsgs, setNiaMsgs }) {
             </motion.div>
           )}
 
-          <div className={`nia-glass rounded-[32px] border p-3 flex flex-col gap-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all duration-500 group focus-within:shadow-[0_20px_50px_rgba(20,184,166,0.15)] focus-within:border-teal-500/50 ${dark ? 'border-slate-800/80' : 'border-slate-200/80'
-            }`}>
-            <div className="flex items-center gap-2 px-2 py-1">
-              <button onClick={startCamera} className={`p-2 rounded-lg transition-all shrink-0 ${dark ? 'text-slate-500 hover:bg-slate-800 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
-                <Camera size={17} strokeWidth={2} />
-              </button>
-              <button onClick={() => fileRef.current.click()} className={`p-2 rounded-lg transition-all shrink-0 ${dark ? 'text-slate-500 hover:bg-slate-800 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
-                <Paperclip size={17} strokeWidth={2} />
-              </button>
-
-              <textarea
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  e.target.style.height = 'auto';
-                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                placeholder="Message Nia..."
-                className={`nia-textarea flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none text-[14px] py-2 px-1 placeholder-slate-400 resize-none overflow-hidden leading-relaxed ${dark ? 'text-white' : 'text-slate-900'}`}
-                rows={1}
-                style={{ minHeight: '34px', maxHeight: '120px' }}
-              />
-
-              <button
-                onClick={() => setIsListening(!isListening)}
-                className={`p-2 rounded-lg transition-all shrink-0 ${isListening ? 'bg-red-500 text-white nia-pulse' : (dark ? 'text-slate-500 hover:bg-slate-800 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600')
-                  }`}
-              >
-                {isListening ? <MicOff size={17} /> : <Mic size={17} />}
-              </button>
-              <button
-                disabled={!input.trim() && !capturedImage}
-                onClick={() => sendMessage()}
-                className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 shrink-0 ${input.trim() || capturedImage ? 'bg-teal-500 text-white shadow-md shadow-teal-500/30' : (dark ? 'bg-slate-800 text-slate-600' : 'bg-slate-100 text-slate-300')
-                  }`}
-              >
-                <ArrowUp size={15} strokeWidth={2.5} />
-              </button>
+          {userData?.plan_tier === 'free' ? (
+            <div className={`rounded-[28px] border p-5 text-center flex flex-col items-center gap-2 shadow-2xl ${dark ? 'bg-slate-900/90 border-amber-500/30' : 'bg-white border-amber-500/30'}`}>
+              <div className="flex items-center gap-2 text-amber-500 font-extrabold text-base">
+                <ShieldAlert size={20} />
+                <span>NIA AI Chat is Locked on the Free Plan</span>
+              </div>
+              <p className={`text-xs max-w-md ${dark ? 'text-slate-400' : 'text-slate-500'}`}>
+                Your current Free Plan does not include access to NIA AI Chat. Upgrade to <b>Pro Plan</b> (20 chats/day) or <b>Premium Plan</b> (Unlimited chats) to start chatting with Nia!
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className={`nia-glass rounded-[32px] border p-3 flex flex-col gap-2 shadow-[0_20px_50px_rgba(0,0,0,0.15)] transition-all duration-500 group focus-within:shadow-[0_20px_50px_rgba(20,184,166,0.15)] focus-within:border-teal-500/50 ${dark ? 'border-slate-800/80' : 'border-slate-200/80'
+              }`}>
+              <div className="flex items-center gap-2 px-2 py-1">
+                <button onClick={startCamera} className={`p-2 rounded-lg transition-all shrink-0 ${dark ? 'text-slate-500 hover:bg-slate-800 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+                  <Camera size={17} strokeWidth={2} />
+                </button>
+                <button onClick={() => fileRef.current.click()} className={`p-2 rounded-lg transition-all shrink-0 ${dark ? 'text-slate-500 hover:bg-slate-800 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+                  <Paperclip size={17} strokeWidth={2} />
+                </button>
+
+                <textarea
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  placeholder="Message Nia..."
+                  className={`nia-textarea flex-1 bg-transparent border-none outline-none ring-0 focus:ring-0 focus:outline-none text-[14px] py-2 px-1 placeholder-slate-400 resize-none overflow-hidden leading-relaxed ${dark ? 'text-white' : 'text-slate-900'}`}
+                  rows={1}
+                  style={{ minHeight: '34px', maxHeight: '120px' }}
+                />
+
+                <button
+                  onClick={() => setIsListening(!isListening)}
+                  className={`p-2 rounded-lg transition-all shrink-0 ${isListening ? 'bg-red-500 text-white nia-pulse' : (dark ? 'text-slate-500 hover:bg-slate-800 hover:text-slate-300' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600')
+                    }`}
+                >
+                  {isListening ? <MicOff size={17} /> : <Mic size={17} />}
+                </button>
+                <button
+                  disabled={!input.trim() && !capturedImage}
+                  onClick={() => sendMessage()}
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 shrink-0 ${input.trim() || capturedImage ? 'bg-teal-500 text-white shadow-md shadow-teal-500/30' : (dark ? 'bg-slate-800 text-slate-600' : 'bg-slate-100 text-slate-300')
+                    }`}
+                >
+                  <ArrowUp size={15} strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
       </footer>
 

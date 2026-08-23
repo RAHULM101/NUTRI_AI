@@ -55,16 +55,23 @@ export function UserProvider({ children }) {
       // Reset today's water to 0 on fresh load (water isn't persisted in backend yet)
       setDailyLogs(prev => ({ ...prev, current_water: 0 }));
 
-      // Also store raw profile in userData with mapped helper fields
-      const formattedName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+      // Store selected plan or plan_tier
+      const rawPlan = profile.selected_plan || profile.plan_type || 'Free';
+      const planStr = String(rawPlan).toLowerCase();
+      let derivedTier = 'free';
+      if (planStr.includes('premium') || planStr.includes('gym') || planStr.includes('athlete') || planStr.includes('vip')) derivedTier = 'premium';
+      else if (planStr.includes('pro') || planStr.includes('student') || planStr.includes('working professional') || planStr.includes('standard')) derivedTier = 'pro';
+
       setUserData(prev => ({
         ...prev,
         ...profile,
         name: formattedName || prev?.name,
-        mainGoal: profile.primary_goal || prev?.mainGoal
+        mainGoal: profile.primary_goal || prev?.mainGoal,
+        plan_tier: derivedTier
       }));
 
       console.log('✅ Profile loaded from backend:', profile);
+
       return profile;
     } catch (err) {
       console.warn('⚠️ Could not load profile from backend:', err?.response?.data || err.message);

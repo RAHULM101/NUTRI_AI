@@ -114,7 +114,7 @@ function MealRow({ meal, onDelete, dark }) {
 }
 
 export default function MealLogs({ dark }) {
-  const { addMealLog } = useUser();
+  const { addMealLog, userData } = useUser();
   const fileRef = useRef();
   const videoRef = useRef();
   const canvasRef = useRef();
@@ -122,10 +122,14 @@ export default function MealLogs({ dark }) {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraStream, setCameraStream] = useState(null);
 
-  // Session-only scan count — resets on every page refresh
+  const planTier = userData?.plan_tier || 'free';
+  const dailyScanLimit = planTier === 'premium' ? 20 : planTier === 'pro' ? 10 : 3;
+
+  // Session-only scan count
   const [scansUsed, setScansUsed] = useState(0);
-  const scansLeft = DAILY_SCAN_LIMIT - scansUsed;
+  const scansLeft = Math.max(0, dailyScanLimit - scansUsed);
   const limitReached = scansLeft <= 0;
+
 
   const [photo, setPhoto] = useState(null);
   const [mealName, setMealName] = useState('');
@@ -371,7 +375,8 @@ export default function MealLogs({ dark }) {
                 : `border-slate-200 dark:border-slate-700 ${dark ? 'bg-slate-800 text-slate-300' : 'bg-white text-slate-600'}`
             }`}>
             <ScanLine size={17} />
-            <span>{limitReached ? 'Limit reached' : `${scansLeft}/${DAILY_SCAN_LIMIT} scans remaining today`}</span>
+            <span>{limitReached ? 'Limit reached' : `${scansLeft}/${dailyScanLimit} scans remaining today`}</span>
+
           </div>
         </div>
 

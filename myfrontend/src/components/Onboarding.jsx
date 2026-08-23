@@ -648,25 +648,26 @@ const Onboarding = ({ onComplete, onBack, dark = false, initialData = null, back
                   {[{
                     id: 'Free',
                     tag: 'Free',
-                    subtitle: 'Always free, no card needed',
+                    subtitle: 'Always free, basic tracking',
                     free: true,
                     recommended: false,
-                    features: ['5 Meal Scans / day', 'Limited Nia AI Chat', '7 Days Meal History', 'Basic Access'],
+                    features: ['3 Meal Scans / day', 'NIA AI Chat Locked', 'Today Meal History Only', 'No PDF Export'],
                   }, {
                     id: 'Pro',
                     tag: 'Pro',
-                    price: 149,
-                    subtitle: 'Best for serious health goals',
+                    price: 499,
+                    subtitle: 'Best for active health goals',
                     recommended: true,
-                    features: ['20 Meal Scans / day', 'More Nia AI Access', '30 Days Meal History', 'PDF Report Export'],
+                    features: ['10 Meal Scans / day', '20 NIA AI Chats / day', '7 Days Meal History', 'Weekly PDF Export', 'Interactive Meal Planner'],
                   }, {
                     id: 'Premium',
                     tag: 'Premium',
-                    price: 349,
-                    subtitle: 'Everything, no limits',
+                    price: 999,
+                    subtitle: 'Full access, zero limits',
                     recommended: false,
-                    features: ['Unlimited Meal Scans', 'Unlimited Nia AI', 'Unlimited Meal History', 'PDF Report Export', 'Smart Reminders'],
+                    features: ['20 Meal Scans / day', 'Unlimited NIA AI Chats', '30 Days Meal History', 'Weekly & Monthly Reports', 'Custom Meal Planner', 'Smart Reminders', 'Live Web Search'],
                   }].map(plan => {
+
                     const selected = formData.selectedPlan === plan.id;
                     return (
                       <div

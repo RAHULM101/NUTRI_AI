@@ -408,43 +408,47 @@ export default function Profile({ dark, profileData, onboardingDone, onCompleteP
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
                 <PlanCard
-                  name="Always free, no card needed"
+                  name="Always free, basic tracking"
                   tag="Free"
                   free
                   dark={dark}
                   features={[
-                    '5 Meal Scans / day',
-                    'Limited Nia AI Chat',
-                    '7 Days Meal History',
-                    'Basic Access',
+                    '3 Meal Scans / day',
+                    'NIA AI Chat Locked',
+                    'Today Meal History Only',
+                    'No PDF Export',
                   ]}
                 />
                 <PlanCard
-                  name="Best for serious health goals"
+                  name="Best for active health goals"
                   tag="Pro"
-                  price={149}
+                  price={499}
                   recommended
                   dark={dark}
                   features={[
-                    '20 Meal Scans / day',
-                    'More Nia AI Access',
-                    '30 Days Meal History',
-                    'PDF Report Export',
+                    '10 Meal Scans / day',
+                    '20 NIA AI Chats / day',
+                    '7 Days Meal History',
+                    'Weekly PDF Export',
+                    'Interactive Meal Planner',
                   ]}
                 />
                 <PlanCard
-                  name="Everything, no limits"
+                  name="Full access, zero limits"
                   tag="Premium"
-                  price={349}
+                  price={999}
                   dark={dark}
                   features={[
-                    'Unlimited Meal Scans',
-                    'Unlimited Nia AI',
-                    'Unlimited Meal History',
-                    'PDF Report Export',
+                    '20 Meal Scans / day',
+                    'Unlimited NIA AI Chats',
+                    '30 Days Meal History',
+                    'Weekly & Monthly Reports',
+                    'Custom Meal Planner',
                     'Smart Reminders',
+                    'Live Web Search',
                   ]}
                 />
+
               </div>
             </div>
           )}
