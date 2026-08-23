@@ -315,13 +315,15 @@ Answer the user's message: "{user_message}"
 """
 
         # ── Step 5: Call Gemini with fallback chain ──────────────────────────
-        api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
+        raw_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
+        api_key = raw_key.strip().strip("'").strip('"') if (raw_key and isinstance(raw_key, str)) else None
         client = None
         if api_key and api_key != "your_gemini_api_key_here":
             try:
                 client = genai.Client(api_key=api_key)
             except Exception as e:
                 print(f"GenAI Client Init Notice: {e}")
+
 
         response = call_gemini_with_fallback(client=client, contents=master_prompt)
 

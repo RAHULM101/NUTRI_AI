@@ -21,25 +21,21 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# Load .env from both BASE_DIR and root directory if present
 load_dotenv(os.path.join(BASE_DIR, '.env'), override=True)
-
+load_dotenv(os.path.join(BASE_DIR.parent, '.env'), override=False)
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-production-env-file-only')
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-# Gemini API Key configuration
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+# Gemini & Tavily API Key configuration (stripped of spaces/quotes)
+raw_gemini = os.environ.get('GEMINI_API_KEY', '') or ''
+GEMINI_API_KEY = raw_gemini.strip().strip("'").strip('"') if raw_gemini.strip() else None
+
+raw_tavily = os.environ.get('TAVILY_API_KEY', '') or ''
+TAVILY_API_KEY = raw_tavily.strip().strip("'").strip('"') if raw_tavily.strip() else None
+
 
 
 ALLOWED_HOSTS = []
