@@ -7,7 +7,8 @@ import {
   Flame, Dumbbell, Wheat
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getNiaResponse, generateWeeklyMealPlan } from "../lib/niaEngine";
+import { getNiaResponse, generateWeeklyMealPlan, isExplicitMealPlanRequest } from "../lib/niaEngine";
+
 import { jsPDF } from "jspdf";
 import { useUser } from "../context/UserContext";
 
@@ -396,9 +397,10 @@ export default function Nia({ dark, profileData, niaMsgs, setNiaMsgs }) {
       const aiResponse = {
         type: "ai",
         text: data.ai_response || "Sorry, I couldn't generate a response.",
-        hasMealPlan: text.toLowerCase().includes("meal plan"),
+        hasMealPlan: isExplicitMealPlanRequest(text),
         hasCourses: text.toLowerCase().includes("course") || text.toLowerCase().includes("learn")
       };
+
 
       if (aiResponse.hasMealPlan) {
         aiResponse.mealPlanData = generateWeeklyMealPlan(profileData?.mainGoal, calGoal);

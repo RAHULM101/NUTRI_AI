@@ -55,11 +55,30 @@ export const generateWeeklyMealPlan = ( calories = 2000) => {
   }));
 };
 
+// ── Explicit Meal Plan Request Check ────────────────────────────
+export const isExplicitMealPlanRequest = (text) => {
+  if (!text) return false;
+  const lower = text.toLowerCase().trim();
+
+  // Negative rules: Questions asking for guidelines, advice, tips, principles, info, explanations
+  const isQuestionOrGuideline = /\b(guideline|guidelines|tip|tips|advice|info|information|benefit|benefits|what is|explain|tell me about|why|how does|rule|rules|overview|principle|principles|recommendations)\b/.test(lower);
+  if (isQuestionOrGuideline) {
+    return false;
+  }
+
+  // Positive rules: Explicit user intent to generate, make, create, show, or download a meal plan
+  const isExplicitAction = /\b(give|make|create|generate|show|send|provide|build|download|want|get)\b.*\b(meal plan|diet plan|7 day|weekly plan)\b/.test(lower);
+  const isExactMealPlanPhrase = /^(meal plan|diet plan|7-day meal plan|weekly meal plan|my meal plan|show meal plan)$/.test(lower);
+
+  return isExplicitAction || isExactMealPlanPhrase;
+};
+
 // ── Intent detection ──────────────────────────────────────────
 const detect = (t) => {
   if (/\b(hi|hello|hey|good morning|good evening)\b/.test(t))                          return "greeting";
-  if (/\b(meal plan|diet plan|week|7.?day|weekly)\b/.test(t))                          return "meal_plan";
+  if (isExplicitMealPlanRequest(t))                                                    return "meal_plan";
   if (/\b(calorie|kcal|how many cal|caloric)\b/.test(t))                               return "calories";
+
   if (/\b(protein|how much protein|protein goal|protein intake)\b/.test(t))            return "protein";
   if (/\b(fat loss|weight loss|lose weight|reduce weight|slim)\b/.test(t))             return "weight_loss";
   if (/\b(muscle|bulk|gain weight|mass|hypertrophy)\b/.test(t))                        return "muscle_gain";
