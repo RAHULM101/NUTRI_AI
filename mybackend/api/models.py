@@ -4,7 +4,10 @@ from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 import uuid
 from django.db import models
-from pgvector.django import VectorField
+try:
+    from pgvector.django import VectorField
+except ImportError:
+    VectorField = None
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -243,7 +246,7 @@ class RagDocument(models.Model):
     title = models.CharField(max_length=255, null=True, blank=True)
     content = models.TextField()
     metadata = models.JSONField(default=dict, blank=True)
-    embedding = VectorField(dimensions=768, null=True, blank=True)
+    embedding = VectorField(dimensions=768, null=True, blank=True) if VectorField else models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

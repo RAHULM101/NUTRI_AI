@@ -5,6 +5,12 @@ from .models import RagDocument
 from google import genai
 from django.conf import settings
 
+try:
+    from pgvector.django import VectorField as _VectorField
+    PGVECTOR_AVAILABLE = True
+except ImportError:
+    PGVECTOR_AVAILABLE = False
+
 def get_query_embedding(query_text):
     api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
     if not api_key or api_key == "your_gemini_api_key_here":
@@ -64,27 +70,29 @@ def retrieve_relevant_context(user_query, top_k=5):
                 })
                 seen_ids.add(doc.id)
 
-    # 2. Vector Cosine Similarity Search (if embeddings are present)
-    emb = get_query_embedding(query)
-    if emb:
-        try:
-            vector_matches = RagDocument.objects.exclude(embedding__isnull=True).order_by(
-                RagDocument.embedding.cosine_distance(emb)
-            )[:top_k*2]
-            
-            for doc in vector_matches:
-                if doc.id not in seen_ids:
-                    results.append({
-                        "id": str(doc.id),
-                        "dataset_type": doc.dataset_type,
-                        "source_name": doc.source_name,
-                        "page_number": doc.page_number,
-                        "title": doc.title or doc.source_name,
-                        "content": doc.content,
-                        "score": 0.8
-                    })
-                    seen_ids.add(doc.id)
-        except Exception as e:
-            print(f"--- Vector Search Warning: {e} ---")
+    # 2. Vector Cosine Similarity Search (if embeddings are present & pgvector is available)
+    if PGVECTOR_AVAILABLE:
+        emb = get_query_embedding(query)
+        if emb:
+            try:
+                from pgvector.django import VectorField
+                vector_matches = RagDocument.objects.exclude(embedding__isnull=True).order_by(
+                    RagDocument.embedding.cosine_distance(emb)
+                )[:top_k*2]
+                
+                for doc in vector_matches:
+                    if doc.id not in seen_ids:
+                        results.append({
+                            "id": str(doc.id),
+                            "dataset_type": doc.dataset_type,
+                            "source_name": doc.source_name,
+                            "page_number": doc.page_number,
+                            "title": doc.title or doc.source_name,
+                            "content": doc.content,
+                            "score": 0.8
+                        })
+                        seen_ids.add(doc.id)
+            except Exception as e:
+                print(f"--- Vector Search Warning: {e} ---")
 
     return results[:top_k]
