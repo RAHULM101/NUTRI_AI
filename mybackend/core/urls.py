@@ -16,14 +16,29 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
+def root_health_check(request):
+    return JsonResponse({
+        "status": "online",
+        "service": "Nutri AI Backend API",
+        "health": "ok",
+        "endpoints": {
+            "nia_chat": "/api/nia/chat/",
+            "store": "/api/store/products/",
+            "admin": "/admin/"
+        }
+    })
+
 urlpatterns = [
+    path('', root_health_check, name='root_health_check'),
     path('admin/', admin.site.admin_url if hasattr(admin.site, 'admin_url') else admin.site.urls), # Standard admin
     path('api/', include('api.urls')), # This connects to your api/urls.py
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
+
