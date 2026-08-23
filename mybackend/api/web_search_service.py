@@ -94,33 +94,25 @@ BLOCKED_MEDICAL_TOPICS = {
 }
 
 
+def is_blocked_medical_query(user_query: str) -> bool:
+    """Returns True if the query is asking about acute medical treatment/drugs outside nutrition scope."""
+    lower = user_query.lower()
+    for blocked in BLOCKED_MEDICAL_TOPICS:
+        if blocked in lower:
+            return True
+    return False
+
+
 def is_nutrition_query(user_query: str) -> bool:
     """
-    Layer 2 intent classifier: Returns True only if the query is
-    clearly about food, nutrition, or diet — and not a blocked medical topic.
+    Returns True if the query is suitable for searching food/nutrition web sources.
+    If it's blocked medical, returns False. Otherwise defaults to True for general health/food questions.
     """
-    lower = user_query.lower()
-    words = set(re.findall(r'\b\w+\b', lower))
-    full_text = lower  # for multi-word phrase matching
+    if is_blocked_medical_query(user_query):
+        return False
+    # Almost all non-blocked queries asking Nia can be searched for nutrition context
+    return True
 
-    # Check blocked medical topics first (exact phrase match)
-    for blocked in BLOCKED_MEDICAL_TOPICS:
-        if blocked in full_text:
-            logger.info(f"[WebSearch] Blocked medical topic detected: '{blocked}'")
-            return False
-
-    # Check if any nutrition topic keyword matches
-    for topic in NUTRITION_TOPICS:
-        if topic in full_text:
-            return True
-
-    # Single-word fallback: partial word match on nutrition set
-    for word in words:
-        if any(word in topic or topic in word for topic in NUTRITION_TOPICS if len(topic) > 4):
-            return True
-
-    logger.info(f"[WebSearch] Query not classified as nutrition-related: '{user_query}'")
-    return False
 
 
 def search_trusted_nutrition_web(query: str, max_results: int = 3) -> list:

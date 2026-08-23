@@ -188,15 +188,17 @@ def generate_nia_chat_response(user, user_message):
         from .rag_service import retrieve_relevant_context
         from .web_search_service import (
             is_nutrition_query,
+            is_blocked_medical_query,
             search_trusted_nutrition_web,
             build_web_context_block,
         )
 
-        # ── Layer 1: Off-topic pre-filter ────────────────────────────────────
         lower_msg = user_message.lower()
+
+        # ── Layer 1a: Off-topic pre-filter (sports, movies, coding, politics) ────
         off_topic_keywords = [
             'fifa', 'world cup', 'cricket', 'football', 'ipl', 'match score',
-            'movie', 'actor', 'actress', 'coding', 'javascript',
+            'movie', 'actor', 'actress', 'coding', 'javascript', 'python code',
             'politics', 'election', 'president', 'prime minister',
             'weather', 'stock market', 'cryptocurrency', 'bitcoin',
         ]
@@ -206,6 +208,15 @@ def generate_nia_chat_response(user, user_message):
                 "I specialize strictly in food, nutrition, diet, weight management, and fitness. "
                 "I cannot assist with non-health topics like sports, general trivia, or news. "
                 "How can I help you with your meal plan or macro goals today?"
+            )
+
+        # ── Layer 1b: Blocked medical filter (drugs, chemotherapy, surgery) ────
+        if is_blocked_medical_query(user_message):
+            return (
+                "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
+                "I focus exclusively on food, nutrition, diet, weight management, and healthy lifestyles. "
+                "I cannot provide medical diagnosis, drug dosages, or clinical medical treatment advice. "
+                "Please consult a certified medical doctor or healthcare professional for medical treatments."
             )
 
         # ── Step 1: Hydrate Real-Time User Context ───────────────────────────
@@ -224,27 +235,17 @@ def generate_nia_chat_response(user, user_message):
 
         rag_knowledge_context = "\n\n".join(rag_text_blocks) if rag_text_blocks else ""
 
-        # ── Step 3: Web Search Fallback (threshold = 1) ──────────────────────
+        # ── Step 3: Web Search Fallback (Threshold = 1) ──────────────────────
         web_context_block = ""
         web_search_used = False
 
         if len(rag_docs) <= 1:
-            # Layer 2: Nutrition intent classifier before calling Tavily
             if is_nutrition_query(user_message):
                 web_results = search_trusted_nutrition_web(user_message, max_results=3)
                 if web_results:
                     web_context_block = build_web_context_block(web_results)
                     web_search_used = True
                     print(f"[NIA] Web search used for: '{user_message}' — {len(web_results)} trusted results")
-            else:
-                # Nutrition intent classifier rejected the query
-                return (
-                    "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
-                    "Your question appears to be outside the scope of food, nutrition, and diet. "
-                    "I can help with meal planning, macro tracking, specific food nutrients, "
-                    "diet advice for health conditions, and evidence-based nutrition guidance.\n\n"
-                    "What nutrition topic can I help you with today?"
-                )
 
         # ── Step 4: Build Master Prompt ──────────────────────────────────────
         knowledge_section = ""
@@ -254,7 +255,7 @@ def generate_nia_chat_response(user, user_message):
 {rag_knowledge_context}
 ---
 
-WEB SEARCH RESULTS (from verified sources only):
+WEB SEARCH RESULTS (from verified trusted sources only):
 ---
 {web_context_block}
 ---"""
@@ -268,18 +269,17 @@ WEB SEARCH RESULTS (from verified sources only):
 ---
 {web_context_block}
 ---
-NOTE: Local nutrition database did not have specific information on this topic.
-The above results are from trusted health authorities only."""
+NOTE: Local database did not have specific information on this topic.
+The above web results are from trusted health authorities only."""
         else:
-            knowledge_section = "No specific research document retrieved from local database or web."
+            knowledge_section = "Note: No external research documents retrieved. Rely on your core nutrition expertise and user profile data."
 
         web_instruction = ""
         if web_search_used:
             web_instruction = (
                 "\n6. WEB SOURCE CITATION: You used trusted web search results above. "
                 "Always mention the source name (e.g., 'According to Healthline...', "
-                "'As per NIH guidelines...') when citing a web result. "
-                "Never add facts not present in the provided web results."
+                "'As per NIH guidelines...') when citing facts from a web result."
             )
 
         master_prompt = f"""You are Nia, an evidence-based, empathetic AI Nutritionist and Health Assistant.
@@ -304,14 +304,15 @@ RECENT CONVERSATION HISTORY:
 {knowledge_section}
 
 GUARDRAILS & INSTRUCTIONS:
-1. Ground your answer in the RETRIEVED KNOWLEDGE whenever relevant. Cite nutritional facts accurately.
-2. Always keep the user's real-time remaining calorie/macro budget and dietary preferences in mind.
-3. OFF-TOPIC GUARDRAIL: If the user asks non-nutrition/non-health questions, politely decline.
-4. MEDICAL DISCLAIMER: If the user asks about acute medical symptoms, provide evidence-based context AND state: "Consult a certified medical professional or dietitian for diagnosis."
+1. ALWAYS provide a helpful, detailed, and accurate response for any food, nutrition, diet, meal planning, macro tracking, or health-related query.
+2. Ground your answer in the RETRIEVED KNOWLEDGE or WEB SEARCH RESULTS whenever available.
+3. Always keep the user's real-time remaining calorie/macro budget and dietary preferences in mind.
+4. MEDICAL DISCLAIMER: If the user asks about health conditions, provide nutritional guidance AND state: "Consult a certified medical professional or dietitian for medical diagnosis."
 5. If creating a meal plan, format clearly with headers, meals (Breakfast, Lunch, Snack, Dinner), portions, calories, and protein.{web_instruction}
 
 Answer the user's message: "{user_message}"
 """
+
 
         # ── Step 5: Call Gemini with fallback chain ──────────────────────────
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
