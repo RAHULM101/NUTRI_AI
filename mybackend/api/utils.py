@@ -275,7 +275,17 @@ def generate_nia_chat_response(user, user_message):
                         f"Let me know when you'd like to log a meal or get food suggestions!"
                     )
 
-            if 'water' in lower_msg:
+            # If the user explicitly asks for 'macro', 'macros', 'summary', or 'macros and water', show the full summary
+            if 'macro' in lower_msg or 'summary' in lower_msg or ('water' in lower_msg and ('and' in lower_msg or 'macro' in lower_msg)):
+                return (
+                    f"**Today's Live Macro & Water Summary for {profile_info['name']}:** 📊\n\n"
+                    f"• **Calories:** {consumed_cal} / {target_cal} kcal ({remaining_cal} kcal left)\n"
+                    f"• **Protein:** {consumed_p:.1f}g / {target_p:.1f}g ({remaining_p:.1f}g left)\n"
+                    f"• **Carbs:** {consumed_c:.1f}g / {target_c:.1f}g ({remaining_c:.1f}g left)\n"
+                    f"• **Fats:** {consumed_f:.1f}g / {target_f:.1f}g ({remaining_f:.1f}g left)\n"
+                    f"• **Water:** {consumed_w:.1f}L / {target_w:.1f}L ({remaining_w:.1f}L left) 💧"
+                )
+            elif 'water' in lower_msg:
                 return (
                     f"You have logged **{consumed_w:.1f}L** of water today. 💧\n\n"
                     f"You have **{remaining_w:.1f}L of water remaining** out of your {target_w:.1f}L daily goal!"
@@ -309,6 +319,7 @@ def generate_nia_chat_response(user, user_message):
                     f"• **Fats:** {consumed_f:.1f}g / {target_f:.1f}g ({remaining_f:.1f}g left)\n"
                     f"• **Water:** {consumed_w:.1f}L / {target_w:.1f}L ({remaining_w:.1f}L left) 💧"
                 )
+
 
 
         # ── Step 2: Local RAG Retrieval ──────────────────────────────────────
