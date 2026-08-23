@@ -7,20 +7,29 @@ def get_user_realtime_context(user):
     Hydrates live database state for the user: Profile, Today's Intake, Macro Deficit, and Chat Memory.
     """
     today = timezone.now().date()
-    profile = UserProfile.objects.filter(user=user).first()
-    tracking = daily_tracking.objects.filter(user=user, created_at__date=today).first()
-    today_meals = meal_logs.objects.filter(user=user, meal_timedate__date=today).order_by('meal_timedate')
+    profile = None
+    tracking = None
+    today_meals = []
     
+    if user and getattr(user, 'is_authenticated', False):
+        try:
+            profile = UserProfile.objects.filter(user=user).first()
+            tracking = daily_tracking.objects.filter(user=user, created_at__date=today).first()
+            today_meals = meal_logs.objects.filter(user=user, meal_timedate__date=today).order_by('meal_timedate')
+        except Exception:
+            pass
+
     # Calculate streak
     streak = 0
-    try:
-        streak = calculate_user_streak(user)
-    except Exception:
-        streak = 0
+    if user and getattr(user, 'is_authenticated', False):
+        try:
+            streak = calculate_user_streak(user)
+        except Exception:
+            streak = 0
 
     # 1. Profile Context
     profile_info = {
-        "name": user.first_name or user.username,
+        "name": (user.first_name or user.username) if user and getattr(user, 'is_authenticated', False) else "Guest",
         "primary_goal": getattr(profile, 'primary_goal', None) or 'Healthy living',
         "daily_calorie_target": getattr(profile, 'daily_calorie_target', None) or 2000,
         "current_weight_kg": float(profile.current_weight_kg) if profile and profile.current_weight_kg else None,
@@ -42,6 +51,7 @@ def get_user_realtime_context(user):
     target_cals = profile_info["daily_calorie_target"]
     remaining_cals = max(0, target_cals - consumed_cals)
 
+
     today_stats = {
         "calories_consumed": consumed_cals,
         "calorie_target": target_cals,
@@ -50,7 +60,7 @@ def get_user_realtime_context(user):
         "carbs_g": round(consumed_carbs, 1),
         "fat_g": round(consumed_fat, 1),
         "water_liters": water_liters,
-        "logged_meals_count": today_meals.count()
+        "logged_meals_count": len(today_meals)
     }
 
     # 3. Logged Meals Summary
@@ -60,12 +70,17 @@ def get_user_realtime_context(user):
 
     # 4. Sliding Window Chat Session Memory (Last 6 Exchanges)
     recent_history = []
-    past_logs = chat_logs.objects.filter(user=user).order_by('-created_at')[:6]
-    for log in reversed(list(past_logs)):
-        if log.user_message:
-            recent_history.append(f"User: {log.user_message}")
-        if log.ai_response:
-            recent_history.append(f"Nia: {log.ai_response[:200]}...")
+    if user and getattr(user, 'is_authenticated', False):
+        try:
+            past_logs = chat_logs.objects.filter(user=user).order_by('-created_at')[:6]
+            for log in reversed(list(past_logs)):
+                if log.user_message:
+                    recent_history.append(f"User: {log.user_message}")
+                if log.ai_response:
+                    recent_history.append(f"Nia: {log.ai_response[:200]}...")
+        except Exception:
+            pass
+
 
     return {
         "profile": profile_info,

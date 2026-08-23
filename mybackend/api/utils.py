@@ -227,10 +227,12 @@ def generate_nia_chat_response(user, user_message):
         # ── Step 1c: Instant Handler for Personal Tracking Queries ───────────
         personal_tracking_terms = [
             'protein left', 'calories left', 'carbs left', 'fat left',
-            'consumed today', 'remaining calories', 'remaining protein', 'remaining macros',
-            'my goal', 'my profile', 'how much protein', 'how many calories did i',
-            'my budget', 'what did i log', 'protein remaining', 'calorie remaining'
+            'i left for today', 'left for today', 'left today', 'consumed today',
+            'remaining calories', 'remaining protein', 'remaining macros',
+            'my goal', 'my profile', 'how much protein do i', 'how much protein i',
+            'how many calories did i', 'my budget', 'what did i log', 'protein remaining', 'calorie remaining'
         ]
+
         if any(term in lower_msg for term in personal_tracking_terms):
             consumed_p = today_stats.get('protein_g', 0)
             target_p = profile_info.get('target_protein', 70) if profile_info.get('target_protein') else 70.0
@@ -339,7 +341,14 @@ Answer the user's message: "{user_message}"
         print(error_trace)
         print("-------------------------------------")
 
-        # Concise, high-quality fallbacks (No raw document dumping, no URL links!)
+        # Diagnostics: check if API key is missing
+        api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
+        if not api_key or api_key == 'your_gemini_api_key_here':
+            return (
+                "⚠️ **API Key Notice**: `GEMINI_API_KEY` is not set in your `.env` file.\n\n"
+                "Please add `GEMINI_API_KEY=your_key` to your environment variables to enable dynamic AI responses."
+            )
+
         lower_msg = user_message.lower()
 
         if '2 day' in lower_msg or '2 days' in lower_msg or 'meal plan' in lower_msg:
@@ -357,43 +366,11 @@ Answer the user's message: "{user_message}"
                 "• **Dinner:** Lentil/Chicken Soup with sautéed veggies (~340 kcal, 24g protein)"
             )
 
-        if 'ragi' in lower_msg or 'finger millet' in lower_msg:
-            return (
-                "**Ragi (Finger Millet) Nutrition (per 100g):** 🌾\n\n"
-                "• **Calories:** ~328 kcal\n"
-                "• **Protein:** ~7.3g | **Carbs:** ~72g | **Fiber:** ~11.5g\n"
-                "• **Calcium:** ~344 mg (Exceptionally high for bone health!)\n\n"
-                "Ragi is low glycemic index, gluten-free, and great for diabetes management and weight loss."
-            )
-
-        if 'pcos' in lower_msg:
-            return (
-                "**PCOS Nutrition Guidelines:** 🌸\n\n"
-                "• **Complex Carbs:** Choose low-GI oats, ragi, and quinoa to regulate insulin.\n"
-                "• **High Protein & Healthy Fats:** Include paneer, eggs, sprouts, and walnuts.\n"
-                "• **Anti-inflammatory:** Add turmeric, cinnamon, and spearmint tea."
-            )
-
-        if 'dragon fruit' in lower_msg or 'pitaya' in lower_msg:
-            return (
-                "**Dragon Fruit (Pitaya) Nutrition:** 🐉\n\n"
-                "• **Calories:** ~60 kcal per 100g\n"
-                "• **Fiber:** ~3g | **Vitamin C:** ~9% DV\n"
-                "• **Benefits:** Rich in antioxidants, supports gut microbiome, low calorie for weight loss."
-            )
-
-        # Diagnostics: check if API key is missing
-        api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
-        if not api_key or api_key == 'your_gemini_api_key_here':
-            return (
-                "⚠️ **API Key Notice**: `GEMINI_API_KEY` is not set in your `.env` file.\n\n"
-                "Please add `GEMINI_API_KEY=your_key` to your environment variables to enable dynamic AI responses."
-            )
-
         return (
             "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
             "How can I help you with your meal plan, recipes, macro targets, or diet guidance today?"
         )
+
 
 
 
