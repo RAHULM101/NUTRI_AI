@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nutri-ai-backend
+    runtime: python
+    buildCommand: "pip install -r requirements.txt && python mybackend/manage.py collectstatic --no-input && python mybackend/manage.py migrate --no-input"
+    startCommand: "gunicorn --chdir mybackend core.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DEBUG
+        value: "False"
