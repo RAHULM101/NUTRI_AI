@@ -384,7 +384,7 @@ class DashboardSummaryView(APIView):
             from datetime import timedelta
             
             user = request.user
-            today = timezone.now().date()
+            today = timezone.localtime(timezone.now()).date()
             
             # Calculate the past 7 days (including today)
             days = []
@@ -398,10 +398,10 @@ class DashboardSummaryView(APIView):
                 meal_timedate__date__lte=days[-1]
             )
             
-            # Group by day
+            # Group by day using local timezone dates
             daily_data = {day: {'calories': 0, 'junk_score_sum': 0, 'count': 0} for day in days}
             for log in logs:
-                log_date = log.meal_timedate.date()
+                log_date = timezone.localtime(log.meal_timedate).date()
                 if log_date in daily_data:
                     daily_data[log_date]['calories'] += log.calories or 0
                     if log.junk_score is not None:
@@ -430,7 +430,7 @@ class DashboardSummaryView(APIView):
                 })
                 
             # Calculate today's aggregates for front-end hydration
-            today_logs = logs.filter(meal_timedate__date=today)
+            today_logs = [l for l in logs if timezone.localtime(l.meal_timedate).date() == today]
             today_calories = 0
             today_protein = 0.0
             today_carbs = 0.0
@@ -461,8 +461,25 @@ class DashboardSummaryView(APIView):
             profile = getattr(user, 'profile', None)
             plan_tier = get_user_plan_tier(user, profile)
             plan_limits = get_plan_limits(plan_tier)
-            scans_used = logs.filter(meal_timedate__date=today).count()
+            scans_used = len(today_logs)
             chats_used = chat_logs.objects.filter(user=user, created_at__date=today).count()
+
+            # Calculate active streak
+            streak_val = 0
+            check_date = today
+            while True:
+                has_log = meal_logs.objects.filter(user=user, meal_timedate__date=check_date).exists() or \
+                          daily_tracking.objects.filter(user=user, created_at__date=check_date).exists()
+                if has_log:
+                    streak_val += 1
+                    check_date -= timedelta(days=1)
+                else:
+                    if check_date == today and streak_val == 0:
+                        check_date -= timedelta(days=1)
+                        continue
+                    break
+            if streak_val == 0:
+                streak_val = 1
 
             return Response({
                 'cal_trend': cal_trend,
@@ -486,6 +503,9 @@ class DashboardSummaryView(APIView):
             })
 
         except Exception as e:
+            import traceback
+            print("--- DASHBOARD SUMMARY ERROR ---", e)
+            traceback.print_exc()
             return Response({
                 'cal_trend': [],
                 'junk_trend': [],
@@ -502,6 +522,7 @@ class DashboardSummaryView(APIView):
             }, status=status.HTTP_200_OK)
 
 
+
 class UpdateWaterIntakeView(APIView):
     permission_classes = [IsAuthenticated]
     
@@ -513,20 +534,23 @@ class UpdateWaterIntakeView(APIView):
         if water_amount is None:
             return Response({"error": "water amount required"}, status=400)
             
-        today = timezone.now().date()
-        tracking, created = daily_tracking.objects.get_or_create(
-            user=request.user,
-            created_at__date=today,
-            defaults={'behaviour_summary': 'Active', 'water_intake_liters': 0.0}
-        )
-        
-        tracking.water_intake_liters = float(water_amount)
-        tracking.save()
-        
+        today = timezone.localtime(timezone.now()).date()
+        tracking = daily_tracking.objects.filter(user=request.user, created_at__date=today).first()
+        if not tracking:
+            tracking = daily_tracking.objects.create(
+                user=request.user,
+                behaviour_summary='Active',
+                water_intake_liters=float(water_amount)
+            )
+        else:
+            tracking.water_intake_liters = float(water_amount)
+            tracking.save()
+            
         return Response({
             "message": "Water intake updated",
             "water": float(tracking.water_intake_liters)
         }, status=200)
+
 
 
 class NiaChatView(APIView):

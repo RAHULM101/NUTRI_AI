@@ -52,9 +52,6 @@ export function UserProvider({ children }) {
         goal_type: profile.primary_goal || prev.goal_type,
       }));
 
-      // Reset today's water to 0 on fresh load (water isn't persisted in backend yet)
-      setDailyLogs(prev => ({ ...prev, current_water: 0 }));
-
       // Store selected plan or plan_tier
       const rawPlan = profile.selected_plan || profile.plan_type || 'Free';
       const planStr = String(rawPlan).toLowerCase();
@@ -62,10 +59,12 @@ export function UserProvider({ children }) {
       if (planStr.includes('premium') || planStr.includes('gym') || planStr.includes('athlete') || planStr.includes('vip')) derivedTier = 'premium';
       else if (planStr.includes('pro') || planStr.includes('student') || planStr.includes('working professional') || planStr.includes('standard')) derivedTier = 'pro';
 
+      const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+
       setUserData(prev => ({
         ...prev,
         ...profile,
-        name: formattedName || prev?.name,
+        name: fullName || prev?.name,
         mainGoal: profile.primary_goal || prev?.mainGoal,
         plan_tier: derivedTier
       }));
@@ -93,8 +92,8 @@ export function UserProvider({ children }) {
       daily_calorie_goal: data.calorieTarget || prev.daily_calorie_goal,
       water_goal: parseFloat(data.waterGoal) || prev.water_goal,
     }));
-    setDailyLogs(prev => ({ ...prev, current_water: 0 }));
   };
+
 
   const updateWaterIntake = (amount) => {
     const rawToken = localStorage.getItem('access_token');
