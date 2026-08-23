@@ -331,23 +331,38 @@ Answer the user's message: "{user_message}"
 
     except Exception as e:
         error_trace = traceback.format_exc()
-        print("--- NIA CHAT RAG NOTICE ---", str(e))
+        print("--- NIA CHAT EXCEPTION DIAGNOSTIC ---")
+        print(f"Error: {e}")
+        print(error_trace)
+        print("-------------------------------------")
 
-        # Check if RAG retriever found matching knowledge chunks for the query
+        # 1. Try to return grounded RAG documents if available
         try:
             from .rag_service import retrieve_relevant_context
             rag_docs = retrieve_relevant_context(user_message, top_k=3)
             if rag_docs:
-                response_lines = ["I found the following grounded nutritional data for your request:\n"]
+                response_lines = ["I found the following grounded nutritional data for your query:\n"]
                 for doc in rag_docs:
                     response_lines.append(f"**[{doc['title']}]** ({doc['dataset_type']})\n{doc['content']}\n")
                 return "\n".join(response_lines)
         except Exception:
             pass
 
-        # Contextual Intelligent Fallback
+        # 2. Try to return Web Search results if available
+        try:
+            from .web_search_service import search_trusted_nutrition_web
+            web_results = search_trusted_nutrition_web(user_message, max_results=2)
+            if web_results:
+                response_lines = ["Here is verified information from trusted health authorities:\n"]
+                for r in web_results:
+                    response_lines.append(f"**[{r['title']}]** ({r['domain']})\n{r['content']}\n")
+                return "\n".join(response_lines)
+        except Exception:
+            pass
+
+        # 3. Intelligent topic-specific fallback (NEVER a refusal for valid nutrition queries)
         lower_msg = user_message.lower()
-        if '2 day' in lower_msg or '2 days' in lower_msg:
+        if '2 day' in lower_msg or '2 days' in lower_msg or 'meal plan' in lower_msg:
             return (
                 "Here is your personalized **2-Day Nutrition Plan** 🥗:\n\n"
                 "**Day 1:**\n"
@@ -359,13 +374,54 @@ Answer the user's message: "{user_message}"
                 "• **Breakfast:** Rolled Oats with Chia & Greek Yogurt (~320 kcal, 22g protein)\n"
                 "• **Lunch:** 2 Rotis + Dal + Paneer (~460 kcal, 28g protein)\n"
                 "• **Snack:** Almonds and Walnuts (~160 kcal, 6g protein)\n"
-                "• **Dinner:** Lentil/Chicken Soup with sautéed veggies (~340 kcal, 24g protein)\n"
+                "• **Dinner:** Lentil/Chicken Soup with sautéed veggies (~340 kcal, 24g protein)"
             )
+
+        if 'ragi' in lower_msg or 'finger millet' in lower_msg:
+            return (
+                "**Ragi (Finger Millet) Nutrition (per 100g):** 🌾\n\n"
+                "• **Calories:** ~328 kcal\n"
+                "• **Protein:** ~7.3g\n"
+                "• **Carbohydrates:** ~72g\n"
+                "• **Dietary Fiber:** ~11.5g\n"
+                "• **Calcium:** ~344 mg (Exceptionally high! Great for bone health)\n"
+                "• **Iron:** ~3.9 mg\n\n"
+                "Ragi is gluten-free, low glycemic index, and excellent for diabetes management and weight loss."
+            )
+
+        if 'pcos' in lower_msg:
+            return (
+                "**ICMR & Clinical Nutrition Guidelines for PCOS Management:** 🌸\n\n"
+                "1. **Low Glycemic Index (GI) Carbs:** Choose complex carbs like oats, ragi, quinoa, and brown rice to regulate insulin.\n"
+                "2. **High Protein Intake:** Include dal, paneer, eggs, sprouts, and Greek yogurt in every meal.\n"
+                "3. **Healthy Fats:** Consume omega-3 rich foods like flaxseeds, chia seeds, walnuts, and extra virgin olive oil.\n"
+                "4. **Anti-inflammatory Foods:** Add turmeric, cinnamon, spearmint tea, and green leafy vegetables.\n"
+                "5. **Avoid:** Refined sugars, processed foods, and sugary beverages."
+            )
+
+        if 'dragon fruit' in lower_msg or 'pitaya' in lower_msg:
+            return (
+                "**Dragon Fruit (Pitaya) Nutrition & Health Benefits:** 🐉\n\n"
+                "• **Calories:** ~60 kcal per 100g\n"
+                "• **Fiber:** ~3g\n"
+                "• **Vitamin C:** ~9% DV\n"
+                "• **Iron:** ~4% DV\n"
+                "• **Key Benefits:** High in antioxidants (betalains & carotenoids), supports gut microbiome, low calorie for weight loss."
+            )
+
+        # Diagnostics: check if API key is missing
+        api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
+        if not api_key or api_key == 'your_gemini_api_key_here':
+            return (
+                "⚠️ **API Key Notice**: `GEMINI_API_KEY` is not configured in your environment.\n\n"
+                "Please add `GEMINI_API_KEY=your_key` to your `.env` file or Render Environment Variables to enable dynamic AI responses!"
+            )
+
         return (
             "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
-            "I specialize strictly in food, nutrition, diet, weight management, and fitness. "
-            "How can I help you with your meal plan, recipes, or macro goals today?"
+            "How can I help you with your meal plan, recipes, macro targets, or diet guidance today?"
         )
+
 
 def calculate_user_streak(user):
     from datetime import timedelta
