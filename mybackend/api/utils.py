@@ -186,30 +186,103 @@ def generate_nia_chat_response(user, user_message):
     try:
         from .context_service import get_user_realtime_context
         from .rag_service import retrieve_relevant_context
+        from .web_search_service import (
+            is_nutrition_query,
+            search_trusted_nutrition_web,
+            build_web_context_block,
+        )
 
-        # 1. Hydrate Real-Time Context from Database
+        # ── Layer 1: Off-topic pre-filter ────────────────────────────────────
+        lower_msg = user_message.lower()
+        off_topic_keywords = [
+            'fifa', 'world cup', 'cricket', 'football', 'ipl', 'match score',
+            'movie', 'actor', 'actress', 'coding', 'javascript',
+            'politics', 'election', 'president', 'prime minister',
+            'weather', 'stock market', 'cryptocurrency', 'bitcoin',
+        ]
+        if any(kw in lower_msg for kw in off_topic_keywords):
+            return (
+                "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
+                "I specialize strictly in food, nutrition, diet, weight management, and fitness. "
+                "I cannot assist with non-health topics like sports, general trivia, or news. "
+                "How can I help you with your meal plan or macro goals today?"
+            )
+
+        # ── Step 1: Hydrate Real-Time User Context ───────────────────────────
         ctx = get_user_realtime_context(user)
         profile_info = ctx["profile"]
         today_stats = ctx["today_stats"]
 
-        # 2. Retrieve Evidence-Based Grounding Context via RAG
+        # ── Step 2: Local RAG Retrieval ──────────────────────────────────────
         rag_docs = retrieve_relevant_context(user_message, top_k=4)
         rag_text_blocks = []
-        sources = []
 
         for idx, doc in enumerate(rag_docs):
-            rag_text_blocks.append(f"[Source {idx+1}: {doc['title']} ({doc['dataset_type']})]\n{doc['content']}")
-            sources.append({
-                "title": doc['title'],
-                "type": doc['dataset_type'],
-                "page": doc.get('page_number')
-            })
+            rag_text_blocks.append(
+                f"[Local Source {idx+1}: {doc['title']} ({doc['dataset_type']})]\n{doc['content']}"
+            )
 
-        rag_knowledge_context = "\n\n".join(rag_text_blocks) if rag_text_blocks else "No specific research document retrieved."
+        rag_knowledge_context = "\n\n".join(rag_text_blocks) if rag_text_blocks else ""
 
-        # 3. Build Master RAG + Real-Time Context Prompt
-        master_prompt = f"""
-You are Nia, an evidence-based, empathetic AI Nutritionist and Health Assistant.
+        # ── Step 3: Web Search Fallback (threshold = 1) ──────────────────────
+        web_context_block = ""
+        web_search_used = False
+
+        if len(rag_docs) <= 1:
+            # Layer 2: Nutrition intent classifier before calling Tavily
+            if is_nutrition_query(user_message):
+                web_results = search_trusted_nutrition_web(user_message, max_results=3)
+                if web_results:
+                    web_context_block = build_web_context_block(web_results)
+                    web_search_used = True
+                    print(f"[NIA] Web search used for: '{user_message}' — {len(web_results)} trusted results")
+            else:
+                # Nutrition intent classifier rejected the query
+                return (
+                    "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
+                    "Your question appears to be outside the scope of food, nutrition, and diet. "
+                    "I can help with meal planning, macro tracking, specific food nutrients, "
+                    "diet advice for health conditions, and evidence-based nutrition guidance.\n\n"
+                    "What nutrition topic can I help you with today?"
+                )
+
+        # ── Step 4: Build Master Prompt ──────────────────────────────────────
+        knowledge_section = ""
+        if rag_knowledge_context and web_context_block:
+            knowledge_section = f"""LOCAL NUTRITION DATABASE (ICMR/PMC/Vikaspedia):
+---
+{rag_knowledge_context}
+---
+
+WEB SEARCH RESULTS (from verified sources only):
+---
+{web_context_block}
+---"""
+        elif rag_knowledge_context:
+            knowledge_section = f"""RETRIEVED NUTRITIONAL SCIENCE & FOOD TABLE KNOWLEDGE:
+---
+{rag_knowledge_context}
+---"""
+        elif web_context_block:
+            knowledge_section = f"""WEB SEARCH RESULTS (from verified trusted sources only):
+---
+{web_context_block}
+---
+NOTE: Local nutrition database did not have specific information on this topic.
+The above results are from trusted health authorities only."""
+        else:
+            knowledge_section = "No specific research document retrieved from local database or web."
+
+        web_instruction = ""
+        if web_search_used:
+            web_instruction = (
+                "\n6. WEB SOURCE CITATION: You used trusted web search results above. "
+                "Always mention the source name (e.g., 'According to Healthline...', "
+                "'As per NIH guidelines...') when citing a web result. "
+                "Never add facts not present in the provided web results."
+            )
+
+        master_prompt = f"""You are Nia, an evidence-based, empathetic AI Nutritionist and Health Assistant.
 
 REAL-TIME USER PROFILE:
 - Name: {profile_info['name']}
@@ -228,37 +301,19 @@ REAL-TIME USER PROFILE:
 RECENT CONVERSATION HISTORY:
 {ctx['chat_history']}
 
-RETRIEVED NUTRITIONAL SCIENCE & FOOD TABLE KNOWLEDGE (RAG GROUNDING):
----
-{rag_knowledge_context}
----
+{knowledge_section}
 
 GUARDRAILS & INSTRUCTIONS:
-1. Ground your answer in the RETRIEVED KNOWLEDGE whenever relevant. Cite nutritional facts accurately (e.g. calories, macros, guidelines).
+1. Ground your answer in the RETRIEVED KNOWLEDGE whenever relevant. Cite nutritional facts accurately.
 2. Always keep the user's real-time remaining calorie/macro budget and dietary preferences in mind.
-3. OFF-TOPIC GUARDRAIL: If the user asks non-nutrition/non-health questions (e.g., cricket, coding, general trivia), politely decline: "I am Nia, your AI Nutrition Assistant. I specialize in food, diet, and health. How can I help you with your meal plan or macro goals today?"
+3. OFF-TOPIC GUARDRAIL: If the user asks non-nutrition/non-health questions, politely decline.
 4. MEDICAL DISCLAIMER: If the user asks about acute medical symptoms, provide evidence-based context AND state: "Consult a certified medical professional or dietitian for diagnosis."
-5. If creating a meal plan, format clearly with headers, meals (Breakfast, Lunch, Snack, Dinner), portions, calories, and protein.
+5. If creating a meal plan, format clearly with headers, meals (Breakfast, Lunch, Snack, Dinner), portions, calories, and protein.{web_instruction}
 
 Answer the user's message: "{user_message}"
 """
 
-        # Pre-check for clear off-topic queries
-        lower_msg = user_message.lower()
-        off_topic_keywords = [
-            'fifa', 'world cup', 'cricket', 'football', 'ipl', 'match score', 
-            'movie', 'actor', 'actress', 'coding', 'python', 'javascript', 
-            'politics', 'election', 'president', 'prime minister', 'weather', 'stock market'
-        ]
-        is_off_topic = any(kw in lower_msg for kw in off_topic_keywords)
-        if is_off_topic:
-            return (
-                "I am Nia, your AI Nutrition & Health Coach. 🥗\n\n"
-                "I specialize strictly in food, nutrition, diet, weight management, and fitness. "
-                "I cannot assist with non-health topics like sports, general trivia, or news. "
-                "How can I help you with your meal plan or macro goals today?"
-            )
-
+        # ── Step 5: Call Gemini with fallback chain ──────────────────────────
         api_key = getattr(settings, 'GEMINI_API_KEY', None) or os.environ.get('GEMINI_API_KEY')
         client = None
         if api_key and api_key != "your_gemini_api_key_here":
@@ -267,10 +322,7 @@ Answer the user's message: "{user_message}"
             except Exception as e:
                 print(f"GenAI Client Init Notice: {e}")
 
-        response = call_gemini_with_fallback(
-            client=client,
-            contents=master_prompt
-        )
+        response = call_gemini_with_fallback(client=client, contents=master_prompt)
 
         if response and response.text:
             return response.text.strip()
