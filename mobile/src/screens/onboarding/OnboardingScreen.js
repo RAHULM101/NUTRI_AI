@@ -770,36 +770,109 @@ export default function OnboardingScreen({ navigation, route }) {
       case 7: {
         const results = calculateResults();
         const bmiCat = results ? getBmiCategory(results.bmi) : { label: 'Healthy', color: COLORS.teal };
+        const calorieVal = results?.cal ? results.cal : null;
+        const bmiVal = results?.bmi ? results.bmi : null;
+        const weightFrom = formData.weight ? `${formData.weight}` : null;
+        const weightTo = formData.targetWeight ? `${formData.targetWeight}` : null;
         return (
           <View>
             <Text style={[styles.stepTitle, { color: colors.text, textAlign: 'center' }]}>Your Health Blueprint</Text>
-            <Text style={[styles.stepSub, { color: colors.textMuted, textAlign: 'center' }]}>Personalized based on your metabolic metrics & goals</Text>
+            <Text style={[styles.stepSub, { color: colors.textMuted, textAlign: 'center' }]}>AI-personalized to your body & goals</Text>
 
-            <View style={styles.blueprintGrid}>
-              <View style={[styles.blueprintCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Activity size={24} color={bmiCat.color} />
-                <Text style={[styles.resultLabel, { color: colors.textMuted }]}>BODY MASS INDEX</Text>
-                <Text style={[styles.resultValue, { color: colors.text }]}>{results?.bmi || '--'}</Text>
-                <View style={[styles.catBadge, { backgroundColor: `${bmiCat.color}20` }]}>
-                  <Text style={[styles.catBadgeText, { color: bmiCat.color }]}>{bmiCat.label}</Text>
+            {/* ── Hero Calorie Card ────────────────────────────────── */}
+            <View style={[
+              styles.bpHeroCard,
+              {
+                backgroundColor: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)',
+                borderColor: isDark ? 'rgba(16,185,129,0.35)' : 'rgba(16,185,129,0.25)',
+              },
+            ]}>
+              <View style={styles.bpHeroTop}>
+                <View style={[
+                  styles.bpHeroIconWrap,
+                  { backgroundColor: isDark ? 'rgba(16,185,129,0.20)' : 'rgba(16,185,129,0.15)' },
+                ]}>
+                  <Flame size={22} color={COLORS.primary} />
+                </View>
+                <View style={styles.bpHeroTextWrap}>
+                  <Text style={[styles.bpHeroLabel, { color: colors.textMuted }]}>DAILY CALORIE GOAL</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
+                    <Text style={[styles.bpHeroValue, { color: colors.text }]}>
+                      {calorieVal ? calorieVal.toLocaleString() : '--'}
+                    </Text>
+                    <Text style={[styles.bpHeroUnit, { color: colors.textMuted }]}>kcal / day</Text>
+                  </View>
+                </View>
+              </View>
+              <View style={[styles.bpHeroDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(16,185,129,0.15)' }]} />
+              <Text style={[styles.bpHeroNote, { color: colors.textMuted }]}>
+                Calculated using Mifflin-St Jeor formula based on your age, weight, height & activity level
+              </Text>
+            </View>
+
+            {/* ── BMI + Goal Row ───────────────────────────────────── */}
+            <View style={styles.bpRow}>
+              {/* BMI Card */}
+              <View style={[
+                styles.bpHalfCard,
+                {
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : colors.bgCard,
+                  borderColor: isDark ? `${bmiCat.color}40` : `${bmiCat.color}30`,
+                },
+              ]}>
+                <View style={[styles.bpHalfIcon, { backgroundColor: `${bmiCat.color}18` }]}>
+                  <Activity size={18} color={bmiCat.color} />
+                </View>
+                <Text style={[styles.bpHalfLabel, { color: colors.textMuted }]}>BODY MASS INDEX</Text>
+                <Text style={[styles.bpHalfValue, { color: bmiCat.color }]}>
+                  {bmiVal ?? '--'}
+                </Text>
+                <View style={[styles.bpBadge, { backgroundColor: `${bmiCat.color}18`, borderColor: `${bmiCat.color}35` }]}>
+                  <Text style={[styles.bpBadgeText, { color: bmiCat.color }]}>{bmiCat.label}</Text>
                 </View>
               </View>
 
-              <View style={[styles.blueprintCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-                <Flame size={24} color="#EF4444" />
-                <Text style={[styles.resultLabel, { color: colors.textMuted }]}>DAILY CALORIE GOAL</Text>
-                <Text style={[styles.resultValue, { color: '#EF4444' }]}>{results?.cal ? `${results.cal}` : '--'}</Text>
-                <Text style={[styles.unitText, { color: colors.textMuted }]}>kcal / day</Text>
+              {/* Goal Card */}
+              <View style={[
+                styles.bpHalfCard,
+                {
+                  backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : colors.bgCard,
+                  borderColor: colors.border,
+                },
+              ]}>
+                <View style={[styles.bpHalfIcon, { backgroundColor: isDark ? 'rgba(20,184,166,0.15)' : 'rgba(20,184,166,0.12)' }]}>
+                  <Trophy size={18} color={COLORS.teal} />
+                </View>
+                <Text style={[styles.bpHalfLabel, { color: colors.textMuted }]}>YOUR GOAL</Text>
+                <Text style={[styles.bpHalfValue, { color: colors.text, fontSize: 15 }]} numberOfLines={1}>
+                  {formData.mainGoal || 'Fitness'}
+                </Text>
+                {weightFrom && weightTo ? (
+                  <View style={[styles.bpBadge, { backgroundColor: isDark ? 'rgba(20,184,166,0.12)' : 'rgba(20,184,166,0.10)', borderColor: 'rgba(20,184,166,0.25)' }]}>
+                    <Text style={[styles.bpBadgeText, { color: COLORS.teal }]}>{weightFrom} → {weightTo} kg</Text>
+                  </View>
+                ) : null}
               </View>
             </View>
 
-            <View style={[styles.blueprintCardFull, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
-              <Trophy size={20} color={COLORS.teal} />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={[styles.planLabel, { color: colors.textSecondary }]}>NUTRITION TARGET</Text>
-                <Text style={[styles.planSummary, { color: colors.text }]}>
-                  {formData.mainGoal || 'Health & Fitness'} Plan • {formData.waterGoal}L Water/day
-                </Text>
+            {/* ── Bottom Info Pill Row ─────────────────────────────── */}
+            <View style={[styles.bpInfoRow, { backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : colors.bgCard, borderColor: colors.border }]}>
+              <View style={styles.bpInfoPill}>
+                <Text style={styles.bpInfoEmoji}>💧</Text>
+                <View>
+                  <Text style={[styles.bpInfoLabel, { color: colors.textMuted }]}>WATER GOAL</Text>
+                  <Text style={[styles.bpInfoVal, { color: colors.text }]}>{formData.waterGoal || 3.0} L / day</Text>
+                </View>
+              </View>
+              <View style={[styles.bpInfoDivider, { backgroundColor: colors.border }]} />
+              <View style={styles.bpInfoPill}>
+                <Text style={styles.bpInfoEmoji}>🥗</Text>
+                <View>
+                  <Text style={[styles.bpInfoLabel, { color: colors.textMuted }]}>DIET</Text>
+                  <Text style={[styles.bpInfoVal, { color: colors.text }]} numberOfLines={1}>
+                    {formData.dietaryPreference || 'Balanced'}
+                  </Text>
+                </View>
               </View>
             </View>
           </View>
@@ -1091,6 +1164,134 @@ const styles = StyleSheet.create({
   },
   resultLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginTop: 8, marginBottom: 4 },
   resultValue: { fontSize: 28, fontWeight: '900' },
+
+  // ── Health Blueprint Step 7 Styles ──────────────────────────
+  bpHeroCard: {
+    borderRadius: RADIUS['2xl'],
+    borderWidth: 1.5,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    ...SHADOWS.sm,
+  },
+  bpHeroTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    marginBottom: 12,
+  },
+  bpHeroIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: RADIUS.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bpHeroTextWrap: { flex: 1 },
+  bpHeroLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: 2,
+  },
+  bpHeroValue: {
+    fontSize: 38,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  bpHeroUnit: {
+    fontSize: 13,
+    fontWeight: '600',
+    paddingBottom: 4,
+  },
+  bpHeroDivider: {
+    height: 1,
+    marginBottom: 10,
+  },
+  bpHeroNote: {
+    fontSize: 11.5,
+    lineHeight: 17,
+    fontWeight: '500',
+  },
+
+  bpRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  bpHalfCard: {
+    flex: 1,
+    borderRadius: RADIUS['2xl'],
+    borderWidth: 1.5,
+    padding: SPACING.md,
+    alignItems: 'flex-start',
+    gap: 6,
+    ...SHADOWS.sm,
+  },
+  bpHalfIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+  },
+  bpHalfLabel: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.7,
+  },
+  bpHalfValue: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  bpBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    marginTop: 2,
+  },
+  bpBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+
+  bpInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: RADIUS['2xl'],
+    borderWidth: 1,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.sm,
+    ...SHADOWS.sm,
+  },
+  bpInfoPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bpInfoEmoji: {
+    fontSize: 22,
+  },
+  bpInfoLabel: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    marginBottom: 1,
+  },
+  bpInfoVal: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  bpInfoDivider: {
+    width: 1,
+    height: 36,
+    marginHorizontal: SPACING.md,
+  },
 
   // Plan cards (Clean, soft borders, zero harsh black lines)
   planCard: {
