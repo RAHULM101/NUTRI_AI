@@ -34,7 +34,7 @@ export default function CalorieRing({ current = 0, goal = 2000, size = 180 }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={isDark ? '#334155' : '#E2E8F0'}
+          stroke={isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)'}
           strokeWidth={strokeWidth}
           fill="none"
         />
@@ -44,7 +44,7 @@ export default function CalorieRing({ current = 0, goal = 2000, size = 180 }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={overGoal ? '#EF4444' : 'url(#calGrad)'}
+          stroke={overGoal ? COLORS.error : 'url(#calGrad)'}
           strokeWidth={strokeWidth}
           fill="none"
           strokeDasharray={`${circumference} ${circumference}`}
@@ -57,13 +57,13 @@ export default function CalorieRing({ current = 0, goal = 2000, size = 180 }) {
 
       {/* Center text aligned cleanly without clipping */}
       <View style={styles.center}>
-        <Text style={[styles.calValue, { color: overGoal ? '#EF4444' : colors.text }]}>
-          {Math.round(current)}
+        <Text style={[styles.calValue, { color: overGoal ? COLORS.error : colors.text }]}>
+          {Math.round(current).toLocaleString()}
         </Text>
-        <Text style={[styles.calLabel, { color: colors.textMuted }]}>kcal</Text>
+        <Text style={[styles.calLabel, { color: colors.textMuted }]}>kcal eaten</Text>
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
-        <Text style={[styles.remaining, { color: colors.textSecondary }]}>
-          {goal <= 0 ? '0 remaining' : overGoal ? `+${Math.round(current - goal)}` : `${Math.round(remaining)} remaining`}
+        <Text style={[styles.remaining, { color: overGoal ? COLORS.error : colors.textSecondary }]}>
+          {goal <= 0 ? '0 remaining' : overGoal ? `+${Math.round(current - goal)} over` : `${Math.round(remaining)} left`}
         </Text>
       </View>
     </View>
@@ -84,20 +84,25 @@ const styles = StyleSheet.create({
   calValue: {
     fontSize: 28,
     fontWeight: '900',
+    letterSpacing: -0.8,
     lineHeight: 32,
   },
   calLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
     marginTop: 2,
   },
   divider: {
-    width: 32,
+    width: 28,
     height: 1.5,
-    marginVertical: 6,
+    borderRadius: 1,
+    marginVertical: 5,
   },
   remaining: {
     fontSize: 11,
     fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

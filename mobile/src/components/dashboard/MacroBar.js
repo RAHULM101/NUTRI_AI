@@ -1,25 +1,27 @@
-// FILE: mobile/src/components/dashboard/MacroBar.js
-// Purpose: Horizontal progress bar for Protein/Carbs/Fat macros
-// Mobile adaptation: View-based progress bar (replaces Recharts)
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, FONT_SIZES, RADIUS, SPACING } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
+import { FONT_SIZES, RADIUS } from '../../constants/theme';
 
 export default function MacroBar({ label, current, goal, color, unit = 'g' }) {
+  const { isDark, colors } = useTheme();
   const pct = goal > 0 ? Math.min((current / goal) * 100, 100) : 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <View style={[styles.dot, { backgroundColor: color }]} />
-        <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.value, { color }]}>
-          {Math.round(current)}
-          <Text style={styles.unit}>/{Math.round(goal)}{unit}</Text>
-        </Text>
+        <View style={styles.labelGroup}>
+          <View style={[styles.dot, { backgroundColor: color }]} />
+          <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>
+        </View>
+        <View style={styles.valGroup}>
+          <Text style={[styles.value, { color }]}>
+            {Math.round(current)}
+            <Text style={[styles.unit, { color: colors.textMuted }]}> / {Math.round(goal)}{unit}</Text>
+          </Text>
+        </View>
       </View>
-      <View style={styles.track}>
+      <View style={[styles.track, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(15, 23, 42, 0.05)' }]}>
         <View
           style={[
             styles.fill,
@@ -32,37 +34,44 @@ export default function MacroBar({ label, current, goal, color, unit = 'g' }) {
 }
 
 const styles = StyleSheet.create({
-  container: { marginBottom: 14 },
+  container: { marginBottom: 12 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  labelGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 8,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   label: {
-    flex: 1,
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  valGroup: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
   value: {
     fontSize: FONT_SIZES.sm,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
   unit: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: '400',
-    color: COLORS.textMuted,
+    fontSize: 10.5,
+    fontWeight: '600',
   },
   track: {
-    height: 8,
+    height: 6,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surfaceMuted,
     overflow: 'hidden',
   },
   fill: {

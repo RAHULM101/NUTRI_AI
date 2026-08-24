@@ -1,12 +1,12 @@
-// FILE: mobile/src/components/nia/QuickPrompts.js
-// Purpose: Suggested follow-up prompt pills for Nia chat
-// Mobile adaptation: Horizontal ScrollView of pressable pill buttons
-
 import React from 'react';
 import { ScrollView, Pressable, Text, StyleSheet, View } from 'react-native';
+import { useTheme } from '../../context/ThemeContext';
+import { triggerHaptic } from '../../utils/haptics';
 import { COLORS, FONT_SIZES, RADIUS, SPACING } from '../../constants/theme';
 
 export default function QuickPrompts({ prompts = [], onSelect }) {
+  const { isDark, colors } = useTheme();
+
   if (!prompts || prompts.length === 0) return null;
 
   return (
@@ -19,10 +19,20 @@ export default function QuickPrompts({ prompts = [], onSelect }) {
         {prompts.map((prompt, i) => (
           <Pressable
             key={i}
-            style={({ pressed }) => [styles.pill, pressed && styles.pillPressed]}
-            onPress={() => onSelect && onSelect(prompt)}
+            style={({ pressed }) => [
+              styles.pill,
+              {
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : 'rgba(16, 185, 129, 0.08)',
+                borderColor: isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.25)',
+              },
+              pressed && styles.pillPressed,
+            ]}
+            onPress={() => {
+              triggerHaptic('light');
+              onSelect && onSelect(prompt);
+            }}
           >
-            <Text style={styles.pillText}>{prompt}</Text>
+            <Text style={[styles.pillText, { color: isDark ? '#34D399' : COLORS.primary }]}>{prompt}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -32,27 +42,24 @@ export default function QuickPrompts({ prompts = [], onSelect }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginVertical: SPACING.sm,
+    marginVertical: SPACING.xs,
   },
   row: {
     paddingHorizontal: SPACING.base,
     gap: SPACING.sm,
   },
   pill: {
-    backgroundColor: 'rgba(16,185,129,0.1)',
     borderRadius: RADIUS.full,
-    paddingVertical: 8,
-    paddingHorizontal: SPACING.md,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
     borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.25)',
   },
   pillPressed: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+    opacity: 0.75,
   },
   pillText: {
     fontSize: FONT_SIZES.xs,
-    color: COLORS.primary,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

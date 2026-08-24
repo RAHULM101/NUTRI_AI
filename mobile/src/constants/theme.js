@@ -6,60 +6,61 @@ import { Platform } from 'react-native';
 
 export const COLORS = {
   // Brand
-  primary: '#10b981',        // emerald-500
+  primary: '#10B981',        // emerald-500
   primaryDark: '#059669',    // emerald-600
   primaryDeep: '#047857',    // emerald-700
   teal: '#14B8A6',           // teal-500 (Dashboard accent)
   tealLight: '#99F6E4',      // teal-200
+  tealDark: '#0F766E',       // teal-700
 
-  // Background
-  bgLight: '#f8fafc',        // slate-50
-  bgWhite: '#ffffff',
-  bgDark: '#0f172a',         // slate-900
-  bgDarker: '#020617',       // slate-950
+  // Background (Luxury Obsidian & Soft Zinc)
+  bgLight: '#F8FAFC',        // zinc-50
+  bgWhite: '#FFFFFF',
+  bgDark: '#0A0F1D',         // obsidian-950
+  bgDarker: '#060913',       // pure pitch
 
   // Surface
-  surfaceLight: '#ffffff',
-  surfaceMuted: '#f1f5f9',   // slate-100
-  surfaceDark: '#1e293b',    // slate-800
-  surfaceDarker: '#0f172a',  // slate-900
+  surfaceLight: '#FFFFFF',
+  surfaceMuted: '#F1F5F9',   // zinc-100
+  surfaceDark: '#141D2F',    // sleek slate-800
+  surfaceDarker: '#0E1626',  // deep slate-900
 
   // Text
-  textPrimary: '#0f172a',    // slate-900
+  textPrimary: '#0F172A',    // slate-900
   textSecondary: '#475569',  // slate-600
-  textMuted: '#94a3b8',      // slate-400
-  textLight: '#ffffff',
-  textDark: '#f8fafc',
+  textMuted: '#94A3B8',      // slate-400
+  textLight: '#FFFFFF',
+  textDark: '#F8FAFC',
 
-  // Border
-  border: '#e2e8f0',         // slate-200
-  borderDark: '#334155',     // slate-700
-  borderMuted: 'rgba(255,255,255,0.1)',
+  // Border (Refined sub-pixel borders)
+  border: 'rgba(15, 23, 42, 0.07)',         // slate subtle
+  borderDark: 'rgba(255, 255, 255, 0.08)',   // dark crisp subtle
+  borderMuted: 'rgba(15, 23, 42, 0.04)',
 
   // Semantic
-  error: '#ef4444',          // red-500
-  errorLight: '#fee2e2',
-  warning: '#f59e0b',        // amber-500
-  warningLight: '#fef3c7',
-  success: '#22c55e',        // green-500
-  successLight: '#dcfce7',
-  info: '#3b82f6',           // blue-500
+  error: '#F43F5E',          // rose-500
+  errorLight: '#FFE4E6',
+  warning: '#F59E0B',        // amber-500
+  warningLight: '#FEF3C7',
+  success: '#10B981',        // emerald-500
+  successLight: '#D1FAE5',
+  info: '#3B82F6',           // blue-500
 
-  // Macro Colors
-  protein: '#3b82f6',        // blue-500
-  carbs: '#f59e0b',          // amber-500
-  fat: '#ec4899',            // pink-500
+  // Macro Colors (Vibrant Health Indicators)
+  protein: '#3B82F6',        // blue-500
+  carbs: '#F59E0B',          // amber-500
+  fat: '#EC4899',            // pink-500
   calories: '#14B8A6',       // teal-500
-  water: '#0ea5e9',          // sky-500
-  junk: '#f87171',           // red-400
+  water: '#0EA5E9',          // sky-500
+  junk: '#F43F5E',           // rose-500 (Clean luxury danger)
 
   // Glassmorphism
-  glassBg: 'rgba(255,255,255,0.12)',
-  glassBgDark: 'rgba(15,23,42,0.65)',
-  glassBorder: 'rgba(255,255,255,0.20)',
-  glassBorderDark: 'rgba(255,255,255,0.08)',
+  glassBg: 'rgba(255, 255, 255, 0.85)',
+  glassBgDark: 'rgba(20, 29, 47, 0.85)',
+  glassBorder: 'rgba(255, 255, 255, 0.20)',
+  glassBorderDark: 'rgba(255, 255, 255, 0.08)',
 
-  // Sidebar (mirrors web)
+  // Sidebar / Header (mirrors web)
   sidebarBg: '#0D9488',      // teal-600
   sidebarCard: '#0F766E',    // teal-700
 };

@@ -33,14 +33,14 @@ export default function WaterTracker({ current = 0, goal = 3.0, onAdd }) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#1e293b' : '#EFF6FF', borderColor: isDark ? '#334155' : '#BFDBFE' }]}>
+    <View style={[styles.container, { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.08)' : 'rgba(14, 165, 233, 0.06)', borderColor: isDark ? 'rgba(14, 165, 233, 0.25)' : 'rgba(14, 165, 233, 0.20)' }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={[styles.iconBadge, { backgroundColor: isDark ? '#0f172a' : '#DBEAFE' }]}>
+          <View style={[styles.iconBadge, { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.20)' : 'rgba(14, 165, 233, 0.15)' }]}>
             <Droplets size={16} color={COLORS.water} />
           </View>
-          <Text style={[styles.title, { color: isDark ? '#60A5FA' : '#1D4ED8' }]}>Water Intake</Text>
+          <Text style={[styles.title, { color: isDark ? '#38BDF8' : '#0284C7' }]}>Water Intake</Text>
         </View>
 
         {/* Stepper and Current Amount */}
@@ -48,19 +48,19 @@ export default function WaterTracker({ current = 0, goal = 3.0, onAdd }) {
           <Pressable
             style={({ pressed }) => [
               styles.quickMinusBtn,
-              { backgroundColor: isDark ? '#0f172a' : '#DBEAFE', borderColor: isDark ? '#334155' : '#BFDBFE' },
-              current <= 0 && { opacity: 0.4 },
-              pressed && current > 0 && { opacity: 0.8 },
+              { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.15)' : 'rgba(14, 165, 233, 0.12)', borderColor: isDark ? 'rgba(14, 165, 233, 0.3)' : 'rgba(14, 165, 233, 0.25)' },
+              current <= 0 && { opacity: 0.35 },
+              pressed && current > 0 && { opacity: 0.75 },
             ]}
             onPress={handleMinus}
             disabled={current <= 0}
             hitSlop={6}
           >
-            <Minus size={13} color={isDark ? '#60A5FA' : '#1D4ED8'} strokeWidth={2.5} />
+            <Minus size={13} color={isDark ? '#38BDF8' : '#0284C7'} strokeWidth={2.5} />
           </Pressable>
 
           <Text style={styles.amount}>
-            <Text style={[styles.amountBold, { color: isDark ? '#60A5FA' : '#1D4ED8' }]}>{current.toFixed(1)}</Text>
+            <Text style={[styles.amountBold, { color: isDark ? '#38BDF8' : '#0284C7' }]}>{current.toFixed(1)}</Text>
             <Text style={[styles.amountGoal, { color: colors.textMuted }]}> / {goal}L</Text>
           </Text>
 
@@ -79,9 +79,9 @@ export default function WaterTracker({ current = 0, goal = 3.0, onAdd }) {
       </View>
 
       {/* Wave progress bar */}
-      <View style={[styles.track, { backgroundColor: isDark ? '#334155' : '#BFDBFE' }]}>
-        <View style={[styles.fill, { width: `${pct}%` }]} />
-        <Text style={[styles.pctText, pct > 40 ? styles.pctTextInverse : { color: isDark ? '#60A5FA' : '#1D4ED8' }]}>
+      <View style={[styles.track, { backgroundColor: isDark ? 'rgba(14, 165, 233, 0.15)' : 'rgba(14, 165, 233, 0.12)' }]}>
+        <View style={[styles.fill, { width: `${pct}%`, backgroundColor: COLORS.water }]} />
+        <Text style={[styles.pctText, pct > 40 ? styles.pctTextInverse : { color: isDark ? '#38BDF8' : '#0284C7' }]}>
           {Math.round(pct)}%
         </Text>
       </View>
@@ -93,8 +93,8 @@ export default function WaterTracker({ current = 0, goal = 3.0, onAdd }) {
             key={i}
             style={[
               styles.glassDot,
-              { backgroundColor: isDark ? '#334155' : '#BFDBFE' },
-              i < glasses && styles.glassDotFilled,
+              { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.10)' : 'rgba(14, 165, 233, 0.18)' },
+              i < glasses && { backgroundColor: COLORS.water },
             ]}
           />
         ))}

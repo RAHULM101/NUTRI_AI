@@ -319,25 +319,25 @@ export default function DashboardScreen({ navigation }) {
             />
           </View>
 
-          {/* Quick log CTA */}
+          {/* Quick log — Scan Food with Nia Ai */}
           <Pressable
             style={({ pressed }) => [
               styles.quickLogBtn,
-              { backgroundColor: colors.bgCard, borderColor: colors.border },
+              { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.10)' : 'rgba(16, 185, 129, 0.08)', borderColor: isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.25)' },
               pressed && styles.quickLogBtnPressed,
             ]}
             onPress={() => navigation.navigate('MealLogs')}
           >
             <View style={styles.quickLogLeft}>
               <View style={styles.quickLogIconWrap}>
-                <Flame size={20} color="#ffffff" />
+                <Zap size={22} color="#ffffff" />
               </View>
               <View>
-                <Text style={[styles.quickLogTitle, { color: colors.text }]}>Log a Meal</Text>
-                <Text style={[styles.quickLogSub, { color: colors.textMuted }]}>Track nutrition with AI photo scan</Text>
+                <Text style={[styles.quickLogTitle, { color: colors.text }]}>Scan Food with Nia Ai</Text>
+                <Text style={[styles.quickLogSub, { color: colors.textMuted }]}>Instant photo nutrition & macro detection</Text>
               </View>
             </View>
-            <ChevronRight size={20} color={COLORS.primary} />
+            <ChevronRight size={18} color={COLORS.primary} />
           </Pressable>
         </Animated.View>
       </ScrollView>

@@ -65,14 +65,25 @@ function MealLogCard({ item, onDelete, colors, isDark }) {
     ? Math.round(item.junk_score)
     : calculateJunkScore(item.calories, item.protein_gm || item.protein, item.carbs_gm || item.carbs, item.fat_gm || item.fat, item.detected_items || item.food_name);
 
-  const junkColor = junkVal > 60 ? '#EF4444' : junkVal > 30 ? '#F59E0B' : '#10B981';
+  const junkColor = junkVal > 60 ? COLORS.error : junkVal > 30 ? COLORS.warning : COLORS.success;
+  const junkBg = junkVal > 60
+    ? (isDark ? 'rgba(244, 63, 94, 0.15)' : 'rgba(244, 63, 94, 0.10)')
+    : junkVal > 30
+    ? (isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.10)')
+    : (isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.10)');
+  const junkLabel = junkVal > 60 ? 'Ultra Processed' : junkVal > 30 ? 'Moderate Fuel' : 'Clean Fuel';
   const foodName = item.detected_items || item.food_name || 'Logged Meal';
 
   return (
     <View style={[cardStyles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
       <View style={cardStyles.header}>
-        <View style={cardStyles.typeTag}>
-          <Text style={cardStyles.typeText}>{item.meal_type || 'Meal'}</Text>
+        <View style={cardStyles.headerLeftRow}>
+          <View style={cardStyles.typeTag}>
+            <Text style={cardStyles.typeText}>{item.meal_type || 'Meal'}</Text>
+          </View>
+          <View style={[cardStyles.junkBadge, { backgroundColor: junkBg, borderColor: `${junkColor}35` }]}>
+            <Text style={[cardStyles.junkBadgeText, { color: junkColor }]}>{junkLabel}</Text>
+          </View>
         </View>
 
         <View style={cardStyles.headerRight}>
@@ -87,7 +98,7 @@ function MealLogCard({ item, onDelete, colors, isDark }) {
             onPress={() => onDelete(item)}
             hitSlop={8}
           >
-            <Trash2 size={16} color="#EF4444" />
+            <Trash2 size={16} color={COLORS.error} />
           </Pressable>
         </View>
       </View>
@@ -104,19 +115,19 @@ function MealLogCard({ item, onDelete, colors, isDark }) {
 
       {/* Macros */}
       <View style={cardStyles.macros}>
-        <View style={cardStyles.macroPill}>
+        <View style={[cardStyles.macroPill, { backgroundColor: isDark ? 'rgba(20,184,166,0.12)' : 'rgba(20,184,166,0.08)' }]}>
           <Text style={[cardStyles.macroVal, { color: COLORS.teal }]}>{Math.round(item.calories || 0)}</Text>
           <Text style={[cardStyles.macroUnit, { color: colors.textMuted }]}>kcal</Text>
         </View>
-        <View style={cardStyles.macroPill}>
+        <View style={[cardStyles.macroPill, { backgroundColor: isDark ? 'rgba(59,130,246,0.12)' : 'rgba(59,130,246,0.08)' }]}>
           <Text style={[cardStyles.macroVal, { color: COLORS.protein }]}>{Math.round(item.protein_gm || item.protein || 0)}g</Text>
           <Text style={[cardStyles.macroUnit, { color: colors.textMuted }]}>Protein</Text>
         </View>
-        <View style={cardStyles.macroPill}>
+        <View style={[cardStyles.macroPill, { backgroundColor: isDark ? 'rgba(245,158,11,0.12)' : 'rgba(245,158,11,0.08)' }]}>
           <Text style={[cardStyles.macroVal, { color: COLORS.carbs }]}>{Math.round(item.carbs_gm || item.carbs || 0)}g</Text>
           <Text style={[cardStyles.macroUnit, { color: colors.textMuted }]}>Carbs</Text>
         </View>
-        <View style={cardStyles.macroPill}>
+        <View style={[cardStyles.macroPill, { backgroundColor: isDark ? 'rgba(236,72,153,0.12)' : 'rgba(236,72,153,0.08)' }]}>
           <Text style={[cardStyles.macroVal, { color: COLORS.fat }]}>{Math.round(item.fat_gm || item.fat || 0)}g</Text>
           <Text style={[cardStyles.macroUnit, { color: colors.textMuted }]}>Fat</Text>
         </View>
@@ -126,20 +137,23 @@ function MealLogCard({ item, onDelete, colors, isDark }) {
 }
 
 const cardStyles = StyleSheet.create({
-  card: { borderRadius: RADIUS.xl, padding: SPACING.base, marginBottom: SPACING.md, borderWidth: 1, ...SHADOWS.sm },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  typeTag: { backgroundColor: 'rgba(20,184,166,0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
+  card: { borderRadius: RADIUS['2xl'], padding: SPACING.base, marginBottom: SPACING.md, borderWidth: 1, ...SHADOWS.sm },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  headerLeftRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  typeTag: { backgroundColor: 'rgba(16,185,129,0.12)', paddingHorizontal: 9, paddingVertical: 3.5, borderRadius: RADIUS.full },
   typeText: { color: COLORS.primary, fontSize: 11, fontWeight: '800' },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  junkBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full, borderWidth: 1 },
+  junkBadgeText: { fontSize: 10, fontWeight: '800' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   time: { fontSize: 11, fontWeight: '600' },
   deleteBtn: { padding: 4 },
   photoThumb: { width: '100%', height: 140, borderRadius: RADIUS.lg, marginVertical: 8 },
-  name: { fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  name: { fontSize: 16, fontWeight: '800', marginBottom: 4, letterSpacing: -0.2 },
   locationText: { fontSize: 11, marginBottom: 8 },
-  macros: { flexDirection: 'row', gap: 6, marginTop: 4 },
-  macroPill: { flex: 1, backgroundColor: 'rgba(15,23,42,0.04)', borderRadius: RADIUS.lg, padding: 6, alignItems: 'center' },
-  macroVal: { fontSize: 14, fontWeight: '900' },
-  macroUnit: { fontSize: 9, fontWeight: '700', marginTop: 1 },
+  macros: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  macroPill: { flex: 1, borderRadius: RADIUS.lg, paddingVertical: 8, paddingHorizontal: 4, alignItems: 'center' },
+  macroVal: { fontSize: 14, fontWeight: '900', letterSpacing: -0.3 },
+  macroUnit: { fontSize: 9.5, fontWeight: '700', marginTop: 1 },
 });
 
 export default function MealLogsScreen() {
@@ -498,11 +512,11 @@ export default function MealLogsScreen() {
               </>
             ) : (
               <View style={styles.emptyPhotoPlaceholder}>
-                <View style={[styles.emptyPhotoCircle, { backgroundColor: isDark ? 'rgba(20,184,166,0.15)' : 'rgba(20,184,166,0.08)' }]}>
+                <View style={[styles.emptyPhotoCircle, { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.10)' }]}>
                   <Camera size={26} color={COLORS.primary} />
                 </View>
-                <Text style={[styles.emptyPhotoText, { color: colors.text }]}>Meal Photo Scanner</Text>
-                <Text style={[styles.emptyPhotoSub, { color: colors.textMuted }]}>Take a photo or upload from gallery below</Text>
+                <Text style={[styles.emptyPhotoText, { color: colors.text }]}>Scan Food with Nia Ai</Text>
+                <Text style={[styles.emptyPhotoSub, { color: colors.textMuted }]}>Take a photo or upload from gallery to detect calories & macros</Text>
               </View>
             )}
           </View>
@@ -521,7 +535,7 @@ export default function MealLogsScreen() {
             <Pressable
               style={({ pressed }) => [
                 styles.uploadBtn,
-                { backgroundColor: isDark ? '#0f172a' : '#F1F5F9', borderColor: colors.border },
+                { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F1F5F9', borderColor: colors.border },
                 pressed && { opacity: 0.85 },
               ]}
               onPress={() => handleSelectPhoto(false)}
