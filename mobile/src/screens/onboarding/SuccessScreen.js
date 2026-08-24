@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CheckCircle2, Sparkles, Target, Leaf } from 'lucide-react-native';
 import Button from '../../components/common/Button';
+import { useAuth } from '../../context/AuthContext';
 import { COLORS, FONT_SIZES, SPACING, RADIUS } from '../../constants/theme';
 
 const HIGHLIGHTS = [

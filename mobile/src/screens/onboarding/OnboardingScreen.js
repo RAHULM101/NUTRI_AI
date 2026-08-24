@@ -401,12 +401,11 @@ export default function OnboardingScreen({ navigation, route }) {
         selected_plan: formData.selectedPlan || 'Pro',
       };
 
-      // 1. Direct profile patch
-      await api.patch(ENDPOINTS.profile, patchPayload).catch(() => {});
-      // 2. Onboarding fallback
-      if (userId) {
-        await api.patch(ENDPOINTS.onboardingDetail(userId), patchPayload).catch(() => {});
-      }
+      // FIX Bug #3: Run both PATCHes in parallel — faster than sequential await
+      await Promise.all([
+        api.patch(ENDPOINTS.profile, patchPayload).catch(() => {}),
+        userId ? api.patch(ENDPOINTS.onboardingDetail(userId), patchPayload).catch(() => {}) : Promise.resolve(),
+      ]);
 
       const completeData = {
         ...formData,
@@ -487,10 +486,11 @@ export default function OnboardingScreen({ navigation, route }) {
         selected_plan: formData.selectedPlan || 'Pro',
       };
 
-      await api.patch(ENDPOINTS.profile, finalPayload).catch(() => {});
-      if (userId) {
-        await api.patch(ENDPOINTS.onboardingDetail(userId), finalPayload).catch(() => {});
-      }
+      // FIX Bug #3: Run both PATCHes in parallel — cuts network wait time in half
+      await Promise.all([
+        api.patch(ENDPOINTS.profile, finalPayload).catch(() => {}),
+        userId ? api.patch(ENDPOINTS.onboardingDetail(userId), finalPayload).catch(() => {}) : Promise.resolve(),
+      ]);
 
       const completeData = {
         ...formData,
@@ -502,9 +502,16 @@ export default function OnboardingScreen({ navigation, route }) {
         is_onboarded: true,
       };
 
-      await completeOnboarding(completeData);
-      await loadUserProfile().catch(() => {});
+      // FIX Bug #4: Navigate to Success BEFORE calling completeOnboarding().
+      // completeOnboarding() sets isOnboarded=true which causes RootNavigator to
+      // remount the navigation tree. If we navigate after, the navigation ref is
+      // stale and the replace() call fails, causing the 'kicked out' glitch.
+      // Both stacks (onboarded + not-onboarded) include 'Success', so this is safe.
       navigation.replace('Success');
+
+      // Now set onboarding complete and refresh profile in background
+      await completeOnboarding(completeData);
+      loadUserProfile().catch(() => {});
     } catch (err) {
       console.error('Onboarding error:', err?.response?.data || err.message);
       setErrorMsg('Something went wrong. Please try again.');

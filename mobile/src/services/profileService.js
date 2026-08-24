@@ -50,7 +50,7 @@ export async function fetchProfile() {
     calorieTarget: d.daily_calorie_target || 0,
     bmi: d.bmi || 0,
     selectedPlan: d.selected_plan || d.selectedPlan || (d.active_subscription && d.active_subscription.plan_type) || 'Pro',
-    is_onboarded: d.is_Onboarded || d.is_onboarded || false,
+    is_onboarded: d.is_onboarded || d.is_Onboarded || false,
   };
 }
 
