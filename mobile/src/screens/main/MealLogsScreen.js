@@ -881,11 +881,11 @@ const styles = StyleSheet.create({
 
   formSection: { gap: 4 },
   formLabel: { fontSize: 12, fontWeight: '700', marginTop: 4 },
-  input: { height: 46, borderRadius: RADIUS.xl, borderWidth: 1.5, paddingHorizontal: 12, fontSize: 14, marginTop: 4 },
-  dropdownBtn: { height: 48, borderRadius: RADIUS.xl, borderWidth: 1.5, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  input: { height: 46, borderRadius: RADIUS.xl, borderWidth: 1, paddingHorizontal: 12, fontSize: 14, marginTop: 4 },
+  dropdownBtn: { height: 48, borderRadius: RADIUS.xl, borderWidth: 1, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   dropdownValueText: { fontSize: 14, fontWeight: '700' },
 
-  modalOptionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16, borderRadius: RADIUS.xl, borderWidth: 1.5 },
+  modalOptionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 14, paddingHorizontal: 16, borderRadius: RADIUS.xl, borderWidth: 1 },
   modalOptionText: { fontSize: 14 },
 
   analyzeBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.teal, paddingVertical: 14, borderRadius: RADIUS.xl, marginTop: 14, ...SHADOWS.emerald },

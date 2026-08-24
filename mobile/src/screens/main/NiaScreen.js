@@ -419,58 +419,74 @@ export default function NiaScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
 
       {/* Top Header Bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { backgroundColor: colors.bgCard, borderBottomColor: colors.border }]}>
         <View style={styles.coachInfo}>
           <View style={styles.coachHeaderRow}>
-            <Text style={styles.coachName}>Nia AI ✦</Text>
-            <View style={styles.onlinePulseBadge}>
+            <Text style={[styles.coachName, { color: colors.text }]}>Nia AI ✦</Text>
+            <View style={[styles.onlinePulseBadge, { backgroundColor: isDark ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.12)' }]}>
               <View style={styles.greenDot} />
               <Text style={styles.onlinePulseText}>Active Coach</Text>
             </View>
           </View>
-          <Text style={styles.niaTitle}>Personalized Nutrition & Diet Coach</Text>
+          <Text style={[styles.niaTitle, { color: colors.textMuted }]}>Personalized Nutrition & Diet Coach</Text>
         </View>
 
         {/* Action Header Group */}
         <View style={styles.actionHeaderGroup}>
           <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
+            style={({ pressed }) => [
+              styles.headerIconBtn,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)', borderColor: colors.border },
+              pressed && { opacity: 0.8 },
+            ]}
             onPress={handleExportChatPdf}
             disabled={exportingPdf}
             hitSlop={6}
           >
             {exportingPdf ? (
-              <ActivityIndicator size="small" color="#ffffff" />
+              <ActivityIndicator size="small" color={COLORS.primary} />
             ) : (
-              <Download size={16} color="#ffffff" />
+              <Download size={15} color={colors.text} />
             )}
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
+            style={({ pressed }) => [
+              styles.headerIconBtn,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)', borderColor: colors.border },
+              pressed && { opacity: 0.8 },
+            ]}
             onPress={handleNewChat}
             hitSlop={6}
           >
-            <Plus size={16} color="#ffffff" />
+            <Plus size={16} color={COLORS.primary} />
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
+            style={({ pressed }) => [
+              styles.headerIconBtn,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.05)', borderColor: colors.border },
+              pressed && { opacity: 0.8 },
+            ]}
             onPress={() => setShowHistoryModal(true)}
             hitSlop={6}
           >
-            <History size={16} color="#ffffff" />
+            <History size={15} color={colors.text} />
           </Pressable>
 
           <Pressable
-            style={({ pressed }) => [styles.headerIconBtn, pressed && { opacity: 0.8 }]}
+            style={({ pressed }) => [
+              styles.headerIconBtn,
+              { backgroundColor: isDark ? 'rgba(244,63,94,0.12)' : 'rgba(244,63,94,0.08)', borderColor: isDark ? 'rgba(244,63,94,0.25)' : 'rgba(244,63,94,0.20)' },
+              pressed && { opacity: 0.8 },
+            ]}
             onPress={() => handleDeleteSession()}
             hitSlop={6}
           >
-            <Trash2 size={15} color="rgba(255,255,255,0.85)" />
+            <Trash2 size={14} color={COLORS.error} />
           </Pressable>
         </View>
       </View>
@@ -658,12 +674,12 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
   topBar: {
-    backgroundColor: '#0F172A',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderBottomWidth: 1,
   },
   coachInfo: { flex: 1 },
   coachHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },

@@ -915,7 +915,7 @@ const modalStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: RADIUS.xl,
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
   addCartModalText: { fontSize: 12, fontWeight: '800', color: COLORS.teal },
   buyNowBtn: {

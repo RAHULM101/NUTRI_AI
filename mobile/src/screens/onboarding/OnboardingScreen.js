@@ -189,7 +189,7 @@ const inputStyles = StyleSheet.create({
   wrapper: { marginBottom: SPACING.md },
   label: { fontSize: 13, fontWeight: '700', marginBottom: 6 },
   input: {
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: RADIUS.xl,
     paddingHorizontal: SPACING.base,
     fontSize: 16,
@@ -1071,7 +1071,7 @@ const styles = StyleSheet.create({
   quickSaveText: { fontSize: FONT_SIZES.xs, fontWeight: '800', color: '#ffffff' },
 
   footerRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  footerSaveBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: RADIUS.xl, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  footerSaveBtn: { paddingVertical: 14, paddingHorizontal: 18, borderRadius: RADIUS.xl, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   footerSaveText: { fontSize: FONT_SIZES.sm, fontWeight: '700' },
 
   scroll: { padding: SPACING.xl, paddingBottom: 140 },
@@ -1087,19 +1087,19 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: RADIUS.full,
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
   chipText: { fontSize: 13, fontWeight: '600' },
 
   addChipRow: { flexDirection: 'row', gap: 8, marginBottom: SPACING.md },
-  addChipInput: { flex: 1, borderWidth: 1.5, borderRadius: RADIUS.xl, paddingHorizontal: 14, height: 46, fontSize: 14 },
+  addChipInput: { flex: 1, borderWidth: 1, borderRadius: RADIUS.xl, paddingHorizontal: 14, height: 46, fontSize: 14 },
   addChipBtn: { width: 46, height: 46, borderRadius: RADIUS.xl, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
 
   optionBtn: {
     paddingVertical: 16,
     paddingHorizontal: SPACING.base,
     borderRadius: RADIUS.xl,
-    borderWidth: 1.5,
+    borderWidth: 1,
     marginBottom: SPACING.sm,
   },
   optionBtnText: { fontSize: 16, fontWeight: '700' },
@@ -1107,7 +1107,7 @@ const styles = StyleSheet.create({
   dobRow: { flexDirection: 'row', marginBottom: SPACING.lg },
   dobBox: {
     height: 52,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderRadius: RADIUS.xl,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1142,7 +1142,7 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderStyle: 'dashed',
   },
   photoEditBadge: {
@@ -1155,7 +1155,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#fff',
   },
   photoHint: { fontSize: 12, marginTop: 8 },
@@ -1175,7 +1175,7 @@ const styles = StyleSheet.create({
   // ── Health Blueprint Step 7 Styles ──────────────────────────
   bpHeroCard: {
     borderRadius: RADIUS['2xl'],
-    borderWidth: 1.5,
+    borderWidth: 1,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
     ...SHADOWS.sm,
@@ -1228,7 +1228,7 @@ const styles = StyleSheet.create({
   bpHalfCard: {
     flex: 1,
     borderRadius: RADIUS['2xl'],
-    borderWidth: 1.5,
+    borderWidth: 1,
     padding: SPACING.md,
     alignItems: 'flex-start',
     gap: 6,
@@ -1305,7 +1305,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS['2xl'],
     padding: SPACING.lg,
     marginBottom: SPACING.md,
-    borderWidth: 1.5,
+    borderWidth: 1,
     position: 'relative',
     elevation: 0,
     shadowColor: 'transparent',
