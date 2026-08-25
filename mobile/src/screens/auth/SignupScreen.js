@@ -105,6 +105,14 @@ export default function SignupScreen({ navigation }) {
   const scaleAnim = useRef(new Animated.Value(0.92)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
+  // Warm up in-app browser sheet for seamless in-app Google Auth (no external browser switch)
+  useEffect(() => {
+    WebBrowser.warmUpAsync().catch(() => {});
+    return () => {
+      WebBrowser.coolDownAsync().catch(() => {});
+    };
+  }, []);
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
@@ -242,7 +250,8 @@ export default function SignupScreen({ navigation }) {
     setErrorMsg('');
     setGoogleLoading(true);
     try {
-      await promptAsync();
+      // In-app Custom Tab / Sheet execution (keeps user seamlessly inside the app)
+      await promptAsync({ showInRecents: false });
     } catch (err) {
       console.warn('Google Signup prompt error:', err);
       setErrorMsg('Google sign-in failed. Please try again.');

@@ -2,7 +2,7 @@
 // HealthifyMe & Fittr Inspired Nia ChatBubble — Category-Tagged AI Response Cards, Emerald Callout Tips, 1-Tap Copy, Native Share, and Add to Today's Tracker Actions
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Clipboard, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, Alert, Share } from 'react-native';
 import { Sparkles, User, Utensils, Flame, Download, Copy, Plus, Check, Share2, ShieldCheck, Zap, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
@@ -550,10 +550,18 @@ function ChatBubble({ message, isUser }) {
     (lowerText.includes('diet chart') && (lowerText.includes('breakfast') || lowerText.includes('day 1') || lowerText.includes('lunch')))
   );
 
-  const handleCopyText = () => {
-    Clipboard.setString(rawText);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyText = async () => {
+    try {
+      await Share.share({
+        message: rawText,
+        title: 'NutriAI Advice',
+      });
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const handleShareAdvice = () => {
@@ -606,17 +614,6 @@ function ChatBubble({ message, isUser }) {
       console.warn('PDF export error:', e);
       Alert.alert('Download Notice', 'Could not generate PDF.');
     }
-  };
-
-  const handleLogToDailyTracker = () => {
-    addMealLog({
-      calories: 380,
-      protein: 24,
-      carbs: 42,
-      fat: 10,
-      junkScore: 10,
-    });
-    Alert.alert('Logged to Tracker 🎯', 'Recommended meal logged to today\'s nutrition summary!');
   };
 
   return (

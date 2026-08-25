@@ -29,6 +29,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { getStoredToken, logoutUser } from '../../services/authService';
 import api from '../../services/api';
 import { ENDPOINTS } from '../../constants/apiConfig';
+import { parseJwt } from '../../utils/base64';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
 
 const TOTAL_STEPS = 8;
@@ -356,7 +357,7 @@ export default function OnboardingScreen({ navigation, route }) {
       const token = await getStoredToken();
       if (!token) throw new Error('No auth token');
 
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = parseJwt(token);
       const userId = payload.user_id || payload.id || payload.sub;
 
       const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -441,7 +442,7 @@ export default function OnboardingScreen({ navigation, route }) {
       const token = await getStoredToken();
       if (!token) throw new Error('No auth token');
 
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = parseJwt(token);
       const userId = payload.user_id || payload.id || payload.sub;
 
       const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];

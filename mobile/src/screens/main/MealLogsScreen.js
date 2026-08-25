@@ -402,7 +402,7 @@ export default function MealLogsScreen() {
       fat_gm: parseFloat(fatVal.toFixed(2)),
       junk_score: finalJunk,
       ai_insights: aiInsights || 'Nutrient logged successfully.',
-      meal_photo_url: scannedPhotoUri && (scannedPhotoUri.startsWith('http://') || scannedPhotoUri.startsWith('https://')) ? scannedPhotoUri : null,
+      meal_photo_url: scannedPhotoUri || null,
     };
 
     try {
@@ -414,7 +414,11 @@ export default function MealLogsScreen() {
         fat: payload.fat_gm,
         junkScore: finalJunk,
       });
-      setLogs((prev) => [saved || payload, ...prev]);
+      const localItem = {
+        ...(saved || payload),
+        meal_photo_url: (saved && saved.meal_photo_url) || scannedPhotoUri || null,
+      };
+      setLogs((prev) => [localItem, ...prev]);
       Alert.alert('Success 🎉', 'Meal saved to today\'s nutrition!');
       resetForm();
     } catch (e) {

@@ -21,7 +21,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   Send, Sparkles, Trash2, Mic, Paperclip, Plus, History, X,
-  ChevronRight, MessageSquare, Flame, Dumbbell, Apple, Zap, Download,
+  ChevronRight, MessageSquare, Flame, Dumbbell, Apple, Zap, Download, Target,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
@@ -30,6 +30,7 @@ import * as Sharing from 'expo-sharing';
 import ChatBubble from '../../components/nia/ChatBubble';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { calculateDailyCalorieTarget } from '../../utils/calorieCalculator';
 import api from '../../services/api';
 import { ENDPOINTS } from '../../constants/apiConfig';
 import { COLORS, FONT_SIZES, SPACING, RADIUS, SHADOWS } from '../../constants/theme';
@@ -137,8 +138,13 @@ const typingStyles = StyleSheet.create({
 });
 
 export default function NiaScreen() {
-  const { userData, userMetrics } = useAuth();
+  const { userData, userMetrics, dailyLogs } = useAuth();
   const { isDark, colors } = useTheme();
+
+  const calGoal = calculateDailyCalorieTarget(userData, userMetrics);
+  const consumedCal = dailyLogs?.daily_calories_consumed || 0;
+  const remainingCal = Math.max(calGoal - consumedCal, 0);
+  const mainGoal = userData?.mainGoal || userMetrics?.goal_type || 'Healthy Nutrition';
 
   // Sessions & Active Conversation
   const [sessions, setSessions] = useState([]);
@@ -421,7 +427,7 @@ export default function NiaScreen() {
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.bg }]} edges={['top']}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bgCard} />
 
-      {/* Top Header Bar */}
+      {/* Top Header Bar — Theme-Aware Option A */}
       <View style={[styles.topBar, { backgroundColor: colors.bgCard, borderBottomColor: colors.border }]}>
         <View style={styles.coachInfo}>
           <View style={styles.coachHeaderRow}>
@@ -431,7 +437,13 @@ export default function NiaScreen() {
               <Text style={styles.onlinePulseText}>Active Coach</Text>
             </View>
           </View>
-          <Text style={[styles.niaTitle, { color: colors.textMuted }]}>Personalized Nutrition & Diet Coach</Text>
+          {/* Live Dashboard Connected Metric Pill */}
+          <View style={[styles.liveMetricPill, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)', borderColor: colors.border }]}>
+            <Target size={11} color={COLORS.primary} />
+            <Text style={[styles.liveMetricText, { color: colors.textSecondary }]} numberOfLines={1}>
+              {mainGoal} • <Text style={{ color: COLORS.primary, fontWeight: '800' }}>{remainingCal > 0 ? `${remainingCal} kcal left` : `${calGoal} kcal target`}</Text>
+            </Text>
+          </View>
         </View>
 
         {/* Action Header Group */}
@@ -541,6 +553,48 @@ export default function NiaScreen() {
           style={styles.messageList}
           contentContainerStyle={styles.messageContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            messages.length <= 1 ? (
+              <View style={styles.welcomeHeroWrap}>
+                <View style={[styles.welcomeHeroCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+                  <View style={[styles.heroIconCircle, { backgroundColor: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.10)' }]}>
+                    <Sparkles size={24} color={COLORS.primary} />
+                  </View>
+                  <Text style={[styles.heroTitle, { color: colors.text }]}>What can I help you eat today?</Text>
+                  <Text style={[styles.heroSubtitle, { color: colors.textMuted }]}>
+                    Ask for personalized diet plans, macro calculations, healthy food swaps, or food advice.
+                  </Text>
+
+                  <View style={styles.heroActionGrid}>
+                    {[
+                      { prompt: 'Generate 7-Day Indian Fat Loss Diet Plan', icon: Flame, color: '#EF4444' },
+                      { prompt: 'Calculate my optimal Daily Protein target', icon: Dumbbell, color: '#6366F1' },
+                      { prompt: 'Healthy Indian Evening Snacks under 150 kcal', icon: Apple, color: '#10B981' },
+                    ].map((item, idx) => {
+                      const Icon = item.icon;
+                      return (
+                        <Pressable
+                          key={idx}
+                          style={({ pressed }) => [
+                            styles.heroActionRow,
+                            { backgroundColor: isDark ? '#0f172a' : '#f8fafc', borderColor: colors.border },
+                            pressed && { opacity: 0.8 },
+                          ]}
+                          onPress={() => sendMessage(item.prompt)}
+                        >
+                          <View style={[styles.heroActionIconWrap, { backgroundColor: `${item.color}15` }]}>
+                            <Icon size={14} color={item.color} />
+                          </View>
+                          <Text style={[styles.heroActionText, { color: colors.textSecondary }]}>{item.prompt}</Text>
+                          <ChevronRight size={14} color={colors.textMuted} />
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+            ) : null
+          }
           ListFooterComponent={sending ? <InFlowTypingBubble isDark={isDark} colors={colors} /> : null}
           onContentSizeChange={scrollToEnd}
         />
@@ -681,13 +735,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     borderBottomWidth: 1,
   },
-  coachInfo: { flex: 1 },
+  coachInfo: { flex: 1, marginRight: 8 },
   coachHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  coachName: { fontSize: 18, fontWeight: '900', color: '#ffffff', letterSpacing: -0.3 },
+  coachName: { fontSize: 17, fontWeight: '900', letterSpacing: -0.3 },
   onlinePulseBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(16,185,129,0.18)', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full },
   greenDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981' },
   onlinePulseText: { fontSize: 10, fontWeight: '800', color: '#34D399' },
-  niaTitle: { fontSize: 11, color: 'rgba(255,255,255,0.65)', marginTop: 2 },
+  liveMetricPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  liveMetricText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
 
   actionHeaderGroup: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headerIconBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
@@ -716,7 +784,68 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, fontSize: 14, maxHeight: 100, paddingVertical: 8 },
   sendCircleBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', marginLeft: 6 },
-  sendCircleBtnDisabled: { backgroundColor: '#E2E8F0' },
+  sendCircleBtnDisabled: { backgroundColor: 'rgba(148, 163, 184, 0.25)' },
+
+  // Welcome Hero Cards for fresh chats
+  welcomeHeroWrap: {
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+  },
+  welcomeHeroCard: {
+    width: '100%',
+    borderRadius: RADIUS['2xl'],
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    ...SHADOWS.sm,
+  },
+  heroIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  heroTitle: {
+    fontSize: 17,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: -0.3,
+    marginBottom: 4,
+  },
+  heroSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: 8,
+  },
+  heroActionGrid: {
+    width: '100%',
+    gap: 8,
+  },
+  heroActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    gap: 10,
+  },
+  heroActionIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroActionText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+  },
 
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(3,7,18,0.75)', justifyContent: 'flex-end' },
   modalCard: { borderTopLeftRadius: RADIUS['2xl'], borderTopRightRadius: RADIUS['2xl'], maxHeight: '80%', padding: SPACING.lg, borderWidth: 1 },

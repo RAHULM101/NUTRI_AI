@@ -319,25 +319,36 @@ export default function DashboardScreen({ navigation }) {
             />
           </View>
 
-          {/* Quick log — Scan Food with Nia Ai */}
+          {/* Quick log — Scan Food with Nia AI (Sleek Luxury Action Card) */}
           <Pressable
             style={({ pressed }) => [
               styles.quickLogBtn,
-              { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.10)' : 'rgba(16, 185, 129, 0.08)', borderColor: isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.25)' },
+              {
+                backgroundColor: colors.bgCard,
+                borderColor: isDark ? 'rgba(16, 185, 129, 0.28)' : 'rgba(16, 185, 129, 0.20)',
+              },
               pressed && styles.quickLogBtnPressed,
             ]}
             onPress={() => navigation.navigate('MealLogs')}
           >
             <View style={styles.quickLogLeft}>
-              <View style={styles.quickLogIconWrap}>
-                <Zap size={22} color="#ffffff" />
+              <View style={[styles.quickLogIconWrap, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.16)' : 'rgba(16, 185, 129, 0.12)' }]}>
+                <Zap size={18} color={COLORS.primary} strokeWidth={2.5} />
               </View>
-              <View>
-                <Text style={[styles.quickLogTitle, { color: colors.text }]}>Scan Food with Nia Ai</Text>
-                <Text style={[styles.quickLogSub, { color: colors.textMuted }]}>Instant photo nutrition & macro detection</Text>
+              <View style={styles.quickLogTextWrap}>
+                <View style={styles.quickLogTitleRow}>
+                  <Text style={[styles.quickLogTitle, { color: colors.text }]}>Scan Food with Nia AI</Text>
+                  <View style={[styles.aiBadge, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.20)' : 'rgba(16, 185, 129, 0.10)' }]}>
+                    <Sparkles size={9} color={COLORS.primary} />
+                    <Text style={styles.aiBadgeText}>AI VISION</Text>
+                  </View>
+                </View>
+                <Text style={[styles.quickLogSub, { color: colors.textMuted }]}>Photo nutrition & macro detection</Text>
               </View>
             </View>
-            <ChevronRight size={18} color={COLORS.primary} />
+            <View style={[styles.quickLogArrowWrap, { backgroundColor: isDark ? '#1e293b' : '#f1f5f9' }]}>
+              <ChevronRight size={15} color={COLORS.primary} strokeWidth={2.5} />
+            </View>
           </Pressable>
         </Animated.View>
       </ScrollView>
@@ -500,27 +511,72 @@ const styles = StyleSheet.create({
 
   section: { marginBottom: SPACING.base },
 
-  // Quick log
+  // Quick log — Sleek Luxury Action Card
   quickLogBtn: {
     borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    ...SHADOWS.sm,
     borderWidth: 1,
+    ...SHADOWS.xs,
   },
-  quickLogBtnPressed: { opacity: 0.88 },
-  quickLogLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  quickLogBtnPressed: {
+    opacity: 0.88,
+    transform: [{ scale: 0.99 }],
+  },
+  quickLogLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
   quickLogIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: COLORS.primary,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.emerald,
   },
-  quickLogTitle: { fontSize: 16, fontWeight: '800' },
-  quickLogSub: { fontSize: 12, marginTop: 2 },
+  quickLogTextWrap: {
+    flex: 1,
+  },
+  quickLogTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  quickLogTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+  },
+  aiBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
+  },
+  quickLogSub: {
+    fontSize: 11.5,
+    marginTop: 1,
+    fontWeight: '500',
+  },
+  quickLogArrowWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
 });
