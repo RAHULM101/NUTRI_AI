@@ -22,7 +22,7 @@ export async function fetchProfile() {
     lastName: d.last_name || '',
     name: `${d.first_name || ''} ${d.last_name || ''}`.trim(),
     dobDay: d.day_of_birth ? String(d.day_of_birth).padStart(2, '0') : '',
-    dobMonth: monthName,
+    dobMonth: d.month_of_birth ? String(d.month_of_birth).padStart(2, '0') : '',
     dobYear: d.year_of_birth ? String(d.year_of_birth) : '',
     photo: d.profile_photo_url || null,
     gender: d.gender || '',

@@ -360,8 +360,17 @@ export default function OnboardingScreen({ navigation, route }) {
       const payload = parseJwt(token);
       const userId = payload.user_id || payload.id || payload.sub;
 
-      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      const monthInt = formData.dobMonth ? monthNames.indexOf(formData.dobMonth) + 1 : null;
+      let monthInt = null;
+      if (formData.dobMonth) {
+        const parsed = parseInt(formData.dobMonth, 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 12) {
+          monthInt = parsed;
+        } else {
+          const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          const idx = monthNames.findIndex((m) => m.toLowerCase() === String(formData.dobMonth).trim().toLowerCase());
+          if (idx !== -1) monthInt = idx + 1;
+        }
+      }
 
       const results = calculateResults();
       const finalBmi = results?.bmi || parseFloat(formData.bmi) || 22.5;
@@ -445,8 +454,17 @@ export default function OnboardingScreen({ navigation, route }) {
       const payload = parseJwt(token);
       const userId = payload.user_id || payload.id || payload.sub;
 
-      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-      const monthInt = formData.dobMonth ? monthNames.indexOf(formData.dobMonth) + 1 : null;
+      let monthInt = null;
+      if (formData.dobMonth) {
+        const parsed = parseInt(formData.dobMonth, 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 12) {
+          monthInt = parsed;
+        } else {
+          const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+          const idx = monthNames.findIndex((m) => m.toLowerCase() === String(formData.dobMonth).trim().toLowerCase());
+          if (idx !== -1) monthInt = idx + 1;
+        }
+      }
 
       const results = calculateResults();
       const finalBmi = results?.bmi || parseFloat(formData.bmi) || 22.5;
@@ -535,17 +553,27 @@ export default function OnboardingScreen({ navigation, route }) {
             <View style={styles.photoSection}>
               <Pressable style={styles.photoPick} onPress={pickPhoto}>
                 {photoUri ? (
-                  <Image source={{ uri: photoUri }} style={styles.photoImg} />
+                  <View style={[styles.photoImgWrap, { borderColor: COLORS.primary }]}>
+                    <Image source={{ uri: photoUri }} style={styles.photoImg} />
+                  </View>
                 ) : (
-                  <View style={[styles.photoPlaceholder, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: colors.border }]}>
-                    <User size={36} color={isDark ? '#94A3B8' : '#64748B'} />
+                  <View
+                    style={[
+                      styles.photoPlaceholder,
+                      {
+                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.08)' : 'rgba(16, 185, 129, 0.05)',
+                        borderColor: isDark ? 'rgba(16, 185, 129, 0.35)' : 'rgba(16, 185, 129, 0.25)',
+                      },
+                    ]}
+                  >
+                    <User size={38} color={isDark ? '#34D399' : COLORS.primary} />
                   </View>
                 )}
-                <View style={styles.photoEditBadge}>
-                  <Camera size={14} color="#fff" />
+                <View style={[styles.photoEditBadge, { borderColor: colors.bgCard }]}>
+                  <Camera size={13} color="#ffffff" strokeWidth={2.5} />
                 </View>
               </Pressable>
-              <Text style={[styles.photoHint, { color: colors.textMuted }]}>Add profile photo</Text>
+              <Text style={[styles.photoHint, { color: colors.textSecondary }]}>Add profile photo</Text>
             </View>
 
             <FieldInput label="First Name *" value={formData.firstName} onChangeText={(v) => set('firstName', v)} placeholder="e.g. Rahul" colors={colors} />
@@ -787,23 +815,28 @@ export default function OnboardingScreen({ navigation, route }) {
             <Text style={[styles.stepTitle, { color: colors.text, textAlign: 'center' }]}>Your Health Blueprint</Text>
             <Text style={[styles.stepSub, { color: colors.textMuted, textAlign: 'center' }]}>AI-personalized to your body & goals</Text>
 
-            {/* ── Hero Calorie Card ────────────────────────────────── */}
+            {/* ── Hero Calorie Card (Sleek Luxury Card) ──────────────── */}
             <View style={[
               styles.bpHeroCard,
               {
-                backgroundColor: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)',
-                borderColor: isDark ? 'rgba(16,185,129,0.35)' : 'rgba(16,185,129,0.25)',
+                backgroundColor: colors.bgCard,
+                borderColor: isDark ? 'rgba(16, 185, 129, 0.22)' : 'rgba(16, 185, 129, 0.16)',
               },
             ]}>
               <View style={styles.bpHeroTop}>
                 <View style={[
                   styles.bpHeroIconWrap,
-                  { backgroundColor: isDark ? 'rgba(16,185,129,0.20)' : 'rgba(16,185,129,0.15)' },
+                  { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.14)' : 'rgba(16, 185, 129, 0.10)' },
                 ]}>
-                  <Flame size={22} color={COLORS.primary} />
+                  <Flame size={20} color={COLORS.primary} strokeWidth={2.5} />
                 </View>
                 <View style={styles.bpHeroTextWrap}>
-                  <Text style={[styles.bpHeroLabel, { color: colors.textMuted }]}>DAILY CALORIE GOAL</Text>
+                  <View style={styles.bpHeroLabelRow}>
+                    <Text style={[styles.bpHeroLabel, { color: colors.textMuted }]}>DAILY CALORIE TARGET</Text>
+                    <View style={[styles.bpHeroTag, { backgroundColor: isDark ? 'rgba(16,185,129,0.18)' : 'rgba(16,185,129,0.10)' }]}>
+                      <Text style={styles.bpHeroTagText}>OPTIMAL</Text>
+                    </View>
+                  </View>
                   <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 4 }}>
                     <Text style={[styles.bpHeroValue, { color: colors.text }]}>
                       {calorieVal ? calorieVal.toLocaleString() : '--'}
@@ -812,9 +845,9 @@ export default function OnboardingScreen({ navigation, route }) {
                   </View>
                 </View>
               </View>
-              <View style={[styles.bpHeroDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(16,185,129,0.15)' }]} />
+              <View style={[styles.bpHeroDivider, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' }]} />
               <Text style={[styles.bpHeroNote, { color: colors.textMuted }]}>
-                Calculated using Mifflin-St Jeor formula based on your age, weight, height & activity level
+                Calculated using Mifflin-St Jeor formula based on your biometrics & activity level.
               </Text>
             </View>
 
@@ -1136,30 +1169,38 @@ const styles = StyleSheet.create({
 
   photoSection: { alignItems: 'center', marginBottom: SPACING.xl },
   photoPick: { width: 96, height: 96, borderRadius: 48, position: 'relative' },
-  photoImg: { width: 96, height: 96, borderRadius: 48 },
+  photoImgWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 2,
+    overflow: 'hidden',
+    ...SHADOWS.sm,
+  },
+  photoImg: { width: '100%', height: '100%' },
   photoPlaceholder: {
     width: 96,
     height: 96,
     borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderStyle: 'dashed',
+    borderWidth: 2,
+    ...SHADOWS.xs,
   },
   photoEditBadge: {
     position: 'absolute',
-    bottom: 2,
-    right: 2,
+    bottom: 0,
+    right: 0,
     width: 28,
     height: 28,
     borderRadius: 14,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#fff',
+    borderWidth: 2,
+    ...SHADOWS.emerald,
   },
-  photoHint: { fontSize: 12, marginTop: 8 },
+  photoHint: { fontSize: 12, fontWeight: '700', marginTop: 8 },
 
   resultCard: {
     width: '100%',
@@ -1173,51 +1214,67 @@ const styles = StyleSheet.create({
   resultLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8, marginTop: 8, marginBottom: 4 },
   resultValue: { fontSize: 28, fontWeight: '900' },
 
-  // ── Health Blueprint Step 7 Styles ──────────────────────────
+  // ── Health Blueprint Step 7 Styles (Sleek Luxury Aesthetic) ─
   bpHeroCard: {
-    borderRadius: RADIUS['2xl'],
+    borderRadius: RADIUS.xl,
     borderWidth: 1,
-    padding: SPACING.lg,
+    padding: SPACING.md,
     marginBottom: SPACING.md,
-    ...SHADOWS.sm,
+    ...SHADOWS.xs,
   },
   bpHeroTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 10,
   },
   bpHeroIconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: RADIUS.xl,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   bpHeroTextWrap: { flex: 1 },
-  bpHeroLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.8,
+  bpHeroLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginBottom: 2,
   },
-  bpHeroValue: {
-    fontSize: 38,
+  bpHeroLabel: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  bpHeroTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: RADIUS.full,
+  },
+  bpHeroTagText: {
+    fontSize: 8.5,
     fontWeight: '900',
-    letterSpacing: -1,
+    color: COLORS.primary,
+    letterSpacing: 0.4,
+  },
+  bpHeroValue: {
+    fontSize: 30,
+    fontWeight: '900',
+    letterSpacing: -0.8,
   },
   bpHeroUnit: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    paddingBottom: 4,
+    paddingBottom: 3,
   },
   bpHeroDivider: {
     height: 1,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   bpHeroNote: {
-    fontSize: 11.5,
-    lineHeight: 17,
+    fontSize: 11,
+    lineHeight: 16,
     fontWeight: '500',
   },
 
