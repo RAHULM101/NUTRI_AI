@@ -76,6 +76,9 @@ export default function LoginScreen({ navigation }) {
     clientId: GOOGLE_WEB_CLIENT_ID,
     scopes: ['openid', 'profile', 'email'],
     responseType: 'id_token token',
+    extraParams: {
+      prompt: 'select_account',
+    },
   });
 
   // Animations
